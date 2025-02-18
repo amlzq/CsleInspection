@@ -1,0 +1,8 @@
+{
+  "inspections": [
+    {
+      "id": "Csle",
+      "codeQualityCategory": "Sanity"
+    }
+  ]
+}
