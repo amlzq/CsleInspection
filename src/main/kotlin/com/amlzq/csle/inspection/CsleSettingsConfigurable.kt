@@ -4,12 +4,13 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
-import java.awt.BorderLayout
-import java.awt.Component
-import java.awt.Dimension
-import java.awt.FlowLayout
+import com.intellij.util.ui.JBUI
+import java.awt.*
 import java.awt.event.ItemEvent
-import javax.swing.*
+import javax.swing.JComboBox
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
 
 class CsleSettingsConfigurable : Configurable {
     private lateinit var inspectComboBox: JComboBox<String>
@@ -19,9 +20,14 @@ class CsleSettingsConfigurable : Configurable {
     private val options: Array<String> = CsleMode.entries.map { it.label }.toTypedArray()
 
     override fun createComponent(): JComponent {
-        val panel = JPanel().apply {
-            layout = BoxLayout(this, BoxLayout.Y_AXIS)
-            alignmentX = Component.LEFT_ALIGNMENT
+        val panel = JPanel(GridBagLayout())
+
+        val gbc = GridBagConstraints().apply {
+            fill = GridBagConstraints.HORIZONTAL
+            anchor = GridBagConstraints.NORTHWEST // 靠上左对齐
+            insets = JBUI.insets(5) // 设置每个组件的间隔
+            weightx = 1.0 // 防止水平拉伸
+            weighty = 0.0 // 防止垂直拉伸
         }
 
         inspectComboBox = ComboBox(options).apply {
@@ -33,43 +39,56 @@ class CsleSettingsConfigurable : Configurable {
                 }
             }
         }
+
         quickFixComboBox = ComboBox(options.filter { it != CsleSettings.instance.state.inspect }.toTypedArray())
 
         val inspectionPanel = JPanel().apply {
-            layout = FlowLayout(FlowLayout.LEFT, 0, 0)
-            alignmentX = Component.LEFT_ALIGNMENT
+            layout = FlowLayout(FlowLayout.LEFT, 0, 5)
             add(JLabel("Inspect whether a string literal expression contains"))
             add(inspectComboBox)
             add(JLabel(", and quick fix to "))
             add(quickFixComboBox)
         }
-        panel.add(inspectionPanel)
 
-        panel.add(Box.createVerticalStrut(10))
+        // 将 inspectionPanel 添加到 GridBagLayout 中
+        gbc.gridx = 0
+        gbc.gridy = 0
+        gbc.gridwidth = 2 // 使其横跨两列
+        gbc.anchor = GridBagConstraints.NORTHWEST // 靠上左对齐
+        panel.add(inspectionPanel, gbc)
 
         val excludedLabel =
-            JLabel("If you want to excluded some special functions of inspection, fill in the field following to wrap the split.").apply {
+            JLabel("If you want to exclude some special functions (e.g. print, log)of inspection, fill in the field following to wrap the split.").apply {
                 alignmentX = Component.LEFT_ALIGNMENT
             }
 
-        excludedField = JBTextArea(5, 20)
-        excludedField.lineWrap = true
-        excludedField.wrapStyleWord = true
-//        excludedField.bounds = Rectangle(20, 20, 300, 150)
-        excludedField.preferredSize = Dimension(300, 150)
+        // 将 excludedLabel 添加到 GridBagLayout 中
+        gbc.gridx = 0
+        gbc.gridy = 1
+        gbc.gridwidth = 2
+        gbc.anchor = GridBagConstraints.NORTHWEST // 靠上左对齐
+        panel.add(excludedLabel, gbc)
 
-        val excludedPanel = JPanel(BorderLayout()).apply {
-            alignmentX = Component.LEFT_ALIGNMENT
-            add(excludedLabel, BorderLayout.NORTH)
-            add(Box.createVerticalStrut(10))
-            add(JBScrollPane(excludedField).apply {
-                preferredSize = Dimension(300, 150)
-            }, BorderLayout.CENTER)
+        excludedField = JBTextArea().apply {
+            lineWrap = true
+            wrapStyleWord = true
         }
-        panel.add(excludedPanel)
+
+        // 将 excludedField 添加到 GridBagLayout 中
+        gbc.gridx = 0
+        gbc.gridy = 2
+        gbc.gridwidth = 1
+        gbc.weightx = 1.0
+        gbc.weighty = 1.0
+        gbc.anchor = GridBagConstraints.NORTHWEST // 靠上左对齐
+        panel.add(JBScrollPane(excludedField).apply {
+            preferredSize = Dimension(150, 150)  // 设置输入框的宽高
+            maximumSize = Dimension(150, 150)   // 限制输入框的最大尺寸
+        }, gbc)
 
         return panel
     }
+
 
     private fun functionNames(): List<String> {
         return excludedField.text.trim().split("\n")

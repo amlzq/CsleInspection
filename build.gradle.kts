@@ -1,8 +1,16 @@
+import org.jetbrains.changelog.markdownToHTML
+
 plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "1.9.25"
     id("org.jetbrains.intellij") version "1.17.4"
+    // https://github.com/JetBrains/gradle-changelog-plugin
+    id("org.jetbrains.changelog") version "2.2.1"
 }
+
+val mPluginId = "com.amlzq.csle.inspection.dart"
+val mSinceBuild = "231"
+val mUntilBuild = ""
 
 group = "com.amlzq"
 version = "0.0.1"
@@ -35,8 +43,11 @@ tasks {
     }
 
     patchPluginXml {
-        sinceBuild.set("231")
-        untilBuild.set("")
+        pluginId.set(mPluginId)
+        sinceBuild.set(mSinceBuild)
+        untilBuild.set(mUntilBuild)
+        pluginDescription.set(markdownToHTML(file("pluginDescription.md").readText()))
+        changeNotes.set(markdownToHTML(file("changeNotes.md").readText()))
     }
 
     signPlugin {
