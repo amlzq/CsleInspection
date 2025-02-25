@@ -9,7 +9,7 @@ plugins {
 }
 
 val mPluginId = "com.amlzq.csle.inspection.dart"
-val mSinceBuild = "231"
+val mSinceBuild = "203"
 val mUntilBuild = ""
 
 group = "com.amlzq"

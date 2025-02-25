@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElementFactory
 import com.jetbrains.lang.dart.psi.DartStringLiteralExpression
 
 class ConvertToAnotherFix : LocalQuickFix {
-    private val inspect = CsleSettings.instance.state.inspect
     private val quickFix = CsleSettings.instance.state.quickFix
 
     override fun getName(): String {
