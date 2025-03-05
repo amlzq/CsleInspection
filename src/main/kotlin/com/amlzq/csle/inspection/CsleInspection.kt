@@ -112,7 +112,7 @@ class CsleInspection : LocalInspectionTool() {
                         element,
                         CsleBundle.message("convert.to.another.chinese", quickFix),
                         ConvertToAnotherFix(),
-                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                        ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                         isOnTheFly,
                     )
                 )

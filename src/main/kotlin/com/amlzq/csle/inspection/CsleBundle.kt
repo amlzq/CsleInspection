@@ -3,27 +3,26 @@ package com.amlzq.csle.inspection
 import com.intellij.DynamicBundle
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.PropertyKey
-
 import java.util.function.Supplier
 
-object CsleBundle {
-    @NonNls
-    private const val BUNDLE: String = "messages.CsleBundle"
+class CsleBundle private constructor() {
+    companion object {
+        private const val BUNDLE: @NonNls String = "messages.CsleBundle"
+        private val INSTANCE = DynamicBundle(CsleBundle::class.java, BUNDLE)
 
-    private val INSTANCE: DynamicBundle = DynamicBundle(CsleBundle::class.java, BUNDLE)
+        @JvmStatic
+        fun message(
+            @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any
+        ): @Nls String {
+            return INSTANCE.getMessage(key, params)
+        }
 
-    @NotNull
-    @Nls
-    fun message(@NotNull @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: @NotNull Any?): String {
-        return INSTANCE.getMessage(key, *params)
-    }
-
-    @NotNull
-    fun messagePointer(
-        @NotNull @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: @NotNull Any?
-    ): Supplier<String> {
-        return INSTANCE.getLazyMessage(key, *params)
+        @JvmStatic
+        fun messagePointer(
+            @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any
+        ): Supplier<@Nls String> {
+            return INSTANCE.getLazyMessage(key, params)
+        }
     }
 }

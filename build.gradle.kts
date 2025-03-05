@@ -9,11 +9,11 @@ plugins {
 }
 
 val mPluginId = "com.amlzq.csle.inspection.dart"
-val mSinceBuild = "203"
+val mSinceBuild = "223"
 val mUntilBuild = ""
 
 group = "com.amlzq"
-version = "0.0.1"
+version = "0.0.2"
 
 repositories {
     mavenCentral()
