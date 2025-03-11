@@ -1,0 +1,40 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <!-- Public plugin name should be written in Title Case.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
+    <name>Chinese Expression Inspection (Java/Kotlin)</name>
+
+    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+    <vendor email="" url="https://github.com/amlzq">Zeaon</vendor>
+
+    <!-- Product and plugin compatibility requirements.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.java</depends>
+    <depends>org.jetbrains.kotlin</depends>
+
+    <resource-bundle>messages.CsleBundle</resource-bundle>
+
+    <!-- Extension points defined by the plugin.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+    <extensions defaultExtensionNs="com.intellij">
+        <localInspection
+                key="inspection.key.java"
+                groupKey="group.name.java"
+                enabledByDefault="true" level="WARNING" language="JAVA"
+                implementationClass="com.amlzq.csle.inspection.CsleJavaInspection"
+                displayName="Chinese string literal expression inspection"/>
+
+        <localInspection
+                key="inspection.key.kotlin"
+                groupKey="group.name.kotlin"
+                enabledByDefault="true" level="WARNING" language="kotlin"
+                implementationClass="com.amlzq.csle.inspection.CsleKotlinInspection"
+                displayName="Chinese string literal expression inspection"/>
+
+        <applicationConfigurable instance="com.amlzq.csle.inspection.CsleSettingsConfigurable"
+                                 groupId="tools"/>
+        <applicationService
+                serviceImplementation="com.amlzq.csle.inspection.CsleSettings"/>
+    </extensions>
+</idea-plugin>
