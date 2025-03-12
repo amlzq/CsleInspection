@@ -99,7 +99,6 @@ class CsleJavaInspection : LocalInspectionTool() {
                 }
 
                 // 创建问题描述，显示黄色波浪线
-                debugPrintln("10932 quickFix=$quickFix")
                 problems.add(
                     manager.createProblemDescriptor(
                         element,

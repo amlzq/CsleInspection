@@ -6,8 +6,10 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiLiteralExpression
+import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 
 class CsleLocalQuickFix : LocalQuickFix {
@@ -26,41 +28,50 @@ class CsleLocalQuickFix : LocalQuickFix {
     }
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val element = when (descriptor.psiElement) {
-            is PsiLiteralExpression -> descriptor.psiElement
-            is KtStringTemplateExpression -> descriptor.psiElement
-            else -> null
+        // 使用 WriteCommandAction 确保写操作发生在正确的上下文中
+        WriteCommandAction.runWriteCommandAction(project) {
+            // 将新字形的字符串应用到代码中
+            when (val element = descriptor.psiElement) {
+                // 处理 Java 字符串
+                is PsiLiteralExpression -> handleJavaString(element, project)
+                // 处理 Kotlin 字符串
+                is KtStringTemplateExpression -> handleKotlinString(element, project)
+            }
         }
-        debugPrintln("element=${element.toString()} applyFix")
-        if (element == null) return
-        val text: String = when (element) {
-            is PsiLiteralExpression -> element.value as String
-            is KtStringTemplateExpression -> element.entries.joinToString("") { it.text }
-            else -> ""
-        }
-        if (text.isEmpty()) return
-        debugPrintln("text=$text applyFix")
+    }
 
-        // 去掉引号
-//            if (text.startsWith("\"") || text.startsWith("'")) {
-//                text = text.substring(1, text.length - 1)
-//            }
-
-        // 将简体中文转换为繁体中文
-        val converted = when (quickFix) {
+    private fun getConvertedText(text: String): String {
+        return when (quickFix) {
             CsleGlyphs.SIMPLIFIED.label -> ZhConverterUtil.toSimple(text)
             CsleGlyphs.TRADITIONAL.label -> ZhConverterUtil.toTraditional(text)
             CsleGlyphs.TAIWAN.label -> ZhTwConverterUtil.toTraditional(text)
             else -> ZhConverterUtil.toSimple(text)
         }
+    }
 
-        // 使用 WriteCommandAction 确保写操作发生在正确的上下文中
-        WriteCommandAction.runWriteCommandAction(project) {
-            // 将新的繁体字符串应用到代码中
-            val newText = "\"" + converted + "\"" // 使用双引号包裹
-            val factory = PsiElementFactory.getInstance(project)
-            val newElement = factory.createExpressionFromText(newText, element.context)
-            element.replace(newElement)
+    private fun handleJavaString(element: PsiLiteralExpression, project: Project) {
+        val text = (element.value as String)
+        val newText = getConvertedText(text)
+        val newElement =
+            JavaPsiFacade.getElementFactory(project).createExpressionFromText("\"$newText\"", element.context)
+//        val newElement = PsiElementFactory.getInstance(project).createExpressionFromText(newText, element.context)
+        element.replace(newElement)
+    }
+
+    private fun handleKotlinString(element: KtStringTemplateExpression, project: Project) {
+        val isRaw = element.text.startsWith("\"\"\"")
+        val entries = element.entries
+        val newText = buildString {
+            if (isRaw) append("\"\"\"") else append("\"")
+            entries.forEach { entry ->
+                when (entry) {
+                    is KtLiteralStringTemplateEntry -> append(getConvertedText(entry.text))
+                    else -> append(entry.text)
+                }
+            }
+            if (isRaw) append("\"\"\"") else append("\"")
         }
+        val newElement = KtPsiFactory(project).createExpression(newText)
+        element.replace(newElement)
     }
 }
