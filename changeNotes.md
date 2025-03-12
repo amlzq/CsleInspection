@@ -1,3 +1,6 @@
+# 0.0.3
+- Internationalization
+
 # 0.0.2
 - Fix compatibility verification results.
 

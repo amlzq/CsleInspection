@@ -17,7 +17,7 @@ class CsleSettingsConfigurable : Configurable {
     private lateinit var quickFixComboBox: JComboBox<String>
     private lateinit var excludedField: JBTextArea
 
-    private val options: Array<String> = CsleMode.entries.map { it.label }.toTypedArray()
+    private val options: Array<String> = CsleGlyphs.entries.map { it.label }.toTypedArray()
 
     override fun createComponent(): JComponent {
         val panel = JPanel(GridBagLayout())
@@ -44,9 +44,9 @@ class CsleSettingsConfigurable : Configurable {
 
         val inspectionPanel = JPanel().apply {
             layout = FlowLayout(FlowLayout.LEFT, 0, 5)
-            add(JLabel("Inspect whether a string literal expression contains"))
+            add(JLabel(CsleBundle.message("inspection.label")))
             add(inspectComboBox)
-            add(JLabel(", and quick fix to "))
+            add(JLabel(CsleBundle.message("quickfix.label")))
             add(quickFixComboBox)
         }
 
@@ -57,10 +57,9 @@ class CsleSettingsConfigurable : Configurable {
         gbc.anchor = GridBagConstraints.NORTHWEST // 靠上左对齐
         panel.add(inspectionPanel, gbc)
 
-        val excludedLabel =
-            JLabel("If you want to exclude some special functions (e.g. print, log)of inspection, fill in the field following to wrap the split.").apply {
-                alignmentX = Component.LEFT_ALIGNMENT
-            }
+        val excludedLabel = JLabel(CsleBundle.message("excluded.label")).apply {
+            alignmentX = Component.LEFT_ALIGNMENT
+        }
 
         // 将 excludedLabel 添加到 GridBagLayout 中
         gbc.gridx = 0
@@ -124,6 +123,6 @@ class CsleSettingsConfigurable : Configurable {
     }
 
     override fun getDisplayName(): String {
-        return "Chinese Expression Inspection (Dart)"
+        return CsleBundle.message("display.name")
     }
 }

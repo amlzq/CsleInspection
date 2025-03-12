@@ -84,9 +84,9 @@ class CsleInspection : LocalInspectionTool() {
                 val quickFix = CsleSettings.instance.state.quickFix
 
                 val containsChinese = when (inspect) {
-                    CsleMode.SIMPLIFIED.label -> ZhConverterUtil.containsChinese(text)
-                    CsleMode.TRADITIONAL.label -> ZhConverterUtil.containsTraditional(text)
-                    CsleMode.TAIWAN.label -> ZhTwConverterUtil.containsTraditional(text)
+                    CsleGlyphs.SIMPLIFIED.label -> ZhConverterUtil.containsChinese(text)
+                    CsleGlyphs.TRADITIONAL.label -> ZhConverterUtil.containsTraditional(text)
+                    CsleGlyphs.TAIWAN.label -> ZhTwConverterUtil.containsTraditional(text)
                     else -> ZhConverterUtil.containsChinese(text)
                 }
                 if (!containsChinese) {
@@ -96,9 +96,9 @@ class CsleInspection : LocalInspectionTool() {
 
                 // 有inspect的字，但是转换后是同一个字，也就是简繁共用字的情况，比如：“坪”
                 val converted = when (quickFix) {
-                    CsleMode.SIMPLIFIED.label -> ZhConverterUtil.toSimple(text)
-                    CsleMode.TRADITIONAL.label -> ZhConverterUtil.toTraditional(text)
-                    CsleMode.TAIWAN.label -> ZhTwConverterUtil.toTraditional(text)
+                    CsleGlyphs.SIMPLIFIED.label -> ZhConverterUtil.toSimple(text)
+                    CsleGlyphs.TRADITIONAL.label -> ZhConverterUtil.toTraditional(text)
+                    CsleGlyphs.TAIWAN.label -> ZhTwConverterUtil.toTraditional(text)
                     else -> ZhConverterUtil.toSimple(text)
                 }
                 if (text == converted) {
@@ -110,8 +110,8 @@ class CsleInspection : LocalInspectionTool() {
                 problems.add(
                     manager.createProblemDescriptor(
                         element,
-                        CsleBundle.message("convert.to.another.chinese", quickFix),
-                        ConvertToAnotherFix(),
+                        CsleBundle.message("convert.to.another", quickFix),
+                        CsleLocalQuickFix(),
                         ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                         isOnTheFly,
                     )

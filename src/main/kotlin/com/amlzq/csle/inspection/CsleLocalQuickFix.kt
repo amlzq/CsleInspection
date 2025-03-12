@@ -9,11 +9,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementFactory
 import com.jetbrains.lang.dart.psi.DartStringLiteralExpression
 
-class ConvertToAnotherFix : LocalQuickFix {
+class CsleLocalQuickFix : LocalQuickFix {
     private val quickFix = CsleSettings.instance.state.quickFix
 
     override fun getName(): String {
-        return CsleBundle.message("convert.to.another.chinese", quickFix)
+        return CsleBundle.message("convert.to.another", quickFix)
     }
 
     override fun getFamilyName(): String {
@@ -35,9 +35,9 @@ class ConvertToAnotherFix : LocalQuickFix {
 
         // 将简体中文转换为繁体中文
         val converted = when (quickFix) {
-            CsleMode.SIMPLIFIED.label -> ZhConverterUtil.toSimple(text)
-            CsleMode.TRADITIONAL.label -> ZhConverterUtil.toTraditional(text)
-            CsleMode.TAIWAN.label -> ZhTwConverterUtil.toTraditional(text)
+            CsleGlyphs.SIMPLIFIED.label -> ZhConverterUtil.toSimple(text)
+            CsleGlyphs.TRADITIONAL.label -> ZhConverterUtil.toTraditional(text)
+            CsleGlyphs.TAIWAN.label -> ZhTwConverterUtil.toTraditional(text)
             else -> ZhConverterUtil.toSimple(text)
         }
 

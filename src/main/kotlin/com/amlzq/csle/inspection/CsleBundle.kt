@@ -6,23 +6,21 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 import java.util.function.Supplier
 
-class CsleBundle private constructor() {
-    companion object {
-        private const val BUNDLE: @NonNls String = "messages.CsleBundle"
-        private val INSTANCE = DynamicBundle(CsleBundle::class.java, BUNDLE)
+@NonNls
+private const val BUNDLE = "messages.CsleBundle"
 
-        @JvmStatic
-        fun message(
-            @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any
-        ): @Nls String {
-            return INSTANCE.getMessage(key, params)
-        }
+internal object CsleBundle {
+    private val INSTANCE = DynamicBundle(CsleBundle::class.java, BUNDLE)
 
-        @JvmStatic
-        fun messagePointer(
-            @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any
-        ): Supplier<@Nls String> {
-            return INSTANCE.getLazyMessage(key, params)
-        }
+    fun message(
+        key: @PropertyKey(resourceBundle = BUNDLE) String, vararg params: Any
+    ): @Nls String {
+        return INSTANCE.getMessage(key, *params)
+    }
+
+    fun lazyMessage(
+        @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any
+    ): Supplier<@Nls String> {
+        return INSTANCE.getLazyMessage(key, *params)
     }
 }
