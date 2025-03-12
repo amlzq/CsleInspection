@@ -48,9 +48,9 @@ class CsleLocalQuickFix : LocalQuickFix {
 
         // 将简体中文转换为繁体中文
         val converted = when (quickFix) {
-            CsleMode.SIMPLIFIED.label -> ZhConverterUtil.toSimple(text)
-            CsleMode.TRADITIONAL.label -> ZhConverterUtil.toTraditional(text)
-            CsleMode.TAIWAN.label -> ZhTwConverterUtil.toTraditional(text)
+            CsleGlyphs.SIMPLIFIED.label -> ZhConverterUtil.toSimple(text)
+            CsleGlyphs.TRADITIONAL.label -> ZhConverterUtil.toTraditional(text)
+            CsleGlyphs.TAIWAN.label -> ZhTwConverterUtil.toTraditional(text)
             else -> ZhConverterUtil.toSimple(text)
         }
 

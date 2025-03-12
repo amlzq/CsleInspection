@@ -5,11 +5,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 
-@State(name = "CseSettings", storages = [Storage("CseSettings.xml")])
+@State(name = "CseJvmSettings", storages = [Storage("CseJvmSettings.xml")])
 @Service
 class CsleSettings : PersistentStateComponent<CsleSettings> {
-    var inspect: String = CsleMode.SIMPLIFIED.label
-    var quickFix: String = CsleMode.TRADITIONAL.label
+    var inspect: String = CsleGlyphs.SIMPLIFIED.label
+    var quickFix: String = CsleGlyphs.TRADITIONAL.label
     var excluded: List<String> = listOf()
 
     override fun getState(): CsleSettings = this

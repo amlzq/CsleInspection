@@ -41,8 +41,6 @@ class CsleKotlinInspection : LocalInspectionTool() {
 
         if (file !is KtFile) return null
 
-        if (Utils.isPubActionInProgress()) return null
-
         val virtualFile: VirtualFile? = Utils.getRealVirtualFile(file)
         if (virtualFile == null || !virtualFile.isInLocalFileSystem) return null
 
@@ -83,9 +81,9 @@ class CsleKotlinInspection : LocalInspectionTool() {
                 val quickFix = CsleSettings.instance.state.quickFix
 
                 val containsChinese = when (inspect) {
-                    CsleMode.SIMPLIFIED.label -> ZhConverterUtil.containsChinese(text)
-                    CsleMode.TRADITIONAL.label -> ZhConverterUtil.containsTraditional(text)
-                    CsleMode.TAIWAN.label -> ZhTwConverterUtil.containsTraditional(text)
+                    CsleGlyphs.SIMPLIFIED.label -> ZhConverterUtil.containsChinese(text)
+                    CsleGlyphs.TRADITIONAL.label -> ZhConverterUtil.containsTraditional(text)
+                    CsleGlyphs.TAIWAN.label -> ZhTwConverterUtil.containsTraditional(text)
                     else -> ZhConverterUtil.containsChinese(text)
                 }
                 if (!containsChinese) {
@@ -95,9 +93,9 @@ class CsleKotlinInspection : LocalInspectionTool() {
 
                 // 有inspect的字，但是转换后是同一个字，也就是简繁共用字的情况，比如：“坪”
                 val converted = when (quickFix) {
-                    CsleMode.SIMPLIFIED.label -> ZhConverterUtil.toSimple(text)
-                    CsleMode.TRADITIONAL.label -> ZhConverterUtil.toTraditional(text)
-                    CsleMode.TAIWAN.label -> ZhTwConverterUtil.toTraditional(text)
+                    CsleGlyphs.SIMPLIFIED.label -> ZhConverterUtil.toSimple(text)
+                    CsleGlyphs.TRADITIONAL.label -> ZhConverterUtil.toTraditional(text)
+                    CsleGlyphs.TAIWAN.label -> ZhTwConverterUtil.toTraditional(text)
                     else -> ZhConverterUtil.toSimple(text)
                 }
                 if (text == converted) {

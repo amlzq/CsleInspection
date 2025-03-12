@@ -1,7 +1,11 @@
 {
   "inspections": [
     {
-      "id": "Csle",
+      "id": "CsleJava",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "CsleKotlin",
       "codeQualityCategory": "Sanity"
     }
   ]
