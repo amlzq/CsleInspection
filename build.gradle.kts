@@ -13,7 +13,7 @@ val mSinceBuild = "223"
 val mUntilBuild = ""
 
 group = "com.amlzq"
-version = "0.0.2"
+version = "0.0.3"
 
 repositories {
     mavenCentral()
