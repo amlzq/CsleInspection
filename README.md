@@ -6,3 +6,4 @@ An IntelliJ plugin that inspect if a string literal expression contains Chinese 
 - Kotlin
 
 ### Plugin Marketplace
+[Chinese Expression Inspection](https://plugins.jetbrains.com/plugin/26834-chinese-expression-inspection)
