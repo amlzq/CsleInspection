@@ -1,0 +1,16 @@
+{
+  "inspections": [
+    {
+      "id": "CsleDart",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "CsleJava",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "CsleKotlin",
+      "codeQualityCategory": "Sanity"
+    }
+  ]
+}
