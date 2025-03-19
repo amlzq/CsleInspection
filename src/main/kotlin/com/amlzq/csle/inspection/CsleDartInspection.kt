@@ -50,7 +50,7 @@ class CsleDartInspection : CsleLocalInspectionTool() {
 
         if (file !is DartFile) return null
 
-        if (DartPubActionBase.isInProgress) return null
+        if (DartPubActionBase.isInProgress()) return null
 
         val virtualFile: VirtualFile? = Utils.getRealVirtualFile(file)
         if (virtualFile == null || !virtualFile.isInLocalFileSystem) return null
