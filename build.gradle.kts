@@ -21,12 +21,12 @@ intellijPlatform {
     pluginConfiguration {
         id = "com.amlzq.csle.inspection"
         group = "com.amlzq"
-        version = "0.0.4"
+        version = "0.0.5"
         description = markdownToHTML(file("pluginDescription.md").readText())
         changeNotes = markdownToHTML(file("changeNotes.md").readText())
         ideaVersion {
-            sinceBuild = "242"
-            untilBuild = "242.*"
+            sinceBuild = "243"
+            untilBuild = provider { null }
         }
     }
     signing {
@@ -45,7 +45,7 @@ dependencies {
         intellijIdeaCommunity("2024.3.4") // Target IDE Platform
         bundledPlugin("com.intellij.java")
         bundledPlugin("org.jetbrains.kotlin")
-        plugins(listOf("Dart:242.24931"))
+        plugins(listOf("Dart:243.23654.44"))
     }
     implementation("com.github.houbb:opencc4j:1.8.1")
 }

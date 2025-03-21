@@ -1,3 +1,6 @@
+# 0.0.4
+- sinceBuild 243
+
 # 0.0.3
 - Change compatibility range
 
