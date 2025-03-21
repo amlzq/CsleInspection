@@ -1,4 +1,7 @@
 # 0.0.3
+- Change compatibility range
+
+# 0.0.3
 - Fix compatibility error.
 
 # 0.0.2
