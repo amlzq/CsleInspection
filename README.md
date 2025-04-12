@@ -1,10 +1,13 @@
-An IntelliJ plugin that inspect if a string literal expression contains Chinese characters, and supports quick fixes between simplified or traditional Chinese characters.
+Language: English | [简体中文](./README_zh.md)
+
+Inspect whether the string literal expression contains Chinese characters, and can quickly fix them between simplified or traditional characters.
+
+If you don't want to inspect the strings in certain locations, such as: print, you can exclude them in the settings.
+
+In the plugin settings view, you can modify the Chinese glyphs you want to inspect and the glyphs to quick fix.
 
 ### Supported languages
-- [Dart](https://github.com/amlzq/CsleInspection/tree/dart)
-- [Java/Kotlin](https://github.com/amlzq/CsleInspection/tree/java-kotlin)
+- JavaScript and TypeScript
 
-### Plugin Marketplace
-- [Chinese Expression Inspection ​(Dart)​](https://plugins.jetbrains.com/plugin/26651-chinese-expression-inspection-dart-)
-
-- [Chinese Expression Inspection ​(Java/Kotlin)​](https://plugins.jetbrains.com/plugin/26804-chinese-expression-inspection-java-kotlin-)
+### Installation
+[Chinese Expression Inspection](https://plugins.jetbrains.com/plugin/26834-chinese-expression-inspection)

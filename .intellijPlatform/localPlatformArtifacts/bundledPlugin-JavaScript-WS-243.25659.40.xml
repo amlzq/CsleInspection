@@ -1,0 +1,33 @@
+<ivy-module version="2.0">
+  <info organisation="bundledPlugin" module="JavaScript" revision="WS-243.25659.40"/>
+  <configurations>
+    <conf name="default" visibility="public"/>
+  </configurations>
+  <publications>
+    <artifact name="javascript-plugin" ext="jar" conf="default" url="plugins/javascript-plugin/lib"/>
+  </publications>
+  <dependencies>
+    <dependency org="bundledPlugin" name="com.intellij.modules.json" rev="WS-243.25659.40"/>
+    <dependency org="bundledPlugin" name="com.intellij.completion.ml.ranking" rev="WS-243.25659.40"/>
+    <dependency org="bundledPlugin" name="com.intellij.plugins.watcher" rev="WS-243.25659.40"/>
+    <dependency org="bundledPlugin" name="com.jetbrains.performancePlugin" rev="WS-243.25659.40"/>
+    <dependency org="bundledPlugin" name="org.intellij.intelliLang" rev="WS-243.25659.40"/>
+    <dependency org="bundledPlugin" name="com.intellij.copyright" rev="WS-243.25659.40"/>
+    <dependency org="bundledPlugin" name="org.jetbrains.plugins.terminal" rev="WS-243.25659.40"/>
+    <dependency org="bundledPlugin" name="tanvd.grazi" rev="WS-243.25659.40"/>
+    <dependency org="bundledPlugin" name="com.jetbrains.performancePlugin" rev="WS-243.25659.40"/>
+    <dependency org="bundledPlugin" name="org.intellij.plugins.markdown" rev="WS-243.25659.40"/>
+    <dependency org="bundledPlugin" name="training" rev="WS-243.25659.40"/>
+    <dependency org="bundledPlugin" name="Git4Idea" rev="WS-243.25659.40"/>
+    <dependency org="bundledPlugin" name="com.intellij.css" rev="WS-243.25659.40"/>
+    <dependency org="bundledPlugin" name="com.intellij.css" rev="WS-243.25659.40"/>
+    <dependency org="bundledPlugin" name="com.intellij.diagram" rev="WS-243.25659.40"/>
+    <dependency org="bundledPlugin" name="intellij.indexing.shared.core" rev="WS-243.25659.40"/>
+    <dependency org="bundledModule" name="intellij.javascript.sharedIndexes" rev="WS-243.25659.40"/>
+    <dependency org="bundledModule" name="intellij.indexing.shared.generator" rev="WS-243.25659.40"/>
+    <dependency org="bundledPlugin" name="com.jetbrains.sh" rev="WS-243.25659.40"/>
+    <dependency org="bundledPlugin" name="JavaScriptDebugger" rev="WS-243.25659.40"/>
+    <dependency org="bundledModule" name="intellij.aqua.runners.js.core" rev="WS-243.25659.40"/>
+    <dependency org="bundledModule" name="intellij.sh.terminal" rev="WS-243.25659.40"/>
+  </dependencies>
+</ivy-module>
