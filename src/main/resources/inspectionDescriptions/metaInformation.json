@@ -11,6 +11,10 @@
     {
       "id": "CsleKotlin",
       "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "CsleJS",
+      "codeQualityCategory": "Sanity"
     }
   ]
 }
