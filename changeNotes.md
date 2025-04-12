@@ -1,7 +1,10 @@
-# 0.0.4
+# 0.1.0
+- Add support for JS/TS languages
+
+# 0.0.5
 - sinceBuild 243
 
-# 0.0.3
+# 0.0.4
 - Change compatibility range
 
 # 0.0.3
