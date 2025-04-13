@@ -45,7 +45,7 @@ dependencies {
         intellijIdeaCommunity("2024.3.4") // Target IDE Platform
         bundledPlugin("com.intellij.java")
         bundledPlugin("org.jetbrains.kotlin")
-        plugins(listOf("Dart:243.23654.44", "JavaScript:243.25659.59"))
+        plugins(listOf("Dart:243.23654.44", "JavaScript:243.25659.59", "com.jetbrains.php:243.25659.59"))
     }
     implementation("com.github.houbb:opencc4j:1.8.1")
 }

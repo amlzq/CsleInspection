@@ -11,6 +11,7 @@
 - Java
 - Kotlin
 - JavaScript and TypeScript
+- PHP
 
 ### 安装
 [Chinese Expression Inspection](https://plugins.jetbrains.com/plugin/26834-chinese-expression-inspection)

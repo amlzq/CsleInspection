@@ -14,6 +14,7 @@
     <depends optional="true" config-file="com.amlzq.csle.inspection-withJava.xml">com.intellij.java</depends>
     <depends optional="true" config-file="com.amlzq.csle.inspection-withKotlin.xml">org.jetbrains.kotlin</depends>
     <depends optional="true" config-file="com.amlzq.csle.inspection-withJS.xml">JavaScript</depends>
+    <depends optional="true" config-file="com.amlzq.csle.inspection-withPHP.xml">com.jetbrains.php</depends>
 
     <extensions defaultExtensionNs="org.jetbrains.kotlin">
         <supportsKotlinPluginMode supportsK2="true"/>
