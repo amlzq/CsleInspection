@@ -1,5 +1,8 @@
+# 0.2.0
+- Add support for PHP languages
+
 # 0.1.0
-- Add support for JS/TS languages
+- Add support for JavaScript and TypeScript languages
 
 # 0.0.5
 - sinceBuild 243
