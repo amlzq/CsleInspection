@@ -13,5 +13,7 @@ In the plugin settings view, you can modify the Chinese glyphs you want to inspe
 - JavaScript and TypeScript
 - PHP
 
+If you want more supported languages, new an issue.
+
 ### Installation
 [Chinese Expression Inspection](https://plugins.jetbrains.com/plugin/26834-chinese-expression-inspection)

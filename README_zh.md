@@ -13,5 +13,7 @@
 - JavaScript and TypeScript
 - PHP
 
+如果你想更多支持的语言，可以创建issue。
+
 ### 安装
 [Chinese Expression Inspection](https://plugins.jetbrains.com/plugin/26834-chinese-expression-inspection)
