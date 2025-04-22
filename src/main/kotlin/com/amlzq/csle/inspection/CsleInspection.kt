@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
+import com.jetbrains.lang.dart.ide.actions.DartPubActionBase
 import com.jetbrains.lang.dart.psi.DartCallExpression
 import com.jetbrains.lang.dart.psi.DartFile
 import com.jetbrains.lang.dart.psi.DartStringLiteralExpression
@@ -41,7 +42,7 @@ class CsleInspection : LocalInspectionTool() {
 
         if (file !is DartFile) return null
 
-        if (Utils.isPubActionInProgress()) return null
+        if (DartPubActionBase.isInProgress) return null
 
         val virtualFile: VirtualFile? = Utils.getRealVirtualFile(file)
         if (virtualFile == null || !virtualFile.isInLocalFileSystem) return null

@@ -6,8 +6,8 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElementFactory
 import com.jetbrains.lang.dart.psi.DartStringLiteralExpression
+import com.jetbrains.lang.dart.util.DartElementGenerator
 
 class CsleLocalQuickFix : LocalQuickFix {
     private val quickFix = CsleSettings.instance.state.quickFix
@@ -28,11 +28,6 @@ class CsleLocalQuickFix : LocalQuickFix {
         val element = descriptor.psiElement as? DartStringLiteralExpression ?: return
         val text: String = element.text
 
-        // 去掉引号
-//            if (text.startsWith("\"") || text.startsWith("'")) {
-//                text = text.substring(1, text.length - 1)
-//            }
-
         // 将简体中文转换为繁体中文
         val converted = when (quickFix) {
             CsleGlyphs.SIMPLIFIED.label -> ZhConverterUtil.toSimple(text)
@@ -44,10 +39,10 @@ class CsleLocalQuickFix : LocalQuickFix {
         // 使用 WriteCommandAction 确保写操作发生在正确的上下文中
         WriteCommandAction.runWriteCommandAction(project) {
             // 将新的繁体字符串应用到代码中
-            val newText = converted // "\"" + converted + "\"" // 使用双引号包裹
-            val factory = PsiElementFactory.getInstance(project)
-            val newElement = factory.createExpressionFromText(newText, element.context)
-            element.replace(newElement)
+            val newText = converted
+            val newElement = DartElementGenerator.createExpressionFromText(project, newText)
+            newElement?.let { element.replace(it) }
         }
     }
+
 }
