@@ -1,3 +1,6 @@
+# 0.2.1
+- Fix dart multi-line string.
+
 # 0.2.0
 - Add support for PHP languages
 
