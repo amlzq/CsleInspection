@@ -1,6 +1,5 @@
 package com.amlzq.csle.inspection
 
-
 import com.github.houbb.opencc4j.util.ZhConverterUtil
 import com.github.houbb.opencc4j.util.ZhTwConverterUtil
 import com.intellij.codeInspection.InspectionManager
@@ -11,13 +10,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.jetbrains.lang.dart.ide.actions.DartPubActionBase
 import com.jetbrains.lang.dart.psi.DartCallExpression
 import com.jetbrains.lang.dart.psi.DartFile
 import com.jetbrains.lang.dart.psi.DartStringLiteralExpression
+import com.jetbrains.lang.dart.util.DartElementGenerator
 import org.jetbrains.annotations.NotNull
 
 class CsleDartInspection : CsleLocalInspectionTool() {
@@ -136,11 +135,6 @@ class DartLocalQuickFix : CsleLocalQuickFix() {
         val element = descriptor.psiElement as? DartStringLiteralExpression ?: return
         val text: String = element.text
 
-        // 去掉引号
-//            if (text.startsWith("\"") || text.startsWith("'")) {
-//                text = text.substring(1, text.length - 1)
-//            }
-
         // 将简体中文转换为繁体中文
         val converted = when (quickFix) {
             CsleGlyphs.SIMPLIFIED.label -> ZhConverterUtil.toSimple(text)
@@ -152,10 +146,9 @@ class DartLocalQuickFix : CsleLocalQuickFix() {
         // 使用 WriteCommandAction 确保写操作发生在正确的上下文中
         WriteCommandAction.runWriteCommandAction(project) {
             // 将新的繁体字符串应用到代码中
-            val newText = converted // "\"" + converted + "\"" // 使用双引号包裹
-            val factory = PsiElementFactory.getInstance(project)
-            val newElement = factory.createExpressionFromText(newText, element.context)
-            element.replace(newElement)
+            val newText = converted
+            val newElement = DartElementGenerator.createExpressionFromText(project, newText)
+            newElement?.let { element.replace(it) }
         }
     }
 }
