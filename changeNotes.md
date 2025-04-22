@@ -1,3 +1,6 @@
+# 0.0.4
+- Migrating to IntelliJ Platform Gradle Plugin (2.x)
+
 # 0.0.3
 - Internationalization
 

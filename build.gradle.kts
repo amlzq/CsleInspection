@@ -22,7 +22,7 @@ intellijPlatform {
     pluginConfiguration {
         id = "com.amlzq.csle.inspection.dart"
         group = "com.amlzq"
-        version = "0.0.3"
+        version = "0.0.4"
         description = markdownToHTML(file("pluginDescription.md").readText())
         changeNotes = markdownToHTML(file("changeNotes.md").readText())
         ideaVersion {
