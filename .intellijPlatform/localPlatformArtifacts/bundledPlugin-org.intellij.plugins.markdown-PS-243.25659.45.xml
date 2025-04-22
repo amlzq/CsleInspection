@@ -1,0 +1,16 @@
+<ivy-module version="2.0">
+  <info organisation="bundledPlugin" module="org.intellij.plugins.markdown" revision="PS-243.25659.45"/>
+  <configurations>
+    <conf name="default" visibility="public"/>
+  </configurations>
+  <publications>
+    <artifact name="markdown" ext="jar" conf="default" url="plugins/markdown/lib"/>
+  </publications>
+  <dependencies>
+    <dependency org="bundledPlugin" name="org.intellij.intelliLang" rev="PS-243.25659.45"/>
+    <dependency org="bundledPlugin" name="com.intellij.modules.json" rev="PS-243.25659.45"/>
+    <dependency org="bundledPlugin" name="org.jetbrains.plugins.yaml" rev="PS-243.25659.45"/>
+    <dependency org="bundledPlugin" name="com.intellij.platform.images" rev="PS-243.25659.45"/>
+    <dependency org="bundledModule" name="intellij.platform.compose" rev="PS-243.25659.45"/>
+  </dependencies>
+</ivy-module>

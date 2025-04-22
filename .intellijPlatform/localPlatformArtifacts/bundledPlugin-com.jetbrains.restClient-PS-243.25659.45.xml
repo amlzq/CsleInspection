@@ -1,0 +1,17 @@
+<ivy-module version="2.0">
+  <info organisation="bundledPlugin" module="com.jetbrains.restClient" revision="PS-243.25659.45"/>
+  <configurations>
+    <conf name="default" visibility="public"/>
+  </configurations>
+  <publications>
+    <artifact name="restClient" ext="jar" conf="default" url="plugins/restClient/lib"/>
+  </publications>
+  <dependencies>
+    <dependency org="bundledModule" name="intellij.libraries.ktor.client.cio" rev="PS-243.25659.45"/>
+    <dependency org="bundledPlugin" name="com.intellij.platform.images" rev="PS-243.25659.45"/>
+    <dependency org="bundledPlugin" name="com.intellij.modules.json" rev="PS-243.25659.45"/>
+    <dependency org="bundledPlugin" name="org.intellij.intelliLang" rev="PS-243.25659.45"/>
+    <dependency org="bundledPlugin" name="com.intellij.jsonpath" rev="PS-243.25659.45"/>
+    <dependency org="bundledPlugin" name="XPathView" rev="PS-243.25659.45"/>
+  </dependencies>
+</ivy-module>

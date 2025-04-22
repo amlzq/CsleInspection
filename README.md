@@ -7,13 +7,12 @@ If you don't want to inspect the strings in certain locations, such as: print, y
 In the plugin settings view, you can modify the Chinese glyphs you want to inspect and the glyphs to quick fix.
 
 ### Supported languages
-- Dart
-- Java
-- Kotlin
-- JavaScript and TypeScript
-- PHP
+- Python
 
 If you want more supported languages, new an issue.
 
 ### Installation
 - [Chinese Expression Inspection](https://plugins.jetbrains.com/plugin/26834-chinese-expression-inspection)
+
+### Reference
+- [PyCharm Plugin Development](https://plugins.jetbrains.com/docs/intellij/pycharm.html)

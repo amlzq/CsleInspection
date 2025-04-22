@@ -1,0 +1,12 @@
+<ivy-module version="2.0">
+  <info organisation="bundledPlugin" module="com.intellij.plugins.watcher" revision="PS-243.25659.45"/>
+  <configurations>
+    <conf name="default" visibility="public"/>
+  </configurations>
+  <publications>
+    <artifact name="fileWatcher" ext="jar" conf="default" url="plugins/fileWatcher/lib"/>
+  </publications>
+  <dependencies>
+    <dependency org="bundledPlugin" name="com.jetbrains.plugins.webDeployment" rev="PS-243.25659.45"/>
+  </dependencies>
+</ivy-module>

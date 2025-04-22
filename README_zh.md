@@ -7,11 +7,7 @@
 在插件设置视图中，您可以配置要检查的字形以及快速转化的字形。
 
 ### 支持语言
-- Dart
-- Java
-- Kotlin
-- JavaScript and TypeScript
-- PHP
+- Python
 
 如果你想更多支持的语言，可以创建issue。
 

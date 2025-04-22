@@ -1,0 +1,8 @@
+<ivy-module version="2.0">
+  <info organisation="bundledModule" module="intellij.dev.psiViewer" revision="PS-243.25659.45"/>
+  <configurations>
+    <conf name="default" visibility="public"/>
+  </configurations>
+  <publications/>
+  <dependencies/>
+</ivy-module>

@@ -1,0 +1,14 @@
+<ivy-module version="2.0">
+  <info organisation="bundledPlugin" module="com.intellij.css" revision="PS-243.25659.45"/>
+  <configurations>
+    <conf name="default" visibility="public"/>
+  </configurations>
+  <publications>
+    <artifact name="css-impl" ext="jar" conf="default" url="plugins/css-impl/lib"/>
+  </publications>
+  <dependencies>
+    <dependency org="bundledPlugin" name="com.intellij.platform.images" rev="PS-243.25659.45"/>
+    <dependency org="bundledPlugin" name="com.intellij.copyright" rev="PS-243.25659.45"/>
+    <dependency org="bundledPlugin" name="com.intellij.plugins.watcher" rev="PS-243.25659.45"/>
+  </dependencies>
+</ivy-module>
