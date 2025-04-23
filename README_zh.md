@@ -12,6 +12,7 @@
 - Kotlin
 - JavaScript and TypeScript
 - PHP
+- Python
 
 如果你想更多支持的语言，可以创建issue。
 

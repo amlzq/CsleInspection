@@ -1,3 +1,6 @@
+# 0.3.0
+- Add support for Python languages
+
 # 0.2.1
 - Fix dart multi-line string.
 
