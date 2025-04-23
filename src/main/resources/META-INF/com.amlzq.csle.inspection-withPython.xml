@@ -1,0 +1,14 @@
+<!-- Optional Plugin Dependencies. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-dependencies.html#optional-plugin-dependencies -->
+<idea-plugin>
+
+    <resource-bundle>messages.CsleBundle</resource-bundle>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <localInspection
+                key="inspection.key"
+                groupKey="group.name.python"
+                enabledByDefault="true" level="WARNING" language="Python"
+                implementationClass="com.amlzq.csle.inspection.CslePythonInspection"
+                displayName="Chinese string literal expression inspection"/>
+    </extensions>
+</idea-plugin>
