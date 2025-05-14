@@ -22,6 +22,8 @@ Python`语言，无需再安装多个。您可以卸载旧插件，然后安装�
 
 检查字符串字面表达式是否包含中文汉字，并可以在简体字或繁体字之间快速修复它们。
 
-如果您不想检查某些位置的字符串，例如：print方法的字符串形参，则可以在设置中排除它们。
+如果您不想检查某些位置的字符串，例如：print 方法的字符串形参，则可以在设置中排除它们。
 
 在插件设置视图中，您可以修改要检查的字形以及快速修复的字形。
+
+[VSCode extension](https://marketplace.visualstudio.com/items?itemName=amlzq.csle-diagnostic)
