@@ -1,3 +1,6 @@
+# 0.3.1
+- Added Traditional Chinese (Hong Kong) support.
+
 # 0.3.0
 - Add support for Python languages
 
