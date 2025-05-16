@@ -1,7 +1,5 @@
 package com.amlzq.csle.inspection
 
-import com.github.houbb.opencc4j.util.ZhConverterUtil
-import com.github.houbb.opencc4j.util.ZhTwConverterUtil
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
@@ -19,7 +17,7 @@ class CslePythonInspection : CsleLocalInspectionTool() {
     /**
      * 检查字符串是否在用户设置的排除方法中，比如：print
      */
-    private fun isSpecialCallExpression(element: PsiElement): Boolean {
+    override fun inExcludedCallExpression(element: PsiElement): Boolean {
         var parent = element.parent
         while (parent != null) {
             if (parent is PyCallExpression) {
@@ -50,7 +48,7 @@ class CslePythonInspection : CsleLocalInspectionTool() {
             return null
         }
 
-        val virtualFile: VirtualFile? = Utils.getRealVirtualFile(file)
+        val virtualFile: VirtualFile? = CsleUtils.getRealVirtualFile(file)
         if (virtualFile == null || !virtualFile.isInLocalFileSystem) return null
 
         val project: Project = file.project
@@ -72,12 +70,12 @@ class CslePythonInspection : CsleLocalInspectionTool() {
                 }
 
                 // 是否在特殊方法中
-                if (isSpecialCallExpression(element)) {
+                if (inExcludedCallExpression(element)) {
                     return
                 }
 
                 var text: String = element.text
-                if (!ZhConverterUtil.containsChinese(text)) {
+                if (!containsChinese(text)) {
                     debugPrintln("containsChinese=false")
                     return
                 }
@@ -90,28 +88,13 @@ class CslePythonInspection : CsleLocalInspectionTool() {
 
                 // 去掉字母数字空格符号
                 text = cleanPattern.matcher(text).replaceAll("")
-
-                val inspect = CsleSettings.instance.state.inspect
-                val quickFix = CsleSettings.instance.state.quickFix
-
-                val containsChinese = when (inspect) {
-                    CsleGlyphs.SIMPLIFIED.label -> ZhConverterUtil.containsChinese(text)
-                    CsleGlyphs.TRADITIONAL.label -> ZhConverterUtil.containsTraditional(text)
-                    CsleGlyphs.TAIWAN.label -> ZhTwConverterUtil.containsTraditional(text)
-                    else -> ZhConverterUtil.containsChinese(text)
-                }
-                if (!containsChinese) {
+                if (!containsChinese(text)) {
                     debugPrintln("containsChinese again=false")
                     return
                 }
 
                 // 有inspect的字，但是转换后是同一个字，也就是简繁共用字的情况，比如：“坪”
-                val converted = when (quickFix) {
-                    CsleGlyphs.SIMPLIFIED.label -> ZhConverterUtil.toSimple(text)
-                    CsleGlyphs.TRADITIONAL.label -> ZhConverterUtil.toTraditional(text)
-                    CsleGlyphs.TAIWAN.label -> ZhTwConverterUtil.toTraditional(text)
-                    else -> ZhConverterUtil.toSimple(text)
-                }
+                val converted = getConvertedText(text)
                 if (text == converted) {
                     debugPrintln("converted=true")
                     return
@@ -121,7 +104,7 @@ class CslePythonInspection : CsleLocalInspectionTool() {
                 problems.add(
                     manager.createProblemDescriptor(
                         element,
-                        CsleBundle.message("convert.to.another", quickFix),
+                        CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
                         PythonLocalQuickFix(),
                         ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                         isOnTheFly,
@@ -143,12 +126,7 @@ class PythonLocalQuickFix : CsleLocalQuickFix() {
         debugPrintln("text=$text")
 
         // 根据用户配置转换字形
-        val converted = when (quickFix) {
-            CsleGlyphs.SIMPLIFIED.label -> ZhConverterUtil.toSimple(text)
-            CsleGlyphs.TRADITIONAL.label -> ZhConverterUtil.toTraditional(text)
-            CsleGlyphs.TAIWAN.label -> ZhTwConverterUtil.toTraditional(text)
-            else -> ZhConverterUtil.toSimple(text)
-        }
+        val converted = getConvertedText(text)
         debugPrintln("converted=$converted")
 
         // 使用 WriteCommandAction 确保写操作发生在正确的上下文中

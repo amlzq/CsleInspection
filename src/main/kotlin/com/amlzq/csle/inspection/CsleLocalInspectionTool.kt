@@ -1,6 +1,10 @@
 package com.amlzq.csle.inspection
 
+import com.github.houbb.opencc4j.util.ZhConverterUtil
+import com.github.houbb.opencc4j.util.ZhHkConverterUtil
+import com.github.houbb.opencc4j.util.ZhTwConverterUtil
 import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.psi.PsiElement
 import java.util.regex.Pattern
 
 /**
@@ -17,4 +21,19 @@ abstract class CsleLocalInspectionTool : LocalInspectionTool() {
      */
     val cleanPattern =
         Pattern.compile("[A-Za-z0-9\\p{Punct}\\s\u3000\u2014\u2018\u2019\u201C\u201D\uFF08\uFF09\uFF1B\uFF1A\uFF1F\uFF01\u3001\uFF0C\u3002]")
+
+    abstract fun inExcludedCallExpression(element: PsiElement): Boolean
+
+    fun containsChinese(text: String): Boolean {
+        return when (CsleUtils.getInspectGlyphs()) {
+            CsleGlyphs.SIMPLIFIED -> ZhConverterUtil.containsSimple(text)
+            CsleGlyphs.TAIWAN -> ZhTwConverterUtil.containsTraditional(text)
+            CsleGlyphs.HONGKONG -> ZhHkConverterUtil.containsTraditional(text)
+            CsleGlyphs.TRADITIONAL -> ZhConverterUtil.containsTraditional(text)
+        }
+    }
+
+    fun getConvertedText(text: String): String {
+        return CsleUtils.getConvertedText(text)
+    }
 }

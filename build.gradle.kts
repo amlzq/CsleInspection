@@ -54,7 +54,7 @@ dependencies {
             )
         )
     }
-    implementation("com.github.houbb:opencc4j:1.8.1")
+    implementation("com.github.houbb:opencc4j:1.13.1")
 }
 
 tasks {
