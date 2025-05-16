@@ -22,3 +22,7 @@
 [IntelliJ 插件](https://plugins.jetbrains.com/plugin/26834-chinese-expression-inspection)
 
 [VSCode 扩展](https://marketplace.visualstudio.com/items?itemName=amlzq.csle-diagnostic)
+
+### 感谢
+
+[Opencc4j](https://github.com/houbb/opencc4j)

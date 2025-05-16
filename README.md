@@ -22,3 +22,7 @@ If you want more supported languages, new an issue.
 [IntelliJ plugin](https://plugins.jetbrains.com/plugin/26834-chinese-expression-inspection)
 
 [VSCode extension](https://marketplace.visualstudio.com/items?itemName=amlzq.csle-diagnostic)
+
+### Thanks
+
+[Opencc4j](https://github.com/houbb/opencc4j)
