@@ -15,7 +15,7 @@
 - PHP
 - Python
 
-如果你想更多支持的语言，可以创建 issue。
+如果你想更多支持的语言，可以创建 [issue](https://github.com/amlzq/CsleInspection/issues)。
 
 ### 安装
 

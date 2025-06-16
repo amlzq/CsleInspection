@@ -15,7 +15,7 @@ In the plugin settings view, you can modify the Chinese glyphs you want to inspe
 - PHP
 - Python
 
-If you want more supported languages, new an issue.
+If you want more supported languages, new an [issue](https://github.com/amlzq/CsleInspection/issues).
 
 ### Installation
 

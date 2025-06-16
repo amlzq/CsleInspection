@@ -6,7 +6,7 @@ TypeScript
 PHP
 Python`, no need to install multiple anymore. You can uninstall the old plugin and then install this one.
 
-Inspect whether the string literal expression contains Chinese characters, and can quickly fix them between simplified or traditional glyphs.
+csle, short for "Chinese String Literal Expression", inspect whether the string literal expression contains Chinese characters, and can quickly fix them between simplified or traditional glyphs.
 
 If you don't want to inspect the strings in certain locations, such as: print, you can exclude them in the settings.
 
