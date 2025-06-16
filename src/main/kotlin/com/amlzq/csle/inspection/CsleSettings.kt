@@ -9,7 +9,7 @@ import com.intellij.openapi.components.Storage
 @Service
 class CsleSettings : PersistentStateComponent<CsleSettings> {
     var inspect: String = CsleGlyphs.SIMPLIFIED.label
-    var quickFix: String = CsleGlyphs.TRADITIONAL.label
+    var quickFix: String = CsleGlyphs.TAIWAN.label
     var excluded: List<String> = listOf()
 
     override fun getState(): CsleSettings = this
