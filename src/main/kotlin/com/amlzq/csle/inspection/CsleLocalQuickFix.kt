@@ -1,7 +1,5 @@
 package com.amlzq.csle.inspection
 
-import com.github.houbb.opencc4j.util.ZhConverterUtil
-import com.github.houbb.opencc4j.util.ZhTwConverterUtil
 import com.intellij.codeInspection.LocalQuickFix
 
 abstract class CsleLocalQuickFix : LocalQuickFix {
@@ -17,14 +15,5 @@ abstract class CsleLocalQuickFix : LocalQuickFix {
 
     override fun startInWriteAction(): Boolean {
         return false
-    }
-
-    fun getConvertedText(text: String): String {
-        return when (quickFix) {
-            CsleGlyphs.SIMPLIFIED.label -> ZhConverterUtil.toSimple(text)
-            CsleGlyphs.TRADITIONAL.label -> ZhConverterUtil.toTraditional(text)
-            CsleGlyphs.TAIWAN.label -> ZhTwConverterUtil.toTraditional(text)
-            else -> ZhConverterUtil.toSimple(text)
-        }
     }
 }

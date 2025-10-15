@@ -45,7 +45,7 @@ dependencies {
         webstorm("2024.3.4") // Target IDE Platform
         bundledPlugin("JavaScript")
     }
-    implementation("com.github.houbb:opencc4j:1.8.1")
+    implementation("com.github.houbb:opencc4j:1.14.0")
 }
 
 tasks {
