@@ -200,18 +200,14 @@ class JSLocalQuickFix : CsleLocalQuickFix() {
         // 使用 WriteCommandAction 确保写操作发生在正确的上下文中
         WriteCommandAction.runWriteCommandAction(project) {
             when {
-                // 普通字符串字面量（'中文' 或 "中文"）
                 element is JSLiteralExpression -> {
-                    val newText = if (text.startsWith("\"") || text.startsWith("'")) {
-                        "${text.first()}$converted${text.last()}"
-                    } else converted
-
-                    val newElement = JSPsiElementFactory.createJSExpression(newText, element.context!!)
+                    // 普通字符串字面量（'中文' 或 "中文"）
+                    val newElement = JSPsiElementFactory.createJSExpression(converted, element.context!!)
                     element.replace(newElement)
                 }
 
-                // JSX XML 字符节点，例如：<div>中文</div>
                 element.node.elementType == XmlTokenType.XML_DATA_CHARACTERS -> {
+                    // JSX XML 字符节点，例如：<div>中文</div>
                     element.replace(
                         XmlElementFactory.getInstance(project).createDisplayText(converted)
                     )

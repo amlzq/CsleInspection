@@ -1,6 +1,9 @@
 package com.amlzq.csle.inspection
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
@@ -57,10 +60,9 @@ class CsleSettingsConfigurable : Configurable {
         gbc.anchor = GridBagConstraints.NORTHWEST // 靠上左对齐
         panel.add(inspectionPanel, gbc)
 
-        val excludedLabel =
-            JLabel(CsleBundle.message("excluded.label")).apply {
-                alignmentX = Component.LEFT_ALIGNMENT
-            }
+        val excludedLabel = JLabel(CsleBundle.message("excluded.label")).apply {
+            alignmentX = Component.LEFT_ALIGNMENT
+        }
 
         // 将 excludedLabel 添加到 GridBagLayout 中
         gbc.gridx = 0
@@ -111,6 +113,14 @@ class CsleSettingsConfigurable : Configurable {
         CsleSettings.instance.state.inspect = inspectComboBox.selectedItem as String
         CsleSettings.instance.state.quickFix = quickFixComboBox.selectedItem as String
         CsleSettings.instance.state.excluded = functionNames().map { it.trim() }.filter { it.isNotEmpty() }
+
+        // 在后台执行自动刷新所有 "处于编辑器中的文件" 的 inspection
+        ApplicationManager.getApplication().invokeLater {
+            val projectManager = ProjectManager.getInstance()
+            projectManager.openProjects.forEach { project ->
+                DaemonCodeAnalyzer.getInstance(project).restart()
+            }
+        }
     }
 
     /**
