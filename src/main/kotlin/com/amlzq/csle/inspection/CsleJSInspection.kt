@@ -1,12 +1,14 @@
 package com.amlzq.csle.inspection
 
+import com.github.houbb.opencc4j.util.ZhConverterUtil
+import com.github.houbb.opencc4j.util.ZhHkConverterUtil
+import com.github.houbb.opencc4j.util.ZhTwConverterUtil
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.javascript.psi.JSCallExpression
 import com.intellij.lang.javascript.psi.JSFile
 import com.intellij.lang.javascript.psi.JSLiteralExpression
-import com.intellij.lang.javascript.psi.JSXmlLiteralExpression
 import com.intellij.lang.javascript.psi.ecma6.JSStringTemplateExpression
 import com.intellij.lang.javascript.psi.impl.JSPsiElementFactory
 import com.intellij.openapi.command.WriteCommandAction
@@ -16,6 +18,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
+import com.intellij.psi.XmlElementFactory
+import com.intellij.psi.xml.XmlTokenType
 import org.jetbrains.annotations.NotNull
 
 class CsleJSInspection : CsleLocalInspectionTool() {
@@ -92,25 +96,21 @@ class CsleJSInspection : CsleLocalInspectionTool() {
             override fun visitElement(@NotNull element: PsiElement) {
                 super.visitElement(element)
 
-//                if (element is JSXmlLiteralExpression) {
-//                    debugPrintln("element is JSXmlLiteralExpression")
-//                }
+                // debugPrintln("element:$element")
 
                 // 检查是否是 JS 字符串字面量表达式
-                // JSLiteralExpression.isisStringLiteral 单引号或双引号包裹字符串
+                // JSLiteralExpression.isStringLiteral 单引号或双引号包裹字符串
                 // JSStringTemplateExpression 模版字符串 反引号（`）声明支持换行和插值的字符串‌
-                // debugPrintln("element:$element")
-                if (element !is JSLiteralExpression) {
-                    debugPrintln("element is not JSLiteralExpression")
-                    return
-                }
-                if (!element.isStringLiteral && element !is JSStringTemplateExpression) {
-                    debugPrintln("element is not StringLiteral or JSStringTemplateExpression")
-                    return
-                }
+                // XmlToken:XML_DATA_CHARACTERS JSX文件，例如：“<div>中文</div>”
 
-                if (element is JSXmlLiteralExpression) {
-                    debugPrintln("element is JSXmlLiteralExpression")
+                val isJsString =
+                    (element is JSLiteralExpression && element.isStringLiteral) || element is JSStringTemplateExpression
+
+                val isJsxText = element.node.elementType == XmlTokenType.XML_DATA_CHARACTERS
+
+                if (!isJsString && !isJsxText) {
+                    debugPrintln("element is not JSLiteralExpression or not JSXText")
+                    return
                 }
 
                 // 是否在特殊方法中
@@ -164,19 +164,33 @@ class CsleJSInspection : CsleLocalInspectionTool() {
 class JSLocalQuickFix : CsleLocalQuickFix() {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val element = descriptor.psiElement as? JSLiteralExpression ?: return
-        val text: String = element.text
+        val element = descriptor.psiElement ?: return
+        val text = element.text
 
-        // 将简体中文转换为繁体中文
+        // 将原中文字形转换为目标中文字形
         val converted = getConvertedText(text)
 
         // 使用 WriteCommandAction 确保写操作发生在正确的上下文中
         WriteCommandAction.runWriteCommandAction(project) {
-            // 将新的繁体字符串应用到代码中
-            val newText = converted // "\"" + converted + "\"" // 使用双引号包裹
+            when {
+                element is JSLiteralExpression -> {
+                    // 普通字符串字面量（'中文' 或 "中文"）
+                    val newElement = JSPsiElementFactory.createJSExpression(converted, element.context!!)
+                    element.replace(newElement)
+                }
 
-            val newElement = JSPsiElementFactory.createJSExpression(newText, element.context!!)
-            element.replace(newElement)
+                element.node.elementType == XmlTokenType.XML_DATA_CHARACTERS -> {
+                    // JSX XML 字符节点，例如：<div>中文</div>
+                    element.replace(
+                        XmlElementFactory.getInstance(project).createDisplayText(converted)
+                    )
+                }
+
+                else -> {
+                    // 不支持的类型（理论上不会进入）
+                    debugPrintln("Unsupported element type for fix: ${element.javaClass.name}")
+                }
+            }
         }
     }
 }

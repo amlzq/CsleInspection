@@ -1,6 +1,9 @@
 package com.amlzq.csle.inspection
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
@@ -112,6 +115,15 @@ class CsleSettingsConfigurable : Configurable {
         CsleSettings.instance.state.inspect = inspectComboBox.selectedItem as String
         CsleSettings.instance.state.quickFix = quickFixComboBox.selectedItem as String
         CsleSettings.instance.state.excluded = functionNames().map { it.trim() }.filter { it.isNotEmpty() }
+
+        // 在后台执行自动刷新所有 "处于编辑器中的文件" 的 inspection
+        // 解决“用户修改字形配置之后处于编辑器中的文件没有自动刷新”的问题
+        ApplicationManager.getApplication().invokeLater {
+            val projectManager = ProjectManager.getInstance()
+            projectManager.openProjects.forEach { project ->
+                DaemonCodeAnalyzer.getInstance(project).restart()
+            }
+        }
     }
 
     override fun reset() {
