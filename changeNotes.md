@@ -1,3 +1,8 @@
+# 0.4.0
+- Re-run the inspection after modifying the glyph configuration.
+- Support checking and converting tag attribute values in JSX files.
+- Upgrading third-party dependencies.
+
 # 0.3.1
 - Added Traditional Chinese (Hong Kong) support.
 
