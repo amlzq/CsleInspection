@@ -7,96 +7,76 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.WrapLayout
-import java.awt.BorderLayout
-import java.awt.Component
+import com.intellij.ui.dsl.builder.panel
 import java.awt.Dimension
-import java.awt.FlowLayout
 import java.awt.event.ItemEvent
-import javax.swing.*
 
 class CsleSettingsConfigurable : Configurable {
-    private lateinit var inspectComboBox: JComboBox<String>
-    private lateinit var quickFixComboBox: JComboBox<String>
+    private lateinit var inspectComboBox: ComboBox<String>
+    private lateinit var quickFixComboBox: ComboBox<String>
     private lateinit var excludedField: JBTextArea
 
     private val options: Array<String> = CsleGlyphs.entries.map { it.label }.toTypedArray()
 
-    override fun createComponent(): JComponent {
-        val mainPanel = JPanel().apply {
-            layout = BoxLayout(this, BoxLayout.Y_AXIS)
-            border = JBUI.Borders.empty(10)
-        }
-
+    override fun createComponent(): javax.swing.JComponent {
         val longest = options.maxByOrNull { it.length } ?: ""
 
         inspectComboBox = ComboBox(options).apply {
             setPrototypeDisplayValue(longest)
-            maximumSize = Dimension(Int.MAX_VALUE, preferredSize.height)
-            addItemListener { e ->
-                if (e.stateChange == ItemEvent.SELECTED) {
-                    val selected = selectedItem ?: ""
-                    quickFixComboBox.removeAllItems()
-                    options.filter { it != selected }.forEach { quickFixComboBox.addItem(it) }
-                }
-            }
         }
-        quickFixComboBox = ComboBox(options.filter { it != CsleSettings.instance.state.inspect }.toTypedArray()).apply {
+        quickFixComboBox = ComboBox(emptyArray<String>()).apply {
             setPrototypeDisplayValue(longest)
-            maximumSize = Dimension(Int.MAX_VALUE, preferredSize.height)
         }
-
-        val comboPanel = JPanel(WrapLayout(FlowLayout.LEFT, 5, 5)).apply {
-            add(JLabel(CsleBundle.message("inspection.label")))
-            add(inspectComboBox)
-            add(JLabel(CsleBundle.message("quickfix.label")))
-            add(quickFixComboBox)
-        }
-        mainPanel.add(comboPanel)
-
-        val excludedLabel = JBTextArea(CsleBundle.message("excluded.label")).apply {
-            lineWrap = true
-            wrapStyleWord = true
-            isOpaque = false
-            border = null
-            isEditable = false
-            background = null
-        }
-        // 用于自动调整宽度的容器
-        val labelPanel = JPanel(BorderLayout()).apply {
-            border = JBUI.Borders.empty(5, 0)
-            add(excludedLabel, BorderLayout.CENTER)
-            maximumSize = Dimension(Int.MAX_VALUE, excludedLabel.preferredSize.height * 3)
-        }
-        // 添加监听器动态调整宽度
-        mainPanel.addComponentListener(object : java.awt.event.ComponentAdapter() {
-            override fun componentResized(e: java.awt.event.ComponentEvent) {
-                val width = labelPanel.width
-                excludedLabel.preferredSize = Dimension(width, excludedLabel.preferredSize.height)
-                excludedLabel.revalidate()
-            }
-        })
-        mainPanel.add(labelPanel)
 
         excludedField = JBTextArea().apply {
             lineWrap = true
             wrapStyleWord = true
-            alignmentX = Component.LEFT_ALIGNMENT
-            maximumSize = Dimension(Int.MAX_VALUE, Int.MAX_VALUE)
         }
-        val scrollPane = JBScrollPane(excludedField).apply {
-            alignmentX = Component.LEFT_ALIGNMENT
-            preferredSize = Dimension(300, 150)
-            maximumSize = Dimension(Int.MAX_VALUE, Int.MAX_VALUE)
-        }
-        val fieldRow = JPanel(WrapLayout(FlowLayout.LEFT, 5, 2)).apply {
-            add(scrollPane)
-        }
-        mainPanel.add(fieldRow)
-        mainPanel.add(Box.createVerticalGlue())
+        val scrollPane = JBScrollPane(excludedField).apply { preferredSize = Dimension(300, 150) }
 
-        return mainPanel
+        val initialInspect = CsleSettings.instance.state.inspect
+        inspectComboBox.selectedItem = initialInspect
+        updateQuickFixOptions(initialInspect, preferredQuickFix = CsleSettings.instance.state.quickFix)
+
+        inspectComboBox.addItemListener { e ->
+            if (e.stateChange == ItemEvent.SELECTED) {
+                val selectedInspect = inspectComboBox.selectedItem as? String ?: return@addItemListener
+                updateQuickFixOptions(selectedInspect)
+            }
+        }
+
+        return panel {
+            row {
+                text(CsleBundle.message("inspection.label"))
+                cell(inspectComboBox)
+                text(CsleBundle.message("quickfix.label"))
+                cell(quickFixComboBox)
+            }
+
+            row {
+                text(CsleBundle.message("excluded.label"))
+            }
+
+            row {
+                cell(scrollPane)
+            }
+        }
+    }
+
+    private fun updateQuickFixOptions(selectedInspect: String, preferredQuickFix: String? = null) {
+        val currentQuickFix = quickFixComboBox.selectedItem as? String
+        val items = options.filter { it != selectedInspect }
+        quickFixComboBox.removeAllItems()
+        items.forEach { quickFixComboBox.addItem(it) }
+
+        val toSelect = when {
+            preferredQuickFix != null && items.contains(preferredQuickFix) -> preferredQuickFix
+            currentQuickFix != null && items.contains(currentQuickFix) -> currentQuickFix
+            else -> items.firstOrNull()
+        }
+        if (toSelect != null) {
+            quickFixComboBox.selectedItem = toSelect
+        }
     }
 
     private fun functionNames(): List<String> {
@@ -104,16 +84,18 @@ class CsleSettingsConfigurable : Configurable {
     }
 
     override fun isModified(): Boolean {
-        val inspect = inspectComboBox.selectedItem as String
-        val quickFix = quickFixComboBox.selectedItem as String
+        val inspect = inspectComboBox.selectedItem as? String ?: ""
+        val quickFix = quickFixComboBox.selectedItem as? String ?: ""
         return inspect != CsleSettings.instance.state.inspect
                 || quickFix != CsleSettings.instance.state.quickFix
                 || CsleSettings.instance.state.excluded != functionNames().map { it.trim() }.filter { it.isNotEmpty() }
     }
 
     override fun apply() {
-        CsleSettings.instance.state.inspect = inspectComboBox.selectedItem as String
-        CsleSettings.instance.state.quickFix = quickFixComboBox.selectedItem as String
+        CsleSettings.instance.state.inspect =
+            inspectComboBox.selectedItem as? String ?: CsleSettings.instance.state.inspect
+        CsleSettings.instance.state.quickFix =
+            quickFixComboBox.selectedItem as? String ?: CsleSettings.instance.state.quickFix
         CsleSettings.instance.state.excluded = functionNames().map { it.trim() }.filter { it.isNotEmpty() }
 
         // 在后台执行自动刷新所有 "处于编辑器中的文件" 的 inspection
@@ -127,8 +109,9 @@ class CsleSettingsConfigurable : Configurable {
     }
 
     override fun reset() {
-        inspectComboBox.selectedItem = CsleSettings.instance.state.inspect
-        quickFixComboBox.selectedItem = CsleSettings.instance.state.quickFix
+        val inspect = CsleSettings.instance.state.inspect
+        inspectComboBox.selectedItem = inspect
+        updateQuickFixOptions(inspect, preferredQuickFix = CsleSettings.instance.state.quickFix)
         excludedField.text = CsleSettings.instance.state.excluded.joinToString("\n")
     }
 
