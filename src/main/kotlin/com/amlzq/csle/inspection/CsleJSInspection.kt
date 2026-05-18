@@ -9,7 +9,6 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.javascript.psi.JSCallExpression
 import com.intellij.lang.javascript.psi.JSFile
 import com.intellij.lang.javascript.psi.JSLiteralExpression
-import com.intellij.lang.javascript.psi.JSXmlLiteralExpression
 import com.intellij.lang.javascript.psi.ecma6.JSStringTemplateExpression
 import com.intellij.lang.javascript.psi.impl.JSPsiElementFactory
 import com.intellij.openapi.command.WriteCommandAction
@@ -99,10 +98,6 @@ class CsleJSInspection : CsleLocalInspectionTool() {
 
                 // debugPrintln("element:$element")
 
-                if (element is JSXmlLiteralExpression) {
-                    debugPrintln("element is JSXmlLiteralExpression")
-                }
-
                 // 检查是否是 JS 字符串字面量表达式
                 // JSLiteralExpression.isStringLiteral 单引号或双引号包裹字符串
                 // JSStringTemplateExpression 模版字符串 反引号（`）声明支持换行和插值的字符串‌
@@ -188,7 +183,7 @@ class JSLocalQuickFix : CsleLocalQuickFix() {
         val element = descriptor.psiElement ?: return
         val text = element.text
 
-        // 将原中文字形转换为目标中文字形（或用户配置的其他目标）
+        // 将原中文字形转换为目标中文字形
         val converted = when (quickFix) {
             CsleGlyphs.SIMPLIFIED.label -> ZhConverterUtil.toSimple(text)
             CsleGlyphs.TAIWAN.label -> ZhTwConverterUtil.toTraditional(text)
