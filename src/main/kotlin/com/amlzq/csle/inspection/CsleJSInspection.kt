@@ -1,8 +1,5 @@
 package com.amlzq.csle.inspection
 
-import com.github.houbb.opencc4j.util.ZhConverterUtil
-import com.github.houbb.opencc4j.util.ZhHkConverterUtil
-import com.github.houbb.opencc4j.util.ZhTwConverterUtil
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
@@ -11,6 +8,7 @@ import com.intellij.lang.javascript.psi.JSFile
 import com.intellij.lang.javascript.psi.JSLiteralExpression
 import com.intellij.lang.javascript.psi.ecma6.JSStringTemplateExpression
 import com.intellij.lang.javascript.psi.impl.JSPsiElementFactory
+import com.intellij.lang.javascript.psi.jsdoc.JSDocComment
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
@@ -98,6 +96,29 @@ class CsleJSInspection : CsleLocalInspectionTool() {
 
                 // debugPrintln("element:$element")
 
+                if (CsleSettings.instance.state.checkDocComments && element is JSDocComment) {
+                    val text = element.text
+                    if (!containsChinese(text)) {
+                        return
+                    }
+
+                    val converted = getConvertedText(text)
+                    if (text == converted) {
+                        return
+                    }
+
+                    problems.add(
+                        manager.createProblemDescriptor(
+                            element,
+                            CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
+                            JSDocCommentQuickFix(),
+                            ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
+                            isOnTheFly,
+                        )
+                    )
+                    return
+                }
+
                 // 检查是否是 JS 字符串字面量表达式
                 // JSLiteralExpression.isStringLiteral 单引号或双引号包裹字符串
                 // JSStringTemplateExpression 模版字符串 反引号（`）声明支持换行和插值的字符串‌
@@ -150,7 +171,7 @@ class CsleJSInspection : CsleLocalInspectionTool() {
                     manager.createProblemDescriptor(
                         element,
                         CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
-                        JSLocalQuickFix(),
+                        JSLiteralExpressionQuickFix(),
                         ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                         isOnTheFly,
                     )
@@ -161,28 +182,28 @@ class CsleJSInspection : CsleLocalInspectionTool() {
     }
 }
 
-class JSLocalQuickFix : CsleLocalQuickFix() {
+class JSLiteralExpressionQuickFix : CsleLocalQuickFix() {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement ?: return
         val text = element.text
 
         // 将原中文字形转换为目标中文字形
-        val converted = getConvertedText(text)
+        val newText = getConvertedText(text)
 
         // 使用 WriteCommandAction 确保写操作发生在正确的上下文中
         WriteCommandAction.runWriteCommandAction(project) {
             when {
                 element is JSLiteralExpression -> {
                     // 普通字符串字面量（'中文' 或 "中文"）
-                    val newElement = JSPsiElementFactory.createJSExpression(converted, element.context!!)
+                    val newElement = JSPsiElementFactory.createJSExpression(newText, element.context!!)
                     element.replace(newElement)
                 }
 
                 element.node.elementType == XmlTokenType.XML_DATA_CHARACTERS -> {
                     // JSX XML 字符节点，例如：<div>中文</div>
                     element.replace(
-                        XmlElementFactory.getInstance(project).createDisplayText(converted)
+                        XmlElementFactory.getInstance(project).createDisplayText(newText)
                     )
                 }
 
@@ -191,6 +212,17 @@ class JSLocalQuickFix : CsleLocalQuickFix() {
                     debugPrintln("Unsupported element type for fix: ${element.javaClass.name}")
                 }
             }
+        }
+    }
+}
+
+class JSDocCommentQuickFix : CsleLocalQuickFix() {
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        WriteCommandAction.runWriteCommandAction(project) {
+            val element = descriptor.psiElement as? JSDocComment ?: return@runWriteCommandAction
+            val newText = getConvertedText(element.text)
+            val newElement = JSPsiElementFactory.createJSExpression(newText, element.context!!)
+            element.replace(newElement)
         }
     }
 }

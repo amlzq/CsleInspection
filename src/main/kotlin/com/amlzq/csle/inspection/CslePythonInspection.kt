@@ -64,8 +64,8 @@ class CslePythonInspection : CsleLocalInspectionTool() {
                 debugPrintln("text=${element.text}")
 
                 // 检查是否是 Python 字符串字面量表达式
-                if (element !is StringLiteralExpression) {
-                    debugPrintln("element is not StringLiteralExpression")
+                if (element !is PyStringLiteralExpression) {
+                    debugPrintln("element is not PyStringLiteralExpression")
                     return
                 }
 
@@ -105,7 +105,7 @@ class CslePythonInspection : CsleLocalInspectionTool() {
                     manager.createProblemDescriptor(
                         element,
                         CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
-                        PythonLocalQuickFix(),
+                        PythonLiteralExpressionQuickFix(),
                         ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                         isOnTheFly,
                     )
@@ -116,24 +116,24 @@ class CslePythonInspection : CsleLocalInspectionTool() {
     }
 }
 
-class PythonLocalQuickFix : CsleLocalQuickFix() {
+class PythonLiteralExpressionQuickFix : CsleLocalQuickFix() {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         debugPrintln("psiElement=${descriptor.psiElement}")
 
-        val element = descriptor.psiElement as? StringLiteralExpression ?: return
+        val element = descriptor.psiElement as? PyStringLiteralExpression ?: return
         val text: String = element.text
         debugPrintln("text=$text")
 
         // 根据用户配置转换字形
-        val converted = getConvertedText(text)
-        debugPrintln("converted=$converted")
+        val newText = getConvertedText(text)
+        debugPrintln("converted=$newText")
 
         // 使用 WriteCommandAction 确保写操作发生在正确的上下文中
         WriteCommandAction.runWriteCommandAction(project) {
             // 将新的字符串应用到代码中
             val generator = PyElementGenerator.getInstance(project)
-            val newElement = generator.createStringLiteralAlreadyEscaped(converted)
+            val newElement = generator.createStringLiteralAlreadyEscaped(newText)
             newElement?.let { element.replace(it) }
         }
     }

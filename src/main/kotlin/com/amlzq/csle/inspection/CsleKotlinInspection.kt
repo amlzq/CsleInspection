@@ -11,12 +11,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.psi.*
 
 class CsleKotlinInspection : CsleLocalInspectionTool() {
 
     /**
-     * 检查字符表达式是否在用户设置的排除方法中，比如：println
+     * 检查字符表达式是否在用户设置的排除方法中，比如：debugPrintln
      */
     override fun inExcludedCallExpression(element: PsiElement): Boolean {
         var parent = element.parent
@@ -57,6 +58,31 @@ class CsleKotlinInspection : CsleLocalInspectionTool() {
             override fun visitElement(@NotNull element: PsiElement) {
                 super.visitElement(element)
 
+                if (CsleSettings.instance.state.checkDocComments && element is KDoc) {
+                    val text = element.text
+                    if (!containsChinese(text)) {
+                        return
+                    }
+
+                    val converted = getConvertedText(text)
+                    if (text == converted) {
+                        return
+                    }
+
+                    problems.add(
+                        manager.createProblemDescriptor(
+                            element,
+                            CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
+                            KotlinDocCommentQuickFix(),
+                            ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
+                            isOnTheFly,
+                        )
+                    )
+                    return
+                }
+
+                if (!CsleSettings.instance.state.checkliteralExpression) return
+
                 // 检查是否是 Kotlin 字符串字面量表达式
                 if (element !is KtStringTemplateExpression) return
 
@@ -96,7 +122,7 @@ class CsleKotlinInspection : CsleLocalInspectionTool() {
                     manager.createProblemDescriptor(
                         element,
                         CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
-                        KotlinLocalQuickFix(),
+                        KotlinLiteralExpressionQuickFix(),
                         ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                         isOnTheFly,
                     )
@@ -107,7 +133,7 @@ class CsleKotlinInspection : CsleLocalInspectionTool() {
     }
 }
 
-class KotlinLocalQuickFix : CsleLocalQuickFix() {
+class KotlinLiteralExpressionQuickFix : CsleLocalQuickFix() {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         // 使用 WriteCommandAction 确保写操作发生在正确的上下文中
         WriteCommandAction.runWriteCommandAction(project) {
@@ -129,6 +155,25 @@ class KotlinLocalQuickFix : CsleLocalQuickFix() {
                 }
                 val newElement = KtPsiFactory(project).createExpression(newText)
                 element.replace(newElement)
+            }
+        }
+    }
+}
+
+class KotlinDocCommentQuickFix : CsleLocalQuickFix() {
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        // 使用 WriteCommandAction 确保写操作发生在正确的上下文中
+        WriteCommandAction.runWriteCommandAction(project) {
+            val element = descriptor.psiElement
+            if (element is KDoc) {
+                val text = element.text
+                val newText = getConvertedText(text)
+                // 如果转换前后相同，则不做任何修改
+                if (text == newText) return@runWriteCommandAction
+
+                // 使用 KtPsiFactory 创建新的注释节点并替换旧节点
+                val newComment = KtPsiFactory(project).createComment(newText)
+                element.replace(newComment)
             }
         }
     }

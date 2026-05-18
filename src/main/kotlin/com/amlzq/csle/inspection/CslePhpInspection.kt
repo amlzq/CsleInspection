@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
+import com.jetbrains.php.lang.documentation.phpdoc.psi.PhpDocComment
 import com.jetbrains.php.lang.psi.PhpFile
 import com.jetbrains.php.lang.psi.PhpPsiElementFactory
 import com.jetbrains.php.lang.psi.elements.PhpEchoStatement
@@ -62,6 +63,29 @@ class CslePhpInspection : CsleLocalInspectionTool() {
             override fun visitElement(@NotNull element: PsiElement) {
                 super.visitElement(element)
 
+                if (CsleSettings.instance.state.checkDocComments && element is PhpDocComment) {
+                    val text = element.text
+                    if (!containsChinese(text)) {
+                        return
+                    }
+
+                    val converted = getConvertedText(text)
+                    if (text == converted) {
+                        return
+                    }
+
+                    problems.add(
+                        manager.createProblemDescriptor(
+                            element,
+                            CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
+                            PhpDocCommentQuickFix(),
+                            ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
+                            isOnTheFly,
+                        )
+                    )
+                    return
+                }
+
                 // 检查是否是 PHP 字符串字面量表达式
                 if (element !is StringLiteralExpression) {
                     debugPrintln("element is not StringLiteralExpression")
@@ -104,7 +128,7 @@ class CslePhpInspection : CsleLocalInspectionTool() {
                     manager.createProblemDescriptor(
                         element,
                         CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
-                        PhpLocalQuickFix(),
+                        PhpLiteralExpressionQuickFix(),
                         ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                         isOnTheFly,
                     )
@@ -115,7 +139,7 @@ class CslePhpInspection : CsleLocalInspectionTool() {
     }
 }
 
-class PhpLocalQuickFix : CsleLocalQuickFix() {
+class PhpLiteralExpressionQuickFix : CsleLocalQuickFix() {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         debugPrintln("psiElement=${descriptor.psiElement}")
@@ -125,13 +149,13 @@ class PhpLocalQuickFix : CsleLocalQuickFix() {
         debugPrintln("text=$text")
 
         // 根据用户配置转换字形
-        val converted = getConvertedText(text)
-        debugPrintln("converted=$converted")
+        val newText = getConvertedText(text)
+        debugPrintln("converted=$newText")
 
         // 使用 WriteCommandAction 确保写操作发生在正确的上下文中
         WriteCommandAction.runWriteCommandAction(project) {
             // 将新的字符串应用到代码中
-            val newElement = createStringLiteralExpression(project, converted)
+            val newElement = createStringLiteralExpression(project, newText)
             newElement?.let { element.replace(it) }
         }
     }
@@ -149,6 +173,16 @@ class PhpLocalQuickFix : CsleLocalQuickFix() {
             debugPrintln("withoutQuote=$withoutQuote")
 
             return PhpPsiElementFactory.createStringLiteralExpression(project, withoutQuote, singleQuote)
+        }
+    }
+}
+
+class PhpDocCommentQuickFix : CsleLocalQuickFix() {
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        WriteCommandAction.runWriteCommandAction(project) {
+            val element = descriptor.psiElement as? PhpDocComment ?: return@runWriteCommandAction
+            val newText = getConvertedText(element.text)
+            PhpPsiElementFactory.createFromText(project, StringLiteralExpression::class.java, newText)
         }
     }
 }

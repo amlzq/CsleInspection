@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.panel
@@ -15,6 +16,8 @@ class CsleSettingsConfigurable : Configurable {
     private lateinit var inspectComboBox: ComboBox<String>
     private lateinit var quickFixComboBox: ComboBox<String>
     private lateinit var excludedField: JBTextArea
+    private lateinit var literalExpressionCheckBox: JBCheckBox
+    private lateinit var docCommentsCheckBox: JBCheckBox
 
     private val options: Array<String> = CsleGlyphs.entries.map { it.label }.toTypedArray()
 
@@ -34,6 +37,16 @@ class CsleSettingsConfigurable : Configurable {
         }
         val scrollPane = JBScrollPane(excludedField).apply { preferredSize = Dimension(300, 150) }
 
+        literalExpressionCheckBox = JBCheckBox(
+            "Literal expression",
+            CsleSettings.instance.state.checkliteralExpression,
+        )
+        literalExpressionCheckBox.isEnabled = false
+        docCommentsCheckBox = JBCheckBox(
+            "Doc comments",
+            CsleSettings.instance.state.checkDocComments,
+        )
+
         val initialInspect = CsleSettings.instance.state.inspect
         inspectComboBox.selectedItem = initialInspect
         updateQuickFixOptions(initialInspect, preferredQuickFix = CsleSettings.instance.state.quickFix)
@@ -51,6 +64,13 @@ class CsleSettingsConfigurable : Configurable {
                 cell(inspectComboBox)
                 text(CsleBundle.message("quickfix.label"))
                 cell(quickFixComboBox)
+            }
+
+            group("Inspect targets") {
+                row {
+                    cell(literalExpressionCheckBox)
+                    cell(docCommentsCheckBox)
+                }
             }
 
             row {
@@ -89,6 +109,7 @@ class CsleSettingsConfigurable : Configurable {
         return inspect != CsleSettings.instance.state.inspect
                 || quickFix != CsleSettings.instance.state.quickFix
                 || CsleSettings.instance.state.excluded != functionNames().map { it.trim() }.filter { it.isNotEmpty() }
+                || docCommentsCheckBox.isSelected != CsleSettings.instance.state.checkDocComments
     }
 
     override fun apply() {
@@ -97,6 +118,8 @@ class CsleSettingsConfigurable : Configurable {
         CsleSettings.instance.state.quickFix =
             quickFixComboBox.selectedItem as? String ?: CsleSettings.instance.state.quickFix
         CsleSettings.instance.state.excluded = functionNames().map { it.trim() }.filter { it.isNotEmpty() }
+        CsleSettings.instance.state.checkliteralExpression = true
+        CsleSettings.instance.state.checkDocComments = docCommentsCheckBox.isSelected
 
         // 在后台执行自动刷新所有 "处于编辑器中的文件" 的 inspection
         // 解决“用户修改字形配置之后处于编辑器中的文件没有自动刷新”的问题
@@ -113,6 +136,8 @@ class CsleSettingsConfigurable : Configurable {
         inspectComboBox.selectedItem = inspect
         updateQuickFixOptions(inspect, preferredQuickFix = CsleSettings.instance.state.quickFix)
         excludedField.text = CsleSettings.instance.state.excluded.joinToString("\n")
+        literalExpressionCheckBox.isSelected = true
+        docCommentsCheckBox.isSelected = CsleSettings.instance.state.checkDocComments
     }
 
     override fun getDisplayName(): String = CsleBundle.message("display.name")

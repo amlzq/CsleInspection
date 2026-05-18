@@ -12,6 +12,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.jetbrains.lang.dart.ide.actions.DartPubActionBase
 import com.jetbrains.lang.dart.psi.DartCallExpression
+import com.jetbrains.lang.dart.psi.DartDocComment
 import com.jetbrains.lang.dart.psi.DartFile
 import com.jetbrains.lang.dart.psi.DartStringLiteralExpression
 import com.jetbrains.lang.dart.util.DartElementGenerator
@@ -62,6 +63,29 @@ class CsleDartInspection : CsleLocalInspectionTool() {
             override fun visitElement(@NotNull element: PsiElement) {
                 super.visitElement(element)
 
+                if (CsleSettings.instance.state.checkDocComments && element is DartDocComment) {
+                    val text = element.text
+                    if (!containsChinese(text)) {
+                        return
+                    }
+
+                    val converted = getConvertedText(text)
+                    if (text == converted) {
+                        return
+                    }
+
+                    problems.add(
+                        manager.createProblemDescriptor(
+                            element,
+                            CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
+                            DartDocCommentQuickFix(),
+                            ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
+                            isOnTheFly,
+                        )
+                    )
+                    return
+                }
+
                 // 检查是否是 Dart 字符串字面量表达式
                 if (element !is DartStringLiteralExpression) return
 
@@ -97,7 +121,7 @@ class CsleDartInspection : CsleLocalInspectionTool() {
                     manager.createProblemDescriptor(
                         element,
                         CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
-                        DartLocalQuickFix(),
+                        DartLiteralExpressionQuickFix(),
                         ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                         isOnTheFly,
                     )
@@ -108,21 +132,32 @@ class CsleDartInspection : CsleLocalInspectionTool() {
     }
 }
 
-class DartLocalQuickFix : CsleLocalQuickFix() {
+class DartLiteralExpressionQuickFix : CsleLocalQuickFix() {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement as? DartStringLiteralExpression ?: return
         val text: String = element.text
 
         // 将简体中文转换为繁体中文
-        val converted = getConvertedText(text)
+        val newText = getConvertedText(text)
 
         // 使用 WriteCommandAction 确保写操作发生在正确的上下文中
         WriteCommandAction.runWriteCommandAction(project) {
             // 将新的繁体字符串应用到代码中
-            val newText = converted
             val newElement = DartElementGenerator.createExpressionFromText(project, newText)
             newElement?.let { element.replace(it) }
         }
     }
 }
+
+class DartDocCommentQuickFix : CsleLocalQuickFix() {
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        WriteCommandAction.runWriteCommandAction(project) {
+            val element = descriptor.psiElement as? DartDocComment ?: return@runWriteCommandAction
+            val newText = getConvertedText(element.text)
+            val newElement = DartElementGenerator.createExpressionFromText(project, newText)
+            newElement?.let { element.replace(it) }
+        }
+    }
+}
+

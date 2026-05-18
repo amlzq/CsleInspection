@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
+import com.intellij.psi.javadoc.PsiDocComment
 import org.jetbrains.annotations.NotNull
 
 class CsleJavaInspection : CsleLocalInspectionTool() {
@@ -54,6 +55,31 @@ class CsleJavaInspection : CsleLocalInspectionTool() {
             override fun visitElement(@NotNull element: PsiElement) {
                 super.visitElement(element)
 
+                if (CsleSettings.instance.state.checkDocComments && element is PsiDocComment) {
+                    val text = element.text
+                    if (!containsChinese(text)) {
+                        return
+                    }
+
+                    val converted = getConvertedText(text)
+                    if (text == converted) {
+                        return
+                    }
+
+                    problems.add(
+                        manager.createProblemDescriptor(
+                            element,
+                            CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
+                            JavaDocCommentQuickFix(),
+                            ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
+                            isOnTheFly,
+                        )
+                    )
+                    return
+                }
+
+                if (!CsleSettings.instance.state.checkliteralExpression) return
+
                 // 检查是否是 Java 字符串字面量表达式
                 if (element !is PsiLiteralExpression) return
 
@@ -94,7 +120,7 @@ class CsleJavaInspection : CsleLocalInspectionTool() {
                     manager.createProblemDescriptor(
                         element,
                         CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
-                        JavaLocalQuickFix(),
+                        JavaLiteralExpressionQuickFix(),
                         ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                         isOnTheFly,
                     )
@@ -105,7 +131,7 @@ class CsleJavaInspection : CsleLocalInspectionTool() {
     }
 }
 
-class JavaLocalQuickFix : CsleLocalQuickFix() {
+class JavaLiteralExpressionQuickFix : CsleLocalQuickFix() {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         // 使用 WriteCommandAction 确保写操作发生在正确的上下文中
         WriteCommandAction.runWriteCommandAction(project) {
@@ -119,6 +145,17 @@ class JavaLocalQuickFix : CsleLocalQuickFix() {
 //        val newElement = PsiElementFactory.getInstance(project).createExpressionFromText(newText, element.context)
                 element.replace(newElement)
             }
+        }
+    }
+}
+
+class JavaDocCommentQuickFix : CsleLocalQuickFix() {
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        WriteCommandAction.runWriteCommandAction(project) {
+            val element = descriptor.psiElement as? PsiDocComment ?: return@runWriteCommandAction
+            val newText = getConvertedText(element.text)
+            val newElement = JavaPsiFacade.getElementFactory(project).createDocCommentFromText(newText)
+            element.replace(newElement)
         }
     }
 }
