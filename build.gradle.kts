@@ -45,12 +45,17 @@ dependencies {
         intellijIdeaCommunity("2024.3.4") // Target IDE Platform
         bundledPlugin("com.intellij.java")
         bundledPlugin("org.jetbrains.kotlin")
+//        bundledPlugin("com.intellij.modules.xml")
+//        bundledPlugin("com.intellij.modules.json")
+//        bundledPlugin("com.intellij.css")
         plugins(
             listOf(
                 "Dart:243.23654.44",
                 "JavaScript:243.25659.59",
                 "com.jetbrains.php:243.25659.59",
                 "PythonCore:243.24978.46",
+                "HtmlTools:243.22562.23",
+                "com.intellij.css:243.22562.13",
             )
         )
     }

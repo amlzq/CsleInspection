@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.*
 class CsleKotlinInspection : CsleLocalInspectionTool() {
 
     /**
-     * 检查字符表达式是否在用户设置的排除方法中，比如：debugPrintln
+     * 检查字符表达式是否在用户设置的排除方法中，比如：println
      */
     override fun inExcludedCallExpression(element: PsiElement): Boolean {
         var parent = element.parent
@@ -81,7 +81,7 @@ class CsleKotlinInspection : CsleLocalInspectionTool() {
                     return
                 }
 
-                if (!CsleSettings.instance.state.checkliteralExpression) return
+                if (!CsleSettings.instance.state.checkLiteralExpression) return
 
                 // 检查是否是 Kotlin 字符串字面量表达式
                 if (element !is KtStringTemplateExpression) return

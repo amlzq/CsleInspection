@@ -23,6 +23,22 @@
     {
       "id": "CslePython",
       "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "CsleHTML",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "CsleCSS",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "CsleXML",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "CsleJSON",
+      "codeQualityCategory": "Sanity"
     }
   ]
 }

@@ -39,7 +39,7 @@ class CsleSettingsConfigurable : Configurable {
 
         literalExpressionCheckBox = JBCheckBox(
             "Literal expression",
-            CsleSettings.instance.state.checkliteralExpression,
+            CsleSettings.instance.state.checkLiteralExpression,
         )
         literalExpressionCheckBox.isEnabled = false
         docCommentsCheckBox = JBCheckBox(
@@ -118,7 +118,7 @@ class CsleSettingsConfigurable : Configurable {
         CsleSettings.instance.state.quickFix =
             quickFixComboBox.selectedItem as? String ?: CsleSettings.instance.state.quickFix
         CsleSettings.instance.state.excluded = functionNames().map { it.trim() }.filter { it.isNotEmpty() }
-        CsleSettings.instance.state.checkliteralExpression = true
+        CsleSettings.instance.state.checkLiteralExpression = true
         CsleSettings.instance.state.checkDocComments = docCommentsCheckBox.isSelected
 
         // 在后台执行自动刷新所有 "处于编辑器中的文件" 的 inspection

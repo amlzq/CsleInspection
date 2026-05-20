@@ -11,7 +11,7 @@ class CsleSettings : PersistentStateComponent<CsleSettings> {
     var inspect: String = CsleGlyphs.SIMPLIFIED.label
     var quickFix: String = CsleGlyphs.TAIWAN.label
     var excluded: List<String> = listOf()
-    var checkliteralExpression: Boolean = true
+    var checkLiteralExpression: Boolean = true
     var checkDocComments: Boolean = false
 
     override fun getState(): CsleSettings = this
@@ -20,7 +20,7 @@ class CsleSettings : PersistentStateComponent<CsleSettings> {
         inspect = state.inspect
         quickFix = state.quickFix
         excluded = state.excluded
-        checkliteralExpression = true
+        checkLiteralExpression = true
         checkDocComments = state.checkDocComments
     }
 

@@ -78,7 +78,7 @@ class CsleJavaInspection : CsleLocalInspectionTool() {
                     return
                 }
 
-                if (!CsleSettings.instance.state.checkliteralExpression) return
+                if (!CsleSettings.instance.state.checkLiteralExpression) return
 
                 // 检查是否是 Java 字符串字面量表达式
                 if (element !is PsiLiteralExpression) return
