@@ -4,6 +4,7 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.json.psi.JsonFile
+import com.intellij.json.psi.JsonProperty
 import com.intellij.json.psi.JsonStringLiteral
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
@@ -19,7 +20,30 @@ import org.jetbrains.annotations.NotNull
 class CsleJsonInspection : CsleLocalInspectionTool() {
 
     override fun inExcludedCallExpression(element: PsiElement): Boolean {
-        return false
+        val excluded = CsleSettings.instance.state.excluded
+        if (excluded.isEmpty()) return false
+
+        val property = PsiTreeUtil.getParentOfType(element, JsonProperty::class.java, false) ?: return false
+        val name = property.name
+        if (excluded.contains(name)) return true
+
+        val path = buildPropertyPath(property)
+        return path.isNotEmpty() && excluded.contains(path)
+    }
+
+    private fun buildPropertyPath(property: JsonProperty): String {
+        val parts = ArrayList<String>()
+        var current: JsonProperty? = property
+        while (current != null) {
+            val name = current.name
+            if (name.isNotBlank()) {
+                parts.add(name)
+            }
+            current = PsiTreeUtil.getParentOfType(current.parent, JsonProperty::class.java, true)
+        }
+        if (parts.isEmpty()) return ""
+        parts.reverse()
+        return parts.joinToString(".")
     }
 
     @NotNull
@@ -45,6 +69,7 @@ class CsleJsonInspection : CsleLocalInspectionTool() {
                 super.visitElement(element)
 
                 if (element !is JsonStringLiteral) return
+                if (inExcludedCallExpression(element)) return
 
                 var text: String = element.text
                 if (!containsChinese(text)) return

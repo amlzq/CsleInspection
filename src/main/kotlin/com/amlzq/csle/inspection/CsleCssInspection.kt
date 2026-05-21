@@ -12,17 +12,36 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiRecursiveElementVisitor
+import com.intellij.psi.css.CssDeclaration
 import com.intellij.psi.css.CssString
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.NotNull
 
 class CsleCssInspection : CsleLocalInspectionTool() {
-    /**
-     * 检查元素是否在排除列表中（对于CSS来说，不需要特殊处理）
-     */
+    
     override fun inExcludedCallExpression(element: PsiElement): Boolean {
+        val excluded = CsleSettings.instance.state.excluded
+        if (excluded.isEmpty()) return false
+
+        val declaration = PsiTreeUtil.getParentOfType(element, CssDeclaration::class.java, false) ?: return false
+        val declarationText = declaration.text
+        val colonIndex = declarationText.indexOf(':')
+        if (colonIndex <= 0) return false
+
+        val propertyName = declarationText.substring(0, colonIndex).trim()
+        if (propertyName.isEmpty()) return false
+
+        val propertyNameNormalized = normalizeCssPropertyName(propertyName)
+        for (raw in excluded) {
+            val excludedName = normalizeCssPropertyName(raw)
+            if (excludedName.isEmpty()) continue
+            if (propertyNameNormalized == excludedName) return true
+            if (propertyNameNormalized.removePrefix("--") == excludedName.removePrefix("--")) return true
+        }
         return false
     }
+
+    private fun normalizeCssPropertyName(name: String): String = name.trim().lowercase()
 
     @NotNull
     override fun checkFile(
@@ -52,6 +71,7 @@ class CsleCssInspection : CsleLocalInspectionTool() {
                 super.visitElement(element)
 
                 if (element !is CssString) return
+                if (inExcludedCallExpression(element)) return
 
                 val text = element.text
                 if (!containsChinese(text)) {
@@ -119,4 +139,3 @@ class CssStringQuickFix : CsleLocalQuickFix() {
         return candidates.firstOrNull { it.text == newText } ?: candidates.firstOrNull()
     }
 }
-

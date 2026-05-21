@@ -25,6 +25,32 @@ import org.jetbrains.annotations.NotNull
 class CsleHtmlInspection : CsleLocalInspectionTool() {
 
     override fun inExcludedCallExpression(element: PsiElement): Boolean {
+        val excluded = CsleSettings.instance.state.excluded
+            .asSequence()
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .map { it.lowercase() }
+            .toSet()
+        if (excluded.isEmpty()) return false
+
+        val tag = generateSequence(element) { it.parent }
+            .filterIsInstance<HtmlTag>()
+            .firstOrNull()
+
+        val tagName = tag?.name?.lowercase()
+        if (tagName == "script" || tagName == "style") return true
+        if (tagName != null && excluded.contains(tagName)) return true
+
+        if (element is XmlAttributeValue) {
+            val attribute = element.parent as? XmlAttribute ?: return false
+            val attrName = attribute.name.lowercase()
+            if (excluded.contains(attrName)) return true
+            if (tagName != null) {
+                if (excluded.contains("$tagName.$attrName")) return true
+                if (excluded.contains("$tagName@$attrName")) return true
+            }
+        }
+
         return false
     }
 
@@ -46,11 +72,6 @@ class CsleHtmlInspection : CsleLocalInspectionTool() {
         val shouldCheckLiteral = CsleSettings.instance.state.checkLiteralExpression
         val shouldCheckComments = CsleSettings.instance.state.checkDocComments
         if (!shouldCheckLiteral && !shouldCheckComments) return null
-
-        val excludedTags = CsleSettings.instance.state.excluded
-            .asSequence()
-            .map { it.lowercase() }
-            .toSet()
 
         val problems: MutableList<ProblemDescriptor> = ArrayList()
 
@@ -76,7 +97,7 @@ class CsleHtmlInspection : CsleLocalInspectionTool() {
 
                 when (element) {
                     is XmlAttributeValue -> {
-                        if (isExcluded(element, excludedTags)) return
+                        if (inExcludedCallExpression(element)) return
                         if (!hasConvertibleChinese(element.value)) return
                         problems.add(
                             manager.createProblemDescriptor(
@@ -90,7 +111,7 @@ class CsleHtmlInspection : CsleLocalInspectionTool() {
                     }
 
                     is XmlText -> {
-                        if (isExcluded(element, excludedTags)) return
+                        if (inExcludedCallExpression(element)) return
                         if (!hasConvertibleChinese(element.value)) return
                         problems.add(
                             manager.createProblemDescriptor(
@@ -107,16 +128,6 @@ class CsleHtmlInspection : CsleLocalInspectionTool() {
         })
 
         return problems.toTypedArray()
-    }
-
-    private fun isExcluded(element: PsiElement, excludedTags: Set<String>): Boolean {
-        val tag = generateSequence(element.parent) { it.parent }
-            .filterIsInstance<HtmlTag>()
-            .firstOrNull() ?: return false
-
-        val tagName = tag.name.lowercase()
-        if (tagName == "script" || tagName == "style") return true
-        return excludedTags.contains(tagName)
     }
 
     private fun hasConvertibleChinese(original: String): Boolean {
