@@ -24,7 +24,7 @@ class CsleXmlInspection : CsleLocalInspectionTool() {
         while (parent != null) {
             if (parent is XmlTag) {
                 val tagName = parent.name.lowercase()
-                for (excludedName in CsleSettings.instance.state.excluded) {
+                for (excludedName in CsleSettings.instance.state.excludedXml) {
                     if (excludedName.lowercase() == tagName) {
                         return true
                     }

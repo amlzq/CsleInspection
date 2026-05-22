@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull
 class CsleCssInspection : CsleLocalInspectionTool() {
     
     override fun inExcludedCallExpression(element: PsiElement): Boolean {
-        val excluded = CsleSettings.instance.state.excluded
+        val excluded = CsleSettings.instance.state.excludedCss
         if (excluded.isEmpty()) return false
 
         val declaration = PsiTreeUtil.getParentOfType(element, CssDeclaration::class.java, false) ?: return false

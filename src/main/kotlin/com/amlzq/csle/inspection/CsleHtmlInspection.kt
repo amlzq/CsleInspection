@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull
 class CsleHtmlInspection : CsleLocalInspectionTool() {
 
     override fun inExcludedCallExpression(element: PsiElement): Boolean {
-        val excluded = CsleSettings.instance.state.excluded
+        val excluded = CsleSettings.instance.state.excludedHtml
             .asSequence()
             .map { it.trim() }
             .filter { it.isNotEmpty() }

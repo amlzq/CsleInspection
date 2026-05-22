@@ -22,7 +22,7 @@ class CslePythonInspection : CsleLocalInspectionTool() {
         while (parent != null) {
             if (parent is PyCallExpression) {
                 val text = (parent.callee as? PyReferenceExpression)?.referencedName ?: break
-                for (functionName in CsleSettings.instance.state.excluded) {
+                for (functionName in CsleSettings.instance.state.excludedPython) {
                     if (functionName == text || text.contains(".$functionName")) {
                         debugPrintln("$text is on the exclusion list.")
                         return true

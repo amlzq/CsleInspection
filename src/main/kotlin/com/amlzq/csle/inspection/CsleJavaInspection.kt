@@ -22,7 +22,7 @@ class CsleJavaInspection : CsleLocalInspectionTool() {
             if (parent is PsiMethodCallExpression) {
                 val text = parent.methodExpression.referenceName ?: continue
                 debugPrintln("text=$text isSpecialCallExpression")
-                for (functionName in CsleSettings.instance.state.excluded) {
+                for (functionName in CsleSettings.instance.state.excludedJava) {
                     if (functionName == text || text.contains(".$functionName")) {
                         debugPrintln("$text is on the exclusion list.")
                         return true

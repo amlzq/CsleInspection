@@ -23,12 +23,13 @@ class CslePhpInspection : CsleLocalInspectionTool() {
      * 检查字符串是否在用户设置的排除方法中，比如：print
      */
     override fun inExcludedCallExpression(element: PsiElement): Boolean {
+        val excluded = CsleSettings.instance.state.excludedPhp
         var parent = element.parent
         while (parent != null) {
             debugPrintln("parent=$parent text=${parent.text} isSpecialCallExpression")
-            if (parent is PhpPrintExpression && CsleSettings.instance.state.excluded.contains("print")) {
+            if (parent is PhpPrintExpression && excluded.contains("print")) {
                 return true
-            } else if (parent is PhpEchoStatement && CsleSettings.instance.state.excluded.contains("echo")) {
+            } else if (parent is PhpEchoStatement && excluded.contains("echo")) {
                 return true
             }
             parent = parent.parent

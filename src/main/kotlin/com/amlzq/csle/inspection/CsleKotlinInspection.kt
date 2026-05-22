@@ -25,7 +25,7 @@ class CsleKotlinInspection : CsleLocalInspectionTool() {
             if (parent is KtCallExpression) {
                 val text = parent.calleeExpression?.text ?: continue
                 debugPrintln("text=$text isSpecialCallExpression")
-                for (functionName in CsleSettings.instance.state.excluded) {
+                for (functionName in CsleSettings.instance.state.excludedKotlin) {
                     if (functionName == text || text.contains(".$functionName")) {
                         debugPrintln("$text is on the exclusion list.")
                         return true
