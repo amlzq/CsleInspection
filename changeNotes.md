@@ -1,3 +1,8 @@
+# 0.5.0
+- **FEATURE** add doc-comment inspection and fixes (option)
+- **FEATURE** add support for HTML/CSS, XML, JSON
+- **REFACTOR** per-language excluded lists and target selector
+
 # 0.4.0
 - Re-run the inspection after modifying the glyph configuration.
 - Support checking and converting tag attribute values in JSX files.
