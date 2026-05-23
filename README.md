@@ -14,6 +14,9 @@ In the plugin settings view, you can modify the Chinese glyphs you want to inspe
 - JavaScript and TypeScript
 - PHP
 - Python
+- HTML/CSS
+- XML
+- JSON
 
 If you want more supported languages, new an issue.
 
