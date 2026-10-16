@@ -256,16 +256,16 @@ class CsleSettingsConfigurable : Configurable {
 }
 
 private enum class ExcludedTarget(val labelKey: String) {
-    JS_TS("target.language.js_ts"),
-    JAVA("target.language.java"),
-    KOTLIN("target.language.kotlin"),
-    PYTHON("target.language.python"),
-    PHP("target.language.php"),
+    CSS("target.language.css"),
     DART("target.language.dart"),
     HTML("target.language.html"),
-    CSS("target.language.css"),
-    XML("target.language.xml"),
-    JSON("target.language.json");
+    JAVA("target.language.java"),
+    JS_TS("target.language.js_ts"),
+    JSON("target.language.json"),
+    KOTLIN("target.language.kotlin"),
+    PHP("target.language.php"),
+    PYTHON("target.language.python"),
+    XML("target.language.xml");
 
     override fun toString(): String = CsleBundle.message(labelKey)
 }

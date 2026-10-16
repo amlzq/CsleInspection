@@ -39,6 +39,7 @@ dependencies {
         bundledPlugin("org.jetbrains.kotlin")
         bundledPlugin("JavaScript")
         bundledPlugin("com.intellij.modules.json")
+        bundledPlugin("com.intellij.modules.xml")
         bundledPlugin("HtmlTools")
         bundledPlugin("com.intellij.css")
         compatiblePlugin("PythonCore")
