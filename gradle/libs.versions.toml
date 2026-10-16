@@ -1,0 +1,7 @@
+[versions]
+junit = "4.13.2"
+opencc4j = "1.14.0"
+
+[libraries]
+junit = { module = "junit:junit", version.ref = "junit" }
+opencc4j = { module = "com.github.houbb:opencc4j", version.ref = "opencc4j" }

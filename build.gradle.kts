@@ -1,31 +1,19 @@
 import org.jetbrains.changelog.markdownToHTML
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 plugins {
-    id("java")
-    id("org.jetbrains.kotlin.jvm") version "2.1.10"
-    id("org.jetbrains.intellij.platform") version "2.3.0"
-    // https://github.com/JetBrains/gradle-changelog-plugin
-    id("org.jetbrains.changelog") version "2.2.1"
+    id("org.jetbrains.kotlin.jvm")
+    id("org.jetbrains.changelog")
+    id("org.jetbrains.intellij.platform")
 }
 
-// Read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-repositories-extension.html
-repositories {
-    mavenCentral()
-    intellijPlatform {
-        defaultRepositories()
-    }
-}
-
-// Read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-extension.html
 intellijPlatform {
     pluginConfiguration {
         id = "com.amlzq.csle.inspection"
-        group = "com.amlzq"
-        version = "0.5.0"
         description = markdownToHTML(file("pluginDescription.md").readText())
         changeNotes = markdownToHTML(file("changeNotes.md").readText())
         ideaVersion {
-            sinceBuild = "243"
+            sinceBuild = "253"
             untilBuild = provider { null }
         }
     }
@@ -39,36 +27,27 @@ intellijPlatform {
     }
 }
 
-// Read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html
 dependencies {
+    testImplementation(libs.junit)
+
     intellijPlatform {
-        intellijIdeaCommunity("2024.3.4") // Target IDE Platform
+        intellijIdea("2025.3.6.1") // Target IDE Platform
+        testFramework(TestFrameworkType.Platform)
+
+        // Add plugin dependencies for compilation here:
         bundledPlugin("com.intellij.java")
         bundledPlugin("org.jetbrains.kotlin")
-//        bundledPlugin("com.intellij.modules.xml")
-//        bundledPlugin("com.intellij.modules.json")
-//        bundledPlugin("com.intellij.css")
-        plugins(
-            listOf(
-                "Dart:243.23654.44",
-                "JavaScript:243.25659.59",
-                "com.jetbrains.php:243.25659.59",
-                "PythonCore:243.24978.46",
-                "HtmlTools:243.22562.23",
-                "com.intellij.css:243.22562.13",
-            )
-        )
+        bundledPlugin("JavaScript")
+        bundledPlugin("com.intellij.modules.json")
+        bundledPlugin("HtmlTools")
+        bundledPlugin("com.intellij.css")
+        compatiblePlugin("PythonCore")
+        compatiblePlugin("com.jetbrains.php")
+        compatiblePlugin("Dart")
     }
-    implementation("com.github.houbb:opencc4j:1.14.0")
+    implementation(libs.opencc4j)
 }
 
-tasks {
-    // Set the JVM compatibility versions
-    withType<JavaCompile> {
-        sourceCompatibility = "17"
-        targetCompatibility = "17"
-    }
-    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        kotlinOptions.jvmTarget = "17"
-    }
+kotlin {
+    jvmToolchain(21)
 }
