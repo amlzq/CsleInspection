@@ -53,7 +53,7 @@ class CsleHighlightingTest : CsleBasePlatformTest() {
     }
 
     fun testXml() {
-        myFixture.enableInspections(CsleXmlInspection::class.java)
+        myFixture.enableInspections(CsleXMLInspection::class.java)
         myFixture.configureByText(
             "a.xml",
             "<resources>\n    <string name=\"app_name\"><warning descr=\"Convert to Chinese (Taiwan)\">软件</warning></string>\n</resources>"
@@ -62,7 +62,7 @@ class CsleHighlightingTest : CsleBasePlatformTest() {
     }
 
     fun testHtml() {
-        myFixture.enableInspections(CsleHtmlInspection::class.java)
+        myFixture.enableInspections(CsleHTMLInspection::class.java)
         myFixture.configureByText(
             "a.html",
             "<p title=<warning descr=\"Convert to Chinese (Taiwan)\">\"软件\"</warning>><warning descr=\"Convert to Chinese (Taiwan)\">软件</warning></p>"
@@ -72,23 +72,27 @@ class CsleHighlightingTest : CsleBasePlatformTest() {
 
     fun testHtmlCommentNotChecked() {
         // 回归：HTML 注释并非编程语言的文档注释，不参与检查。
-        // 同时启用 XML 检查器：HTML 是 XML 的方言，XML 检查器曾以 XML 语义
-        // 重复检查 HTML 文件并误报注释等内容。
-        myFixture.enableInspections(CsleHtmlInspection::class.java, CsleXmlInspection::class.java)
-        myFixture.configureByText("a.html", "<p><!-- 软件 --></p>")
+        // HTML 注释在 PSI 中被 XmlText 包裹，必须用 value（不含注释）而非 text 检查，
+        // 否则空白包围的注释会随 XmlText 一起被误报。
+        myFixture.enableInspections(CsleHTMLInspection::class.java)
+        myFixture.configureByText("a.html", "<p>\n  <!-- 软件 -->\n</p>")
         myFixture.checkHighlighting()
     }
 
-    fun testXmlInspectionSkipsHtmlFile() {
-        // 回归：仅启用 XML 检查器时，HTML 文件不应产生任何问题
-        myFixture.enableInspections(CsleXmlInspection::class.java)
-        myFixture.configureByText("a.html", "<p title=\"属性\"><!-- 注释 -->文本</p>")
+    fun testHtmlFileWithCommentAndText() {
+        // 回归：HTML 文件仅标记属性值与文本，注释不标记
+        myFixture.enableInspections(CsleHTMLInspection::class.java)
+        myFixture.configureByText(
+            "a.html",
+            "<p title=<warning descr=\"Convert to Chinese (Taiwan)\">\"属性\"</warning>>" +
+                    "<!-- 注释 --><warning descr=\"Convert to Chinese (Taiwan)\">文本</warning></p>"
+        )
         myFixture.checkHighlighting()
     }
 
     fun testXmlCommentNotChecked() {
         // 回归：用户调试场景，XML 注释不参与检查，仅字面量被标记
-        myFixture.enableInspections(CsleXmlInspection::class.java)
+        myFixture.enableInspections(CsleXMLInspection::class.java)
         myFixture.configureByText(
             "myxml.xml",
             "<tag>\n" +
@@ -143,8 +147,8 @@ class CsleHighlightingTest : CsleBasePlatformTest() {
             CsleJavaInspection::class.java,
             CsleJSInspection::class.java,
             CsleJsonInspection::class.java,
-            CsleXmlInspection::class.java,
-            CsleHtmlInspection::class.java,
+            CsleXMLInspection::class.java,
+            CsleHTMLInspection::class.java,
             CsleCssInspection::class.java,
             CslePythonInspection::class.java,
             CslePhpInspection::class.java,

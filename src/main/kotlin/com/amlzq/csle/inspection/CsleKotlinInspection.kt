@@ -14,6 +14,12 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.psi.*
 
+/**
+ * 汉字检查器：Kotlin。
+ *
+ * 字符串字面量始终参与检查；KDoc 文档注释是否参与检查由设置中的
+ * "Doc comments" 开关控制。排除列表按函数名配置（如 println）。
+ */
 class CsleKotlinInspection : CsleLocalInspectionTool() {
 
     /**

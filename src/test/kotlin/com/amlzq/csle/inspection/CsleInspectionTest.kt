@@ -193,7 +193,7 @@ class CsleInspectionTest : CsleBasePlatformTest() {
                 <string name="app_name">软件</string>
                 <string name="tip" label="软件">中文</string>
             </resources>
-        """.trimIndent(), CsleXmlInspection())
+        """.trimIndent(), CsleXMLInspection())
         assertEquals(2, problems.size)
     }
 
@@ -204,10 +204,10 @@ class CsleInspectionTest : CsleBasePlatformTest() {
             </resources>
         """.trimIndent()
 
-        assertEquals(1, inspect("a.xml", text, CsleXmlInspection()).size)
+        assertEquals(1, inspect("a.xml", text, CsleXMLInspection()).size)
 
         CsleSettings.instance.state.excludedXml = listOf("string")
-        assertEquals(0, inspect("a.xml", text, CsleXmlInspection()).size)
+        assertEquals(0, inspect("a.xml", text, CsleXMLInspection()).size)
     }
 
     fun testXmlComments() {
@@ -218,14 +218,15 @@ class CsleInspectionTest : CsleBasePlatformTest() {
         """.trimIndent()
 
         // XML 注释并非编程语言的文档注释，不参与检查
-        assertEquals(0, inspect("a.xml", text, CsleXmlInspection()).size)
+        assertEquals(0, inspect("a.xml", text, CsleXMLInspection()).size)
 
         CsleSettings.instance.state.checkDocComments = true
-        assertEquals(0, inspect("a.xml", text, CsleXmlInspection()).size)
+        assertEquals(0, inspect("a.xml", text, CsleXMLInspection()).size)
     }
 
     fun testXmlInspectionSkipsHtmlFile() {
-        // 回归：HTML 是 XML 的方言，XML 检查器不应以 XML 语义检查 HTML 文件
+        // 回归：HTML 是 XML 的方言，XML 检查器不处理 HTML 文件（由 CsleHTMLInspection 负责），
+        // 避免两个检查项重复报告
         val text = """
             <html>
             <body>
@@ -234,8 +235,21 @@ class CsleInspectionTest : CsleBasePlatformTest() {
             </html>
         """.trimIndent()
 
-        assertEquals(0, inspect("a.html", text, CsleXmlInspection()).size)
-        assertEquals(2, inspect("a.html", text, CsleHtmlInspection()).size)
+        assertEquals(0, inspect("a.html", text, CsleXMLInspection()).size)
+    }
+
+    fun testHtmlInspectionHandlesHtmlFile() {
+        // HTML 文件由 CsleHTMLInspection 处理：属性值与文本参与检查，注释不参与
+        val text = """
+            <html>
+            <body>
+            <p title="软件"><!-- 软件 -->软件</p>
+            </body>
+            </html>
+        """.trimIndent()
+
+        // 属性 + 文本 = 2，注释不计入
+        assertEquals(2, inspect("a.html", text, CsleHTMLInspection()).size)
     }
 
     // ---------- HTML ----------
@@ -248,39 +262,43 @@ class CsleInspectionTest : CsleBasePlatformTest() {
             <script>var a = "软件";</script>
             </body>
             </html>
-        """.trimIndent(), CsleHtmlInspection())
+        """.trimIndent(), CsleHTMLInspection())
         assertEquals(2, problems.size)
     }
 
     fun testHtmlExcludedTag() {
         val text = """<p title="软件">软件</p>"""
 
-        assertEquals(2, inspect("a.html", text, CsleHtmlInspection()).size)
+        assertEquals(2, inspect("a.html", text, CsleHTMLInspection()).size)
 
         CsleSettings.instance.state.excludedHtml = listOf("p")
-        assertEquals(0, inspect("a.html", text, CsleHtmlInspection()).size)
+        assertEquals(0, inspect("a.html", text, CsleHTMLInspection()).size)
     }
 
     fun testHtmlComments() {
+        // HTML 注释并非编程语言的文档注释，不参与检查。
+        // 注意：HTML 中注释被 XmlText 包裹，必须用 value（不含注释）而非 text 检查，
+        // 否则空白包围的注释会随 XmlText 一起被误报。
         val text = """
             <html>
             <body>
-            <!-- 软件 -->
+            <p>
+              <!-- 软件 -->
+            </p>
             </body>
             </html>
         """.trimIndent()
 
-        // HTML 注释并非编程语言的文档注释，不参与检查
-        assertEquals(0, inspect("a.html", text, CsleHtmlInspection()).size)
+        assertEquals(0, inspect("a.html", text, CsleHTMLInspection()).size)
 
         CsleSettings.instance.state.checkDocComments = true
-        assertEquals(0, inspect("a.html", text, CsleHtmlInspection()).size)
+        assertEquals(0, inspect("a.html", text, CsleHTMLInspection()).size)
     }
 
     fun testHtmlExcludedTagAtAttribute() {
         val text = """<p title="软件">软件</p>"""
         CsleSettings.instance.state.excludedHtml = listOf("p@title")
-        assertEquals(1, inspect("a.html", text, CsleHtmlInspection()).size)
+        assertEquals(1, inspect("a.html", text, CsleHTMLInspection()).size)
     }
 
     // ---------- CSS ----------
@@ -390,8 +408,8 @@ class CsleInspectionTest : CsleBasePlatformTest() {
             "A.java" to CsleJavaInspection(),
             "a.js" to CsleJSInspection(),
             "a.json" to CsleJsonInspection(),
-            "a.xml" to CsleXmlInspection(),
-            "a.html" to CsleHtmlInspection(),
+            "a.xml" to CsleXMLInspection(),
+            "a.html" to CsleHTMLInspection(),
             "a.css" to CsleCssInspection(),
             "a.py" to CslePythonInspection(),
             "a.php" to CslePhpInspection(),

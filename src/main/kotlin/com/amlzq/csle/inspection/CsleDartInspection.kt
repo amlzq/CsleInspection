@@ -18,6 +18,13 @@ import com.jetbrains.lang.dart.psi.DartStringLiteralExpression
 import com.jetbrains.lang.dart.util.DartElementGenerator
 import org.jetbrains.annotations.NotNull
 
+/**
+ * 汉字检查器：Dart。
+ *
+ * 字符串字面量始终参与检查；文档注释是否参与检查由设置中的
+ * "Doc comments" 开关控制。排除列表按方法名配置（如 print）。
+ * pub 命令执行期间跳过检查，避免误报。
+ */
 class CsleDartInspection : CsleLocalInspectionTool() {
 
     /**

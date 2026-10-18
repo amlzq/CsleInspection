@@ -17,6 +17,11 @@ import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.NotNull
 
+/**
+ * 汉字检查器：JSON。
+ *
+ * 检查字符串值中的汉字；排除列表按字段名或字段路径配置。
+ */
 class CsleJsonInspection : CsleLocalInspectionTool() {
 
     override fun inExcludedCallExpression(element: PsiElement): Boolean {

@@ -126,7 +126,7 @@ class CsleQuickFixTest : CsleBasePlatformTest() {
             "a.xml",
             "<resources><string name=\"a\">软件</string></resources>",
             "<resources><string name=\"a\">軟體</string></resources>",
-            CsleXmlInspection()
+            CsleXMLInspection()
         )
     }
 
@@ -135,7 +135,7 @@ class CsleQuickFixTest : CsleBasePlatformTest() {
             "a.xml",
             "<resources><string name=\"a\" label=\"软件\"/></resources>",
             "<resources><string name=\"a\" label=\"軟體\"/></resources>",
-            CsleXmlInspection()
+            CsleXMLInspection()
         )
     }
 
@@ -146,7 +146,27 @@ class CsleQuickFixTest : CsleBasePlatformTest() {
             "a.html",
             "<p>软件</p>",
             "<p>軟體</p>",
-            CsleHtmlInspection()
+            CsleHTMLInspection()
+        )
+    }
+
+    fun testHtmlTextWithCommentQuickFix() {
+        // 回归：HTML 中注释是 XmlText 的子节点，快速修复只转换文本、原样保留注释
+        fixAndCheckResult(
+            "a.html",
+            "<p>软件<!-- 注释 --></p>",
+            "<p>軟體<!-- 注释 --></p>",
+            CsleHTMLInspection()
+        )
+    }
+
+    fun testHtmlMultiLineTextQuickFix() {
+        // 回归：多行文本节点修复后不应被包成 <![CDATA[...]]>
+        fixAndCheckResult(
+            "a.html",
+            "<p>\n    这是一段带有内联样式的文本。\n</p>",
+            "<p>\n    這是一段帶有內聯樣式的文字。\n</p>",
+            CsleHTMLInspection()
         )
     }
 
@@ -155,7 +175,7 @@ class CsleQuickFixTest : CsleBasePlatformTest() {
             "a.html",
             "<p title=\"软件\">x</p>",
             "<p title=\"軟體\">x</p>",
-            CsleHtmlInspection()
+            CsleHTMLInspection()
         )
     }
 

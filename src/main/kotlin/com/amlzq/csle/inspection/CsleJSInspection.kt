@@ -20,6 +20,13 @@ import com.intellij.psi.XmlElementFactory
 import com.intellij.psi.xml.XmlTokenType
 import org.jetbrains.annotations.NotNull
 
+/**
+ * 汉字检查器：JavaScript / TypeScript / JSX / TSX。
+ *
+ * JSFile 覆盖 js/ts/jsx/tsx 等整个 JS 家族语言，本检查器统一处理整个家族文件：
+ * 字符串字面量（含模板字符串与 JSX 文本节点）始终参与检查；
+ * JSDoc 文档注释是否参与检查由设置中的 "Doc comments" 开关控制。
+ */
 class CsleJSInspection : CsleLocalInspectionTool() {
     /**
      * 检查字符表达式是否在用户设置的排除方法中，比如：console.log

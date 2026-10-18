@@ -11,6 +11,12 @@ import com.intellij.psi.*
 import com.intellij.psi.javadoc.PsiDocComment
 import org.jetbrains.annotations.NotNull
 
+/**
+ * 汉字检查器：Java。
+ *
+ * 字符串字面量始终参与检查；Javadoc 文档注释是否参与检查由设置中的
+ * "Doc comments" 开关控制。排除列表按方法名配置（如 print）。
+ */
 class CsleJavaInspection : CsleLocalInspectionTool() {
 
     /**

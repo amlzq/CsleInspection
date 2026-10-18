@@ -13,6 +13,11 @@ import com.intellij.psi.PsiRecursiveElementVisitor
 import com.jetbrains.python.psi.*
 import org.jetbrains.annotations.NotNull
 
+/**
+ * 汉字检查器：Python。
+ *
+ * 检查字符串字面量中的汉字；排除列表按函数名配置（如 print）。
+ */
 class CslePythonInspection : CsleLocalInspectionTool() {
     /**
      * 检查字符串是否在用户设置的排除方法中，比如：print
