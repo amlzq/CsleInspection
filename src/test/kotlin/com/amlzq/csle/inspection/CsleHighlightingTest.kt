@@ -70,6 +70,37 @@ class CsleHighlightingTest : CsleBasePlatformTest() {
         myFixture.checkHighlighting()
     }
 
+    fun testHtmlCommentNotChecked() {
+        // 回归：HTML 注释并非编程语言的文档注释，不参与检查。
+        // 同时启用 XML 检查器：HTML 是 XML 的方言，XML 检查器曾以 XML 语义
+        // 重复检查 HTML 文件并误报注释等内容。
+        myFixture.enableInspections(CsleHtmlInspection::class.java, CsleXmlInspection::class.java)
+        myFixture.configureByText("a.html", "<p><!-- 软件 --></p>")
+        myFixture.checkHighlighting()
+    }
+
+    fun testXmlInspectionSkipsHtmlFile() {
+        // 回归：仅启用 XML 检查器时，HTML 文件不应产生任何问题
+        myFixture.enableInspections(CsleXmlInspection::class.java)
+        myFixture.configureByText("a.html", "<p title=\"属性\"><!-- 注释 -->文本</p>")
+        myFixture.checkHighlighting()
+    }
+
+    fun testXmlCommentNotChecked() {
+        // 回归：用户调试场景，XML 注释不参与检查，仅字面量被标记
+        myFixture.enableInspections(CsleXmlInspection::class.java)
+        myFixture.configureByText(
+            "myxml.xml",
+            "<tag>\n" +
+                    "    <name><warning descr=\"Convert to Chinese (Taiwan)\">雪柜</warning></name>\n" +
+                    "<!--    注释启用检查了吗-->\n" +
+                    "    <label name=<warning descr=\"Convert to Chinese (Taiwan)\">\"雪柜\"</warning>>" +
+                    "<warning descr=\"Convert to Chinese (Taiwan)\">雪柜</warning></label>\n" +
+                    "</tag>"
+        )
+        myFixture.checkHighlighting()
+    }
+
     fun testCss() {
         myFixture.enableInspections(CsleCssInspection::class.java)
         myFixture.configureByText(

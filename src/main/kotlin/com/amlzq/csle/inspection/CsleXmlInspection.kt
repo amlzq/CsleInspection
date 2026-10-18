@@ -43,6 +43,11 @@ class CsleXmlInspection : CsleLocalInspectionTool() {
     ): @NotNull Array<ProblemDescriptor>? {
         if (!isOnTheFly) return null
         if (file !is XmlFile) return null
+        // HTML 是 XML 的方言（HTMLLanguage extends XMLLanguage），
+        // 注册 language="XML" 的检查同样会在 HTML 文件上触发。
+        // HTML 文件由 CsleHtmlInspection 处理，此处跳过，
+        // 避免以 XML 语义重复检查 HTML，导致注释等内容被误报。
+        if (file.language.id.equals("HTML", ignoreCase = true)) return null
 
         val virtualFile: VirtualFile? = CsleUtils.getRealVirtualFile(file)
         if (virtualFile == null || !virtualFile.isInLocalFileSystem) return null
@@ -57,26 +62,7 @@ class CsleXmlInspection : CsleLocalInspectionTool() {
             override fun visitElement(@NotNull element: PsiElement) {
                 super.visitElement(element)
 
-                if (CsleSettings.instance.state.checkDocComments && element is XmlComment) {
-                    val text = element.text
-                    if (!containsChinese(text)) return
-
-                    val converted = getConvertedText(text)
-                    if (text == converted) return
-                    if (!reportedRanges.add(element.textRange)) return
-
-                    problems.add(
-                        manager.createProblemDescriptor(
-                            element,
-                            CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
-                            XmlCommentQuickFix(),
-                            ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
-                            isOnTheFly,
-                        )
-                    )
-                    return
-                }
-
+                // XML 中的注释并非编程语言的文档注释，不参与检查
                 if (!CsleSettings.instance.state.checkLiteralExpression) return
 
                 if (element is XmlAttributeValue) {
@@ -165,26 +151,6 @@ class XmlTextQuickFix : CsleLocalQuickFix() {
             val replacement =
                 PsiTreeUtil.findChildOfType(dummyFile, XmlText::class.java) ?: return@runWriteCommandAction
             element.replace(replacement)
-        }
-    }
-}
-
-class XmlCommentQuickFix : CsleLocalQuickFix() {
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val element = descriptor.psiElement as? XmlComment ?: return
-        val text = element.text
-        val newText = getConvertedText(text)
-        if (text == newText) return
-
-        WriteCommandAction.runWriteCommandAction(project) {
-            val dummyFile = PsiFileFactory.getInstance(project).createFileFromText(
-                "dummy.xml",
-                XmlFileType.INSTANCE,
-                "<a>$newText</a>"
-            )
-            val newComment =
-                PsiTreeUtil.findChildOfType(dummyFile, XmlComment::class.java) ?: return@runWriteCommandAction
-            element.replace(newComment)
         }
     }
 }

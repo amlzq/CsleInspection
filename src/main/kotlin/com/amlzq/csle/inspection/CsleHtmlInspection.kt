@@ -3,22 +3,18 @@ package com.amlzq.csle.inspection
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.ide.highlighter.XmlFileType
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.XmlElementFactory
 import com.intellij.psi.html.HtmlTag
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
-import com.intellij.psi.xml.XmlComment
 import com.intellij.psi.xml.XmlText
 import org.jetbrains.annotations.NotNull
 
@@ -69,29 +65,14 @@ class CsleHtmlInspection : CsleLocalInspectionTool() {
         val project: Project = file.project
         if (!ProjectRootManager.getInstance(project).fileIndex.isInContent(virtualFile)) return null
 
+        // HTML 中的注释并非编程语言的文档注释，不参与检查
         val shouldCheckLiteral = CsleSettings.instance.state.checkLiteralExpression
-        val shouldCheckComments = CsleSettings.instance.state.checkDocComments
-        if (!shouldCheckLiteral && !shouldCheckComments) return null
 
         val problems: MutableList<ProblemDescriptor> = ArrayList()
 
         file.accept(object : PsiRecursiveElementVisitor() {
             override fun visitElement(@NotNull element: PsiElement) {
                 super.visitElement(element)
-
-                if (shouldCheckComments && element is XmlComment) {
-                    if (!hasConvertibleChinese(element.text)) return
-                    problems.add(
-                        manager.createProblemDescriptor(
-                            element,
-                            CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
-                            HtmlQuickFix(),
-                            ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
-                            isOnTheFly,
-                        )
-                    )
-                    return
-                }
 
                 if (!shouldCheckLiteral) return
 
@@ -165,21 +146,6 @@ private class HtmlQuickFix : CsleLocalQuickFix() {
 
                     val attribute = element.parent as? XmlAttribute ?: return@runWriteCommandAction
                     attribute.setValue(converted)
-                }
-
-                is XmlComment -> {
-                    val original = element.text
-                    val converted = getConvertedText(original)
-                    if (original == converted) return@runWriteCommandAction
-
-                    val dummyFile = PsiFileFactory.getInstance(project).createFileFromText(
-                        "csle_dummy.xml",
-                        XmlFileType.INSTANCE,
-                        converted,
-                    )
-                    val replacement = PsiTreeUtil.findChildOfType(dummyFile, XmlComment::class.java)
-                        ?: return@runWriteCommandAction
-                    element.replace(replacement)
                 }
             }
         }

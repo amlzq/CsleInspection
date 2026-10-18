@@ -217,10 +217,25 @@ class CsleInspectionTest : CsleBasePlatformTest() {
             </resources>
         """.trimIndent()
 
+        // XML 注释并非编程语言的文档注释，不参与检查
         assertEquals(0, inspect("a.xml", text, CsleXmlInspection()).size)
 
         CsleSettings.instance.state.checkDocComments = true
-        assertEquals(1, inspect("a.xml", text, CsleXmlInspection()).size)
+        assertEquals(0, inspect("a.xml", text, CsleXmlInspection()).size)
+    }
+
+    fun testXmlInspectionSkipsHtmlFile() {
+        // 回归：HTML 是 XML 的方言，XML 检查器不应以 XML 语义检查 HTML 文件
+        val text = """
+            <html>
+            <body>
+            <p title="软件"><!-- 软件 -->软件</p>
+            </body>
+            </html>
+        """.trimIndent()
+
+        assertEquals(0, inspect("a.html", text, CsleXmlInspection()).size)
+        assertEquals(2, inspect("a.html", text, CsleHtmlInspection()).size)
     }
 
     // ---------- HTML ----------
@@ -243,6 +258,22 @@ class CsleInspectionTest : CsleBasePlatformTest() {
         assertEquals(2, inspect("a.html", text, CsleHtmlInspection()).size)
 
         CsleSettings.instance.state.excludedHtml = listOf("p")
+        assertEquals(0, inspect("a.html", text, CsleHtmlInspection()).size)
+    }
+
+    fun testHtmlComments() {
+        val text = """
+            <html>
+            <body>
+            <!-- 软件 -->
+            </body>
+            </html>
+        """.trimIndent()
+
+        // HTML 注释并非编程语言的文档注释，不参与检查
+        assertEquals(0, inspect("a.html", text, CsleHtmlInspection()).size)
+
+        CsleSettings.instance.state.checkDocComments = true
         assertEquals(0, inspect("a.html", text, CsleHtmlInspection()).size)
     }
 
