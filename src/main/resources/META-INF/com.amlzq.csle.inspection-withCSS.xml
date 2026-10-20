@@ -5,10 +5,9 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <localInspection
-                key="inspection.key"
+                key="inspection.display.name"
                 groupKey="group.name.css"
                 enabledByDefault="true" level="WARNING" language="CSS"
-                implementationClass="com.amlzq.csle.inspection.CsleCSSInspection"
-                displayName="Chinese string literal expression inspection"/>
+                implementationClass="com.amlzq.csle.inspection.CsleCSSInspection"/>
     </extensions>
 </idea-plugin>

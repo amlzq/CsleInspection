@@ -5,10 +5,9 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <localInspection
-                key="inspection.key"
+                key="inspection.display.name"
                 groupKey="group.name.xml"
                 enabledByDefault="true" level="WARNING" language="XML"
-                implementationClass="com.amlzq.csle.inspection.CsleXMLInspection"
-                displayName="Chinese string literal expression inspection"/>
+                implementationClass="com.amlzq.csle.inspection.CsleXMLInspection"/>
     </extensions>
 </idea-plugin>

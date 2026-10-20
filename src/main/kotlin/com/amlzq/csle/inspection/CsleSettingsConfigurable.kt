@@ -90,14 +90,14 @@ class CsleSettingsConfigurable : Configurable {
                 cell(quickFixComboBox)
             }
 
-            group("Inspect targets") {
+            group(CsleBundle.message("group.inspect.targets")) {
                 row {
                     cell(literalExpressionCheckBox)
                     cell(docCommentsCheckBox)
                 }
             }
 
-            group("Excluded list") {
+            group(CsleBundle.message("group.excluded.list")) {
                 row {
                     text(CsleBundle.message("target.language.label"))
                     cell(targetLanguageComboBox)
