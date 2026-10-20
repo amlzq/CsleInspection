@@ -94,10 +94,26 @@ class CsleJSInspection : CsleLocalInspectionTool() {
         if (!ProjectRootManager.getInstance(project).fileIndex.isInContent(virtualFile)) return null
 
         val problems: MutableList<ProblemDescriptor> = ArrayList()
+        collectProblems(file, manager, isOnTheFly, problems)
+        return problems.toTypedArray<ProblemDescriptor>()
+    }
 
+    /**
+     * 收集 root 下 JS 字符串字面量的汉字问题。
+     *
+     * 同时供 HTML 检查器复用：HTML 中 <script> 的内容由 JavaScript 解析器在 HTML 文件内
+     * 直接解析成 JSEmbeddedContent（不是注入片段），HTML 文件不会交给注册为 JavaScript
+     * 语言的检查器，只能由 [CsleEmbeddedJSInspection] 在这里调用。
+     */
+    internal fun collectProblems(
+        root: PsiElement,
+        manager: InspectionManager,
+        isOnTheFly: Boolean,
+        problems: MutableList<ProblemDescriptor>
+    ) {
         // 遍历文件中的所有 PSI 元素
         // JSRecursiveElementWalkingVisitor
-        file.accept(object : PsiRecursiveElementVisitor() {
+        root.accept(object : PsiRecursiveElementVisitor() {
             override fun visitElement(@NotNull element: PsiElement) {
                 super.visitElement(element)
 
@@ -185,7 +201,6 @@ class CsleJSInspection : CsleLocalInspectionTool() {
                 )
             }
         })
-        return problems.toTypedArray<ProblemDescriptor>()
     }
 }
 
@@ -201,8 +216,8 @@ class JSLiteralExpressionQuickFix : CsleLocalQuickFix() {
         // 使用 WriteCommandAction 确保写操作发生在正确的上下文中
         WriteCommandAction.runWriteCommandAction(project) {
             when {
-                element is JSLiteralExpression -> {
-                    // 普通字符串字面量（'中文' 或 "中文"）
+                element is JSLiteralExpression || element is JSStringTemplateExpression -> {
+                    // 普通字符串字面量（'中文' 或 "中文"）或模版字符串（`中文`）
                     val newElement = JSPsiElementFactory.createJSExpression(newText, element.context!!)
                     element.replace(newElement)
                 }

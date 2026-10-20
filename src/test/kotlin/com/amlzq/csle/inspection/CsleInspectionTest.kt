@@ -263,7 +263,77 @@ class CsleInspectionTest : CsleBasePlatformTest() {
             </body>
             </html>
         """.trimIndent(), CsleHTMLInspection())
+        // 属性 + 文本 + 内嵌脚本中的字符串字面量
+        assertEquals(3, problems.size)
+    }
+
+    fun testHtmlInlineScriptStringLiterals() {
+        // 回归：HTML 中 <script> 的内容由 JavaScript 解析器在 HTML 文件内直接解析成
+        // JSEmbeddedContent，不是注入片段，注册为 JavaScript 语言的 CsleJSInspection
+        // 收不到 HTML 文件，必须由 HTML 检查器复用 JS 检查逻辑
+        val text = """
+            <script>
+                var double = "软件";
+                var single = '软件';
+                var template = `软件`;
+                var shared = "中文";
+            </script>
+        """.trimIndent()
+
+        val problems = inspect("a.html", text, CsleHTMLInspection())
+        assertEquals(3, problems.size)
+        assertEquals("Convert to Chinese (Taiwan)", problems[0].descriptionTemplate)
+    }
+
+    fun testHtmlInlineScriptExcludedCallExpression() {
+        // 内嵌脚本沿用 JavaScript 的排除列表
+        val text = """
+            <script>
+                console.log("软件");
+                var kept = "软件";
+            </script>
+        """.trimIndent()
+
+        assertEquals(2, inspect("a.html", text, CsleHTMLInspection()).size)
+
+        CsleSettings.instance.state.excludedJs = listOf("console.log")
+        assertEquals(1, inspect("a.html", text, CsleHTMLInspection()).size)
+    }
+
+    fun testHtmlInlineStyleStringLiterals() {
+        // 回归：HTML 中 <style> 的内容由 CSS 解析器在 HTML 文件内直接解析成 CssString，
+        // 不是注入片段，注册为 CSS 语言的 CsleCSSInspection 收不到 HTML 文件，
+        // 必须由 HTML 检查器复用 CSS 检查逻辑
+        val text = """
+            <html>
+            <head>
+                <style>
+                    .before::before { content: "软件"; }
+                    .font { font-family: '软件'; }
+                </style>
+            </head>
+            </html>
+        """.trimIndent()
+
+        val problems = inspect("a.html", text, CsleHTMLInspection())
         assertEquals(2, problems.size)
+        assertEquals("Convert to Chinese (Taiwan)", problems[0].descriptionTemplate)
+    }
+
+    fun testHtmlInlineStyleExcludedProperty() {
+        // 内嵌样式表沿用 CSS 的排除列表（按属性名）
+        val text = "<html><head><style>.a{content:\"软件\";font-family:'软件'}</style></head></html>"
+
+        assertEquals(2, inspect("a.html", text, CsleHTMLInspection()).size)
+
+        CsleSettings.instance.state.excludedCss = listOf("content")
+        assertEquals(1, inspect("a.html", text, CsleHTMLInspection()).size)
+    }
+
+    fun testHtmlStyleAttributeReportedOnce() {
+        // style="..." 内联样式由属性值检查处理，不能被内嵌样式表逻辑重复报告
+        val text = "<p style=\"content:'软件'\">x</p>"
+        assertEquals(1, inspect("a.html", text, CsleHTMLInspection()).size)
     }
 
     fun testHtmlExcludedTag() {
@@ -307,17 +377,17 @@ class CsleInspectionTest : CsleBasePlatformTest() {
         val problems = inspect("a.css", """
             .a::before { content: "软件"; }
             .b { font-family: "中文"; }
-        """.trimIndent(), CsleCssInspection())
+        """.trimIndent(), CsleCSSInspection())
         assertEquals(1, problems.size)
     }
 
     fun testCssExcludedProperty() {
         val text = """.a::before { content: "软件"; }"""
 
-        assertEquals(1, inspect("a.css", text, CsleCssInspection()).size)
+        assertEquals(1, inspect("a.css", text, CsleCSSInspection()).size)
 
         CsleSettings.instance.state.excludedCss = listOf("content")
-        assertEquals(0, inspect("a.css", text, CsleCssInspection()).size)
+        assertEquals(0, inspect("a.css", text, CsleCSSInspection()).size)
     }
 
     // ---------- Python ----------
@@ -348,7 +418,7 @@ class CsleInspectionTest : CsleBasePlatformTest() {
         val problems = inspect("a.php", """
             <?php
             ${'$'}kept = "软件";
-        """.trimIndent(), CslePhpInspection())
+        """.trimIndent(), CslePHPInspection())
         assertEquals(1, problems.size)
     }
 
@@ -359,10 +429,10 @@ class CsleInspectionTest : CsleBasePlatformTest() {
             echo "软件";
         """.trimIndent()
 
-        assertEquals(2, inspect("a.php", text, CslePhpInspection()).size)
+        assertEquals(2, inspect("a.php", text, CslePHPInspection()).size)
 
         CsleSettings.instance.state.excludedPhp = listOf("echo")
-        assertEquals(1, inspect("a.php", text, CslePhpInspection()).size)
+        assertEquals(1, inspect("a.php", text, CslePHPInspection()).size)
     }
 
     // ---------- Dart ----------
@@ -410,9 +480,9 @@ class CsleInspectionTest : CsleBasePlatformTest() {
             "a.json" to CsleJsonInspection(),
             "a.xml" to CsleXMLInspection(),
             "a.html" to CsleHTMLInspection(),
-            "a.css" to CsleCssInspection(),
+            "a.css" to CsleCSSInspection(),
             "a.py" to CslePythonInspection(),
-            "a.php" to CslePhpInspection(),
+            "a.php" to CslePHPInspection(),
             "a.dart" to CsleDartInspection(),
         )
 

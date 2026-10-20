@@ -25,13 +25,18 @@ import org.jetbrains.annotations.NotNull
  * 入口由两个薄子类提供，各自对应 Inspections 列表中的独立开关：
  * - [CsleXMLInspection]：XML 组，处理 XML 文件（跳过 HTML）
  * - [CsleHTMLInspection]：HTML 组，处理 HTML 文件
+ *
+ * HTML 内嵌 `<script>` 的 JS 代码块与 `<style>` 的样式表由 [CsleEmbeddedJSInspection]、
+ * [CsleEmbeddedCSSInspection] 复用对应语言的检查逻辑：它们不是注入片段，
+ * 注册为 JavaScript / CSS 语言的检查器收不到 HTML 文件。
  */
 abstract class CsleMarkupInspection : CsleLocalInspectionTool() {
 
     /**
      * 检查元素是否在用户设置的排除列表中。
      *
-     * HTML：script/style 内容自动排除，支持标签、属性、`标签@属性`、`标签.属性` 模式；
+     * HTML：script/style 内容不按标记文本检查（script 的 JS 代码块交给 JS 逻辑），
+     * 支持标签、属性、`标签@属性`、`标签.属性` 模式；
      * XML：匹配任意祖先标签名。
      */
     override fun inExcludedCallExpression(element: PsiElement): Boolean {
@@ -108,8 +113,33 @@ abstract class CsleMarkupInspection : CsleLocalInspectionTool() {
         val problems = mutableListOf<ProblemDescriptor>()
         val reportedRanges = HashSet<TextRange>()
 
+        // HTML 的 <script>/<style> 内容由对应语言的解析器在 HTML 文件内直接解析，
+        // 不是注入片段，注册为 JavaScript / CSS 语言的检查器收不到 HTML 文件，
+        // 内嵌脚本与样式表里的字符串因此一直没有告警；这里复用 JS / CSS 检查逻辑
+        val isHtml = file.language.id.equals("HTML", ignoreCase = true)
+        val inspectEmbeddedJs = isHtml && javaScriptAvailable
+        val inspectEmbeddedCss = isHtml && cssAvailable
+
         file.accept(object : PsiRecursiveElementVisitor() {
             override fun visitElement(@NotNull element: PsiElement) {
+                // 内嵌脚本内部是 JS / JSX，交给 JS 逻辑处理；
+                // 不再向下遍历，避免脚本内的 JSX 属性被当成 HTML 属性检查
+                if (inspectEmbeddedJs && CsleEmbeddedJSInspection.isEmbeddedContent(element)) {
+                    if (CsleSettings.instance.state.checkLiteralExpression) {
+                        CsleEmbeddedJSInspection.collectProblems(element, manager, isOnTheFly, problems)
+                    }
+                    return
+                }
+
+                // 内嵌样式表内部是 CSS，交给 CSS 逻辑处理；
+                // 内联 style 属性由下面的属性值检查处理，这里不处理
+                if (inspectEmbeddedCss && CsleEmbeddedCSSInspection.isEmbeddedString(element)) {
+                    if (CsleSettings.instance.state.checkLiteralExpression) {
+                        CsleEmbeddedCSSInspection.checkString(element, manager, isOnTheFly)?.let(problems::add)
+                    }
+                    return
+                }
+
                 super.visitElement(element)
 
                 if (!CsleSettings.instance.state.checkLiteralExpression) return
@@ -157,6 +187,38 @@ abstract class CsleMarkupInspection : CsleLocalInspectionTool() {
         })
 
         return problems.toTypedArray()
+    }
+
+    private companion object {
+        /**
+         * JavaScript 插件是否可用。
+         *
+         * 没装插件时 `<script>` 的内容只是普通文本，不会出现 JSEmbeddedContent；
+         * 按类名探测，避免插件缺失时加载 JavaScript 插件的类。
+         */
+        val javaScriptAvailable: Boolean by lazy {
+            try {
+                Class.forName("com.intellij.lang.javascript.psi.JSEmbeddedContent")
+                true
+            } catch (_: Throwable) {
+                false
+            }
+        }
+
+        /**
+         * CSS 插件是否可用。
+         *
+         * 没装插件时 `<style>` 的内容只是普通文本，不会出现 CssString；
+         * 按类名探测，避免插件缺失时加载 CSS 插件的类。
+         */
+        val cssAvailable: Boolean by lazy {
+            try {
+                Class.forName("com.intellij.psi.css.CssString")
+                true
+            } catch (_: Throwable) {
+                false
+            }
+        }
     }
 
     private fun hasConvertibleChinese(original: String): Boolean {

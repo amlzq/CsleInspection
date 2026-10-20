@@ -108,6 +108,16 @@ class CsleQuickFixTest : CsleBasePlatformTest() {
         )
     }
 
+    fun testJsTemplateLiteralQuickFix() {
+        // 回归：模版字符串也有告警，快速修复不能静默失效
+        fixAndCheckResult(
+            "a.js",
+            "var s = `软件`;",
+            "var s = `軟體`;",
+            CsleJSInspection()
+        )
+    }
+
     // ---------- JSON ----------
 
     fun testJsonLiteralQuickFix() {
@@ -179,6 +189,35 @@ class CsleQuickFixTest : CsleBasePlatformTest() {
         )
     }
 
+    fun testHtmlInlineScriptQuickFix() {
+        // 回归：HTML 内嵌 <script> 中的字符串字面量必须有快速修复
+        fixAndCheckResult(
+            "a.html",
+            "<script>var s = \"软件\";</script>",
+            "<script>var s = \"軟體\";</script>",
+            CsleHTMLInspection()
+        )
+    }
+
+    fun testHtmlInlineScriptTemplateLiteralQuickFix() {
+        fixAndCheckResult(
+            "a.html",
+            "<script>var s = `软件`;</script>",
+            "<script>var s = `軟體`;</script>",
+            CsleHTMLInspection()
+        )
+    }
+
+    fun testHtmlInlineStyleQuickFix() {
+        // 回归：HTML 内嵌 <style> 中的字符串字面量必须有快速修复
+        fixAndCheckResult(
+            "a.html",
+            "<html><head><style>.a{content:'软件'}</style></head></html>",
+            "<html><head><style>.a{content:'軟體'}</style></head></html>",
+            CsleHTMLInspection()
+        )
+    }
+
     // ---------- CSS ----------
 
     fun testCssStringQuickFix() {
@@ -186,7 +225,7 @@ class CsleQuickFixTest : CsleBasePlatformTest() {
             "a.css",
             ".a::before { content: \"软件\"; }",
             ".a::before { content: \"軟體\"; }",
-            CsleCssInspection()
+            CsleCSSInspection()
         )
     }
 
@@ -208,7 +247,7 @@ class CsleQuickFixTest : CsleBasePlatformTest() {
             "a.php",
             "<?php \$s = \"软件\";",
             "<?php \$s = \"軟體\";",
-            CslePhpInspection()
+            CslePHPInspection()
         )
     }
 

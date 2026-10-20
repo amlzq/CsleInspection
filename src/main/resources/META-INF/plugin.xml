@@ -31,6 +31,8 @@
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
         <applicationConfigurable instance="com.amlzq.csle.inspection.CsleSettingsConfigurable"
+                                 bundle="messages.CsleBundle"
+                                 key="display.name"
                                  groupId="tools"/>
         <applicationService
                 serviceImplementation="com.amlzq.csle.inspection.CsleSettings"/>

@@ -70,6 +70,30 @@ class CsleHighlightingTest : CsleBasePlatformTest() {
         myFixture.checkHighlighting()
     }
 
+    fun testHtmlInlineScript() {
+        // 回归：HTML 内嵌 <script> 的内容由 JavaScript 解析器直接解析，不是注入片段，
+        // 注册为 JavaScript 语言的检查器收不到 HTML 文件，必须由 HTML 检查器复用 JS 逻辑
+        myFixture.enableInspections(CsleHTMLInspection::class.java)
+        myFixture.configureByText(
+            "a.html",
+            "<html><body><script>var s = " +
+                    "<warning descr=\"Convert to Chinese (Taiwan)\">\"软件\"</warning>;</script></body></html>"
+        )
+        myFixture.checkHighlighting()
+    }
+
+    fun testHtmlInlineStyle() {
+        // 回归：HTML 内嵌 <style> 的内容由 CSS 解析器直接解析，不是注入片段，
+        // 注册为 CSS 语言的检查器收不到 HTML 文件，必须由 HTML 检查器复用 CSS 逻辑
+        myFixture.enableInspections(CsleHTMLInspection::class.java)
+        myFixture.configureByText(
+            "a.html",
+            "<html><head><style>.a { content: " +
+                    "<warning descr=\"Convert to Chinese (Taiwan)\">\"软件\"</warning>; }</style></head></html>"
+        )
+        myFixture.checkHighlighting()
+    }
+
     fun testHtmlCommentNotChecked() {
         // 回归：HTML 注释并非编程语言的文档注释，不参与检查。
         // HTML 注释在 PSI 中被 XmlText 包裹，必须用 value（不含注释）而非 text 检查，
@@ -106,7 +130,7 @@ class CsleHighlightingTest : CsleBasePlatformTest() {
     }
 
     fun testCss() {
-        myFixture.enableInspections(CsleCssInspection::class.java)
+        myFixture.enableInspections(CsleCSSInspection::class.java)
         myFixture.configureByText(
             "a.css",
             ".a::before { content: <warning descr=\"Convert to Chinese (Taiwan)\">\"软件\"</warning>; }"
@@ -124,7 +148,7 @@ class CsleHighlightingTest : CsleBasePlatformTest() {
     }
 
     fun testPhp() {
-        myFixture.enableInspections(CslePhpInspection::class.java)
+        myFixture.enableInspections(CslePHPInspection::class.java)
         myFixture.configureByText(
             "a.php",
             "<?php \$s = <warning descr=\"Convert to Chinese (Taiwan)\">\"软件\"</warning>;"
@@ -149,9 +173,9 @@ class CsleHighlightingTest : CsleBasePlatformTest() {
             CsleJsonInspection::class.java,
             CsleXMLInspection::class.java,
             CsleHTMLInspection::class.java,
-            CsleCssInspection::class.java,
+            CsleCSSInspection::class.java,
             CslePythonInspection::class.java,
-            CslePhpInspection::class.java,
+            CslePHPInspection::class.java,
             CsleDartInspection::class.java,
         )
         myFixture.configureByText("a.kt", "const val EMPTY = \"no natural language here\"")

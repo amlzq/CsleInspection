@@ -4,13 +4,12 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.css.CssDeclaration
 import com.intellij.psi.css.CssString
@@ -77,47 +76,60 @@ class CsleCSSInspection : CsleLocalInspectionTool() {
                 super.visitElement(element)
 
                 if (element !is CssString) return
-                if (inExcludedCallExpression(element)) return
-
-                val text = element.text
-                if (!containsChinese(text)) {
-                    debugPrintln("containsChinese=false")
-                    return
-                }
-
-                debugPrintln("visit CSS text=$text")
-
-                val innerText = text.removeSurrounding("\"").removeSurrounding("'")
-
-                // 清理符号
-                val cleanText = cleanPattern.matcher(innerText).replaceAll("")
-                if (!containsChinese(cleanText)) {
-                    debugPrintln("containsChinese again=false")
-                    return
-                }
-
-                val cleanConverted = getConvertedText(cleanText)
-                if (cleanText == cleanConverted) {
-                    debugPrintln("converted=true")
-                    return
-                }
-
-                val converted = getConvertedText(text)
-                if (text == converted) return
-
-                // 创建问题描述，显示黄色波浪线
-                problems.add(
-                    manager.createProblemDescriptor(
-                        element,
-                        CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
-                        CssStringQuickFix(),
-                        ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
-                        isOnTheFly,
-                    )
-                )
+                checkString(element, manager, isOnTheFly)?.let(problems::add)
             }
         })
         return problems.toTypedArray<ProblemDescriptor>()
+    }
+
+    /**
+     * 检查单个 CSS 字符串。
+     *
+     * 同时供 HTML 检查器复用：HTML 中 `<style>` 的内容由 CSS 解析器在 HTML 文件内
+     * 直接解析成 [CssString]（不是注入片段），注册为 CSS 语言的检查器收不到 HTML 文件，
+     * 只能由 [CsleEmbeddedCSSInspection] 在这里调用。
+     */
+    internal fun checkString(
+        element: CssString,
+        manager: InspectionManager,
+        isOnTheFly: Boolean
+    ): ProblemDescriptor? {
+        if (inExcludedCallExpression(element)) return null
+
+        val text = element.text
+        if (!containsChinese(text)) {
+            debugPrintln("containsChinese=false")
+            return null
+        }
+
+        debugPrintln("visit CSS text=$text")
+
+        val innerText = text.removeSurrounding("\"").removeSurrounding("'")
+
+        // 清理符号
+        val cleanText = cleanPattern.matcher(innerText).replaceAll("")
+        if (!containsChinese(cleanText)) {
+            debugPrintln("containsChinese again=false")
+            return null
+        }
+
+        val cleanConverted = getConvertedText(cleanText)
+        if (cleanText == cleanConverted) {
+            debugPrintln("converted=true")
+            return null
+        }
+
+        val converted = getConvertedText(text)
+        if (text == converted) return null
+
+        // 创建问题描述，显示黄色波浪线
+        return manager.createProblemDescriptor(
+            element,
+            CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
+            CssStringQuickFix(),
+            ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
+            isOnTheFly,
+        )
     }
 }
 
@@ -130,18 +142,13 @@ class CssStringQuickFix : CsleLocalQuickFix() {
         if (text == newText) return
 
         WriteCommandAction.runWriteCommandAction(project) {
-            val replacement = createCssStringReplacement(project, element, newText) ?: return@runWriteCommandAction
-            element.replace(replacement)
+            // 按文本范围就地替换：内嵌样式表的 CssString 位于 HTML 文件中，
+            // 用其它文件构造的 CssString 去 replace 会破坏文档结构（只剩半截内容）
+            val document = PsiDocumentManager.getInstance(project).getDocument(element.containingFile)
+                ?: return@runWriteCommandAction
+            val range = element.textRange
+            document.replaceString(range.startOffset, range.endOffset, newText)
+            PsiDocumentManager.getInstance(project).commitDocument(document)
         }
-    }
-
-    private fun createCssStringReplacement(project: Project, context: CssString, newText: String): CssString? {
-        val fileType: FileType = context.containingFile.fileType
-        val ext = fileType.defaultExtension.ifBlank { "css" }
-        val dummyFile =
-            PsiFileFactory.getInstance(project).createFileFromText("csle_dummy.$ext", fileType, "a{content:$newText;}")
-
-        val candidates = PsiTreeUtil.findChildrenOfType(dummyFile, CssString::class.java)
-        return candidates.firstOrNull { it.text == newText } ?: candidates.firstOrNull()
     }
 }
