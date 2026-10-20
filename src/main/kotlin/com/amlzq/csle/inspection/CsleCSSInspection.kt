@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull
  * 检查字符串值（如 content、font-family）中的汉字；
  * 排除列表按 CSS 属性名配置，自定义属性可用 -- 前缀。
  */
-class CsleCssInspection : CsleLocalInspectionTool() {
+class CsleCSSInspection : CsleLocalInspectionTool() {
     
     override fun inExcludedCallExpression(element: PsiElement): Boolean {
         val excluded = CsleSettings.instance.state.excludedCss

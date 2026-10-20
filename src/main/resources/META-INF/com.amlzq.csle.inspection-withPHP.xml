@@ -8,7 +8,7 @@
                 key="inspection.key"
                 groupKey="group.name.php"
                 enabledByDefault="true" level="WARNING" language="PHP"
-                implementationClass="com.amlzq.csle.inspection.CslePhpInspection"
+                implementationClass="com.amlzq.csle.inspection.CslePHPInspection"
                 displayName="Chinese string literal expression inspection"/>
     </extensions>
 </idea-plugin>

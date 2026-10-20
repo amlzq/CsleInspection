@@ -8,8 +8,7 @@
                 key="inspection.key"
                 groupKey="group.name.css"
                 enabledByDefault="true" level="WARNING" language="CSS"
-                implementationClass="com.amlzq.csle.inspection.CsleCssInspection"
+                implementationClass="com.amlzq.csle.inspection.CsleCSSInspection"
                 displayName="Chinese string literal expression inspection"/>
     </extensions>
 </idea-plugin>
-

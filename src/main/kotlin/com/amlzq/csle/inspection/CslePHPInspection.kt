@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull
  * 字符串字面量始终参与检查；PHPDoc 文档注释是否参与检查由设置中的
  * "Doc comments" 开关控制。排除列表支持 print、echo 与函数名。
  */
-class CslePhpInspection : CsleLocalInspectionTool() {
+class CslePHPInspection : CsleLocalInspectionTool() {
     /**
      * 检查字符串是否在用户设置的排除方法中，比如：print
      */
