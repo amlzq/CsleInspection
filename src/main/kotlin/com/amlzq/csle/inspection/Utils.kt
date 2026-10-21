@@ -29,6 +29,21 @@ object CsleUtils {
         return CsleGlyphs.fromLabel(label) ?: CsleGlyphs.SIMPLIFIED
     }
 
+    /**
+     * 检查结果的描述：说明“发现了什么”“为什么会报告”以及“可以转换为什么”。
+     *
+     * {0} 为当前检查的字形（设置里的 Inspect），{1} 为快速修复的目标字形（Quick fix）。
+     * 文案里点明“按检查设置”，让用户知道报告范围来自设置项，可以在 Settings 中调整。
+     */
+    fun problemDescription(): String {
+        return CsleBundle.message("problem.description", getInspect(), getQuickFix())
+    }
+
+    /** 快速修复在 Alt+Enter 菜单里的名字，只是一个动作名（“转换为……”）。 */
+    fun quickFixName(): String {
+        return CsleBundle.message("quickfix.name", getQuickFix())
+    }
+
     fun getConvertedText(text: String): String {
         return when (getQuickFixGlyphs()) {
             CsleGlyphs.SIMPLIFIED -> ZhConverterUtil.toSimple(text)

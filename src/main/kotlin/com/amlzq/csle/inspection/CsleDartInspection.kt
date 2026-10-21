@@ -86,7 +86,7 @@ class CsleDartInspection : CsleLocalInspectionTool() {
                     problems.add(
                         manager.createProblemDescriptor(
                             element,
-                            CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
+                            CsleUtils.problemDescription(),
                             DartDocCommentQuickFix(),
                             ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                             isOnTheFly,
@@ -131,7 +131,7 @@ class CsleDartInspection : CsleLocalInspectionTool() {
                 problems.add(
                     manager.createProblemDescriptor(
                         element,
-                        CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
+                        CsleUtils.problemDescription(),
                         DartLiteralExpressionQuickFix(),
                         ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                         isOnTheFly,

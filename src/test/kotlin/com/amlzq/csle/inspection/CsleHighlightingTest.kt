@@ -11,7 +11,7 @@ class CsleHighlightingTest : CsleBasePlatformTest() {
         myFixture.enableInspections(CsleKotlinInspection::class.java)
         myFixture.configureByText(
             "a.kt",
-            "const val SOFTWARE = <warning descr=\"Convert to Chinese (Taiwan)\">\"软件\"</warning>"
+            "const val SOFTWARE = <warning descr=\"Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)\">\"软件\"</warning>"
         )
         myFixture.checkHighlighting()
     }
@@ -20,7 +20,7 @@ class CsleHighlightingTest : CsleBasePlatformTest() {
         myFixture.enableInspections(CsleJSInspection::class.java)
         myFixture.configureByText(
             "a.js",
-            "var s = <warning descr=\"Convert to Chinese (Taiwan)\">'软件'</warning>;"
+            "var s = <warning descr=\"Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)\">'软件'</warning>;"
         )
         myFixture.checkHighlighting()
     }
@@ -29,7 +29,7 @@ class CsleHighlightingTest : CsleBasePlatformTest() {
         myFixture.enableInspections(CsleJSInspection::class.java)
         myFixture.configureByText(
             "a.ts",
-            "var s: string = <warning descr=\"Convert to Chinese (Taiwan)\">'软件'</warning>;"
+            "var s: string = <warning descr=\"Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)\">'软件'</warning>;"
         )
         myFixture.checkHighlighting()
     }
@@ -38,7 +38,7 @@ class CsleHighlightingTest : CsleBasePlatformTest() {
         myFixture.enableInspections(CsleJSInspection::class.java)
         myFixture.configureByText(
             "a.jsx",
-            "const e = <div><warning descr=\"Convert to Chinese (Taiwan)\">软件</warning></div>;"
+            "const e = <div><warning descr=\"Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)\">软件</warning></div>;"
         )
         myFixture.checkHighlighting()
     }
@@ -47,7 +47,7 @@ class CsleHighlightingTest : CsleBasePlatformTest() {
         myFixture.enableInspections(CsleJsonInspection::class.java)
         myFixture.configureByText(
             "a.json",
-            "{\"title\": <warning descr=\"Convert to Chinese (Taiwan)\">\"软件\"</warning>, \"note\": \"中文\"}"
+            "{\"title\": <warning descr=\"Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)\">\"软件\"</warning>, \"note\": \"中文\"}"
         )
         myFixture.checkHighlighting()
     }
@@ -56,7 +56,7 @@ class CsleHighlightingTest : CsleBasePlatformTest() {
         myFixture.enableInspections(CsleXMLInspection::class.java)
         myFixture.configureByText(
             "a.xml",
-            "<resources>\n    <string name=\"app_name\"><warning descr=\"Convert to Chinese (Taiwan)\">软件</warning></string>\n</resources>"
+            "<resources>\n    <string name=\"app_name\"><warning descr=\"Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)\">软件</warning></string>\n</resources>"
         )
         myFixture.checkHighlighting()
     }
@@ -65,7 +65,7 @@ class CsleHighlightingTest : CsleBasePlatformTest() {
         myFixture.enableInspections(CsleHTMLInspection::class.java)
         myFixture.configureByText(
             "a.html",
-            "<p title=<warning descr=\"Convert to Chinese (Taiwan)\">\"软件\"</warning>><warning descr=\"Convert to Chinese (Taiwan)\">软件</warning></p>"
+            "<p title=<warning descr=\"Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)\">\"软件\"</warning>><warning descr=\"Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)\">软件</warning></p>"
         )
         myFixture.checkHighlighting()
     }
@@ -77,7 +77,7 @@ class CsleHighlightingTest : CsleBasePlatformTest() {
         myFixture.configureByText(
             "a.html",
             "<html><body><script>var s = " +
-                    "<warning descr=\"Convert to Chinese (Taiwan)\">\"软件\"</warning>;</script></body></html>"
+                    "<warning descr=\"Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)\">\"软件\"</warning>;</script></body></html>"
         )
         myFixture.checkHighlighting()
     }
@@ -89,7 +89,7 @@ class CsleHighlightingTest : CsleBasePlatformTest() {
         myFixture.configureByText(
             "a.html",
             "<html><head><style>.a { content: " +
-                    "<warning descr=\"Convert to Chinese (Taiwan)\">\"软件\"</warning>; }</style></head></html>"
+                    "<warning descr=\"Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)\">\"软件\"</warning>; }</style></head></html>"
         )
         myFixture.checkHighlighting()
     }
@@ -108,8 +108,8 @@ class CsleHighlightingTest : CsleBasePlatformTest() {
         myFixture.enableInspections(CsleHTMLInspection::class.java)
         myFixture.configureByText(
             "a.html",
-            "<p title=<warning descr=\"Convert to Chinese (Taiwan)\">\"属性\"</warning>>" +
-                    "<!-- 注释 --><warning descr=\"Convert to Chinese (Taiwan)\">文本</warning></p>"
+            "<p title=<warning descr=\"Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)\">\"属性\"</warning>>" +
+                    "<!-- 注释 --><warning descr=\"Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)\">文本</warning></p>"
         )
         myFixture.checkHighlighting()
     }
@@ -120,10 +120,10 @@ class CsleHighlightingTest : CsleBasePlatformTest() {
         myFixture.configureByText(
             "myxml.xml",
             "<tag>\n" +
-                    "    <name><warning descr=\"Convert to Chinese (Taiwan)\">雪柜</warning></name>\n" +
+                    "    <name><warning descr=\"Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)\">雪柜</warning></name>\n" +
                     "<!--    注释启用检查了吗-->\n" +
-                    "    <label name=<warning descr=\"Convert to Chinese (Taiwan)\">\"雪柜\"</warning>>" +
-                    "<warning descr=\"Convert to Chinese (Taiwan)\">雪柜</warning></label>\n" +
+                    "    <label name=<warning descr=\"Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)\">\"雪柜\"</warning>>" +
+                    "<warning descr=\"Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)\">雪柜</warning></label>\n" +
                     "</tag>"
         )
         myFixture.checkHighlighting()
@@ -133,7 +133,7 @@ class CsleHighlightingTest : CsleBasePlatformTest() {
         myFixture.enableInspections(CsleCSSInspection::class.java)
         myFixture.configureByText(
             "a.css",
-            ".a::before { content: <warning descr=\"Convert to Chinese (Taiwan)\">\"软件\"</warning>; }"
+            ".a::before { content: <warning descr=\"Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)\">\"软件\"</warning>; }"
         )
         myFixture.checkHighlighting()
     }
@@ -142,7 +142,7 @@ class CsleHighlightingTest : CsleBasePlatformTest() {
         myFixture.enableInspections(CslePythonInspection::class.java)
         myFixture.configureByText(
             "a.py",
-            "s = <warning descr=\"Convert to Chinese (Taiwan)\">\"软件\"</warning>"
+            "s = <warning descr=\"Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)\">\"软件\"</warning>"
         )
         myFixture.checkHighlighting()
     }
@@ -151,7 +151,7 @@ class CsleHighlightingTest : CsleBasePlatformTest() {
         myFixture.enableInspections(CslePHPInspection::class.java)
         myFixture.configureByText(
             "a.php",
-            "<?php \$s = <warning descr=\"Convert to Chinese (Taiwan)\">\"软件\"</warning>;"
+            "<?php \$s = <warning descr=\"Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)\">\"软件\"</warning>;"
         )
         myFixture.checkHighlighting()
     }
@@ -160,7 +160,7 @@ class CsleHighlightingTest : CsleBasePlatformTest() {
         myFixture.enableInspections(CsleDartInspection::class.java)
         myFixture.configureByText(
             "a.dart",
-            "var s = <warning descr=\"Convert to Chinese (Taiwan)\">\"软件\"</warning>;"
+            "var s = <warning descr=\"Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)\">\"软件\"</warning>;"
         )
         myFixture.checkHighlighting()
     }

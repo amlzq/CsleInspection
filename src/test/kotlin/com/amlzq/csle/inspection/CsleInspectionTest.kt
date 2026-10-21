@@ -3,6 +3,8 @@ package com.amlzq.csle.inspection
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
 
 /**
  * 编程语言 x 自然语言：各编程语言源码中汉字字面量的检查行为。
@@ -31,7 +33,7 @@ class CsleInspectionTest : CsleBasePlatformTest() {
         """.trimIndent(), CsleKotlinInspection())
 
         assertEquals(2, problems.size)
-        assertEquals("Convert to Chinese (Taiwan)", problems[0].descriptionTemplate)
+        assertEquals("Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)", problems[0].descriptionTemplate)
     }
 
     fun testKotlinRawStringLiteral() {
@@ -75,7 +77,7 @@ class CsleInspectionTest : CsleBasePlatformTest() {
         CsleSettings.instance.state.checkDocComments = true
         val problems = inspect("a.kt", text, CsleKotlinInspection())
         assertEquals(1, problems.size)
-        assertEquals("Convert to Chinese (Taiwan)", problems[0].descriptionTemplate)
+        assertEquals("Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)", problems[0].descriptionTemplate)
     }
 
     fun testKotlinLiteralInspectionDisabled() {
@@ -95,14 +97,20 @@ class CsleInspectionTest : CsleBasePlatformTest() {
         CsleSettings.instance.state.quickFix = CsleGlyphs.SIMPLIFIED.label
         val problems = inspect("a.kt", "const val T = \"軟體\"", CsleKotlinInspection())
         assertEquals(1, problems.size)
-        assertEquals("Convert to Simplified Chinese", problems[0].descriptionTemplate)
+        assertEquals(
+            CsleBundle.message("problem.description", CsleGlyphs.TRADITIONAL.label, CsleGlyphs.SIMPLIFIED.label),
+            problems[0].descriptionTemplate,
+        )
     }
 
     fun testKotlinHongKongQuickFixDescription() {
         CsleSettings.instance.state.quickFix = CsleGlyphs.HONGKONG.label
         val problems = inspect("a.kt", "const val SOFTWARE = \"软件\"", CsleKotlinInspection())
         assertEquals(1, problems.size)
-        assertEquals("Convert to Chinese (Hong Kong)", problems[0].descriptionTemplate)
+        assertEquals(
+            CsleBundle.message("problem.description", CsleGlyphs.SIMPLIFIED.label, CsleGlyphs.HONGKONG.label),
+            problems[0].descriptionTemplate,
+        )
     }
 
     // ---------- Java ----------
@@ -355,7 +363,7 @@ class CsleInspectionTest : CsleBasePlatformTest() {
 
         val problems = inspect("a.html", text, CsleHTMLInspection())
         assertEquals(3, problems.size)
-        assertEquals("Convert to Chinese (Taiwan)", problems[0].descriptionTemplate)
+        assertEquals("Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)", problems[0].descriptionTemplate)
     }
 
     fun testHtmlInlineScriptExcludedCallExpression() {
@@ -390,7 +398,7 @@ class CsleInspectionTest : CsleBasePlatformTest() {
 
         val problems = inspect("a.html", text, CsleHTMLInspection())
         assertEquals(2, problems.size)
-        assertEquals("Convert to Chinese (Taiwan)", problems[0].descriptionTemplate)
+        assertEquals("Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)", problems[0].descriptionTemplate)
     }
 
     fun testHtmlInlineStyleExcludedProperty() {
@@ -709,7 +717,34 @@ class CsleInspectionTest : CsleBasePlatformTest() {
         for ((fileName, tool) in tools) {
             val problems = inspect(fileName, snippets.getValue(fileName), tool)
             assertEquals("$fileName 应报告 1 个问题", 1, problems.size)
-            assertEquals("Convert to Chinese (Taiwan)", problems[0].descriptionTemplate)
+            assertEquals("Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)", problems[0].descriptionTemplate)
         }
+    }
+
+    fun testProblemDescriptionNamesInspectAndTargetGlyphs() {
+        // 描述要同时点明“检查到的字形”和“可转换成的目标字形”
+        val description = inspect("a.kt", "const val S = \"软件\"", CsleKotlinInspection())
+            .single().descriptionTemplate
+
+        assertTrue(description.contains(CsleGlyphs.SIMPLIFIED.label))
+        assertTrue(description.contains(CsleGlyphs.TAIWAN.label))
+        // 点明报告来自“检查设置”，用户才知道可以到设置里调整检查目标
+        assertTrue(description.contains("inspection settings"))
+        assertEquals(
+            CsleBundle.message(
+                "problem.description",
+                CsleGlyphs.SIMPLIFIED.label,
+                CsleGlyphs.TAIWAN.label,
+            ),
+            description,
+        )
+    }
+
+    fun testQuickFixNameIsAnActionNotADescription() {
+        // Alt+Enter 菜单里应是动作名，不能直接复用“……可转换为……”的问题描述
+        val quickFixName = CsleUtils.quickFixName()
+
+        assertEquals(CsleBundle.message("quickfix.name", CsleGlyphs.TAIWAN.label), quickFixName)
+        assertNotEquals(quickFixName, CsleUtils.problemDescription())
     }
 }

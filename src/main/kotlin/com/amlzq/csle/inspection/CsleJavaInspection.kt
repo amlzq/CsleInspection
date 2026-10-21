@@ -75,7 +75,7 @@ class CsleJavaInspection : CsleLocalInspectionTool() {
                     problems.add(
                         manager.createProblemDescriptor(
                             element,
-                            CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
+                            CsleUtils.problemDescription(),
                             JavaDocCommentQuickFix(),
                             ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                             isOnTheFly,
@@ -125,7 +125,7 @@ class CsleJavaInspection : CsleLocalInspectionTool() {
                 problems.add(
                     manager.createProblemDescriptor(
                         element,
-                        CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
+                        CsleUtils.problemDescription(),
                         JavaLiteralExpressionQuickFix(),
                         ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                         isOnTheFly,

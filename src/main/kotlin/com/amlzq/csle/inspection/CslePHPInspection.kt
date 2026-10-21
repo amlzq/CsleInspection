@@ -85,7 +85,7 @@ class CslePHPInspection : CsleLocalInspectionTool() {
                     problems.add(
                         manager.createProblemDescriptor(
                             element,
-                            CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
+                            CsleUtils.problemDescription(),
                             PhpDocCommentQuickFix(),
                             ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                             isOnTheFly,
@@ -137,7 +137,7 @@ class CslePHPInspection : CsleLocalInspectionTool() {
                 problems.add(
                     manager.createProblemDescriptor(
                         element,
-                        CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
+                        CsleUtils.problemDescription(),
                         PhpLiteralExpressionQuickFix(),
                         ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                         isOnTheFly,

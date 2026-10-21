@@ -116,7 +116,7 @@ class CslePythonInspection : CsleLocalInspectionTool() {
                 problems.add(
                     manager.createProblemDescriptor(
                         element,
-                        CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
+                         CsleUtils.problemDescription(),
                         PythonLiteralExpressionQuickFix(),
                         ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                         isOnTheFly,

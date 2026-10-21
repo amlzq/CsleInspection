@@ -153,7 +153,7 @@ abstract class CsleMarkupInspection : CsleLocalInspectionTool() {
                         problems.add(
                             manager.createProblemDescriptor(
                                 element,
-                                CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
+                                CsleUtils.problemDescription(),
                                 XmlAttributeValueQuickFix(),
                                 ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                                 isOnTheFly,
@@ -174,7 +174,7 @@ abstract class CsleMarkupInspection : CsleLocalInspectionTool() {
                                 manager.createProblemDescriptor(
                                     element,
                                     range,
-                                    CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
+                                    CsleUtils.problemDescription(),
                                     ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                                     isOnTheFly,
                                     XmlTextQuickFix(),

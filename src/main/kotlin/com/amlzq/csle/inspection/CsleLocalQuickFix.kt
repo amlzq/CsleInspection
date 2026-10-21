@@ -11,7 +11,8 @@ import com.intellij.codeInspection.LocalQuickFix
 abstract class CsleLocalQuickFix : LocalQuickFix {
 
     override fun getName(): String {
-        return CsleBundle.message("convert.to.another", CsleUtils.getQuickFix())
+        // 菜单里显示的是动作（“转换为中文（台湾）”），而不是问题描述
+        return CsleUtils.quickFixName()
     }
 
     override fun getFamilyName(): String {

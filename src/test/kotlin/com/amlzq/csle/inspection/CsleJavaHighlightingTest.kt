@@ -19,7 +19,7 @@ class CsleJavaHighlightingTest : CsleBasePlatformTest() {
         myFixture.configureByText(
             "A.java",
             "public class A {\n" +
-                "    public static final String SOFTWARE = <warning descr=\"Convert to Chinese (Taiwan)\">\"软件\"</warning>;\n" +
+                "    public static final String SOFTWARE = <warning descr=\"Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)\">\"软件\"</warning>;\n" +
                 "    public static final String SHARED = \"中文\";\n" +
                 "}"
         )
@@ -46,7 +46,7 @@ class CsleJavaHighlightingTest : CsleBasePlatformTest() {
         myFixture.configureByText(
             "A.java",
             "public class A {\n" +
-                "    <warning descr=\"Convert to Chinese (Taiwan)\">/** 软件 */</warning>\n" +
+                "    <warning descr=\"Simplified Chinese characters found per the inspection settings; convert to Chinese (Taiwan)\">/** 软件 */</warning>\n" +
                 "    public void m() {}\n" +
                 "}"
         )

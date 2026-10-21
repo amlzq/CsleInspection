@@ -133,7 +133,7 @@ class CsleJSInspection : CsleLocalInspectionTool() {
                     problems.add(
                         manager.createProblemDescriptor(
                             element,
-                            CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
+                            CsleUtils.problemDescription(),
                             JSDocCommentQuickFix(),
                             ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                             isOnTheFly,
@@ -199,7 +199,7 @@ class CsleJSInspection : CsleLocalInspectionTool() {
                 problems.add(
                     manager.createProblemDescriptor(
                         element,
-                        CsleBundle.message("convert.to.another", CsleUtils.getQuickFix()),
+                        CsleUtils.problemDescription(),
                         JSLiteralExpressionQuickFix(),
                         ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                         isOnTheFly,
