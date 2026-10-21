@@ -1,4 +1,4 @@
-# Next
+# 0.6.0
 - **IMPROVEMENT** share one implementation for the XML and HTML inspections.
 - **BUGFIX** stop reporting Chinese text from comments in HTML and XML.
 - **BUGFIX** inspect and fix Chinese text inside HTML `<script>` and `<style>` blocks.
