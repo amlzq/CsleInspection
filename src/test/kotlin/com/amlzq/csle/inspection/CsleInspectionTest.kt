@@ -55,6 +55,18 @@ class CsleInspectionTest : CsleBasePlatformTest() {
         assertEquals(1, inspect("a.kt", text, CsleKotlinInspection()).size)
     }
 
+    fun testKotlinInterpolationIsChecked() {
+        // 带插值的字符串整体检查，插值表达式本身不影响
+        val text = """
+            fun main() {
+                val name = "x"
+                val s = "软件${'$'}{name}软体"
+            }
+        """.trimIndent()
+
+        assertEquals(1, inspect("a.kt", text, CsleKotlinInspection()).size)
+    }
+
     fun testKotlinDocComments() {
         val text = "/** 软件 */\nfun main() {}"
 
@@ -120,6 +132,29 @@ class CsleInspectionTest : CsleBasePlatformTest() {
         assertEquals(0, inspect("A.java", text, CsleJavaInspection()).size)
     }
 
+    fun testJavaCharLiteral() {
+        // 字符字面量也是 PsiLiteralExpression，同样要检查
+        assertEquals(1, inspect("A.java", "public class A { char c = '软'; }", CsleJavaInspection()).size)
+    }
+
+    fun testJavaExcludedMethodMatchesAncestorCall() {
+        // 嵌套调用：外层方法在排除列表中时，内层参数也不检查
+        val text = """
+            public class A {
+                void outer(String s) {}
+                void inner(String s) {}
+                void m() {
+                    outer(inner("软件"));
+                }
+            }
+        """.trimIndent()
+
+        assertEquals(1, inspect("A.java", text, CsleJavaInspection()).size)
+
+        CsleSettings.instance.state.excludedJava = listOf("outer")
+        assertEquals(0, inspect("A.java", text, CsleJavaInspection()).size)
+    }
+
     fun testJavaDocComments() {
         val text = """
             public class A {
@@ -158,6 +193,20 @@ class CsleInspectionTest : CsleBasePlatformTest() {
         assertEquals(1, inspect("a.js", text, CsleJSInspection()).size)
     }
 
+    fun testJsDocComments() {
+        val text = "/**\n * 软件\n */\nvar a = 1;"
+
+        assertEquals(0, inspect("a.js", text, CsleJSInspection()).size)
+
+        CsleSettings.instance.state.checkDocComments = true
+        assertEquals(1, inspect("a.js", text, CsleJSInspection()).size)
+    }
+
+    fun testJsxAttributeValue() {
+        // JSX 属性值在 PSI 里是 JS 字符串字面量
+        assertEquals(1, inspect("a.jsx", """<div title="软件"></div>""", CsleJSInspection()).size)
+    }
+
     // ---------- JSON ----------
 
     fun testJsonStringLiterals() {
@@ -185,6 +234,20 @@ class CsleInspectionTest : CsleBasePlatformTest() {
         assertEquals(1, inspect("a.json", text, CsleJsonInspection()).size)
     }
 
+    fun testJsonArrayElementExcludedByParentPath() {
+        // 数组元素没有自己的字段名，路径取其所属字段
+        val text = """{"a": ["软件"]}"""
+        assertEquals(1, inspect("a.json", text, CsleJsonInspection()).size)
+
+        CsleSettings.instance.state.excludedJson = listOf("a")
+        assertEquals(0, inspect("a.json", text, CsleJsonInspection()).size)
+    }
+
+    fun testJsonKeyIsChecked() {
+        // 键名同样是字符串字面量
+        assertEquals(1, inspect("a.json", """{"软件": "a"}""", CsleJsonInspection()).size)
+    }
+
     // ---------- XML ----------
 
     fun testXmlTextAndAttributeValues() {
@@ -207,6 +270,16 @@ class CsleInspectionTest : CsleBasePlatformTest() {
         assertEquals(1, inspect("a.xml", text, CsleXMLInspection()).size)
 
         CsleSettings.instance.state.excludedXml = listOf("string")
+        assertEquals(0, inspect("a.xml", text, CsleXMLInspection()).size)
+    }
+
+    fun testXmlExcludedAncestorTag() {
+        // 标签排除沿祖先链匹配
+        val text = "<a><b>软件</b></a>"
+
+        assertEquals(1, inspect("a.xml", text, CsleXMLInspection()).size)
+
+        CsleSettings.instance.state.excludedXml = listOf("a")
         assertEquals(0, inspect("a.xml", text, CsleXMLInspection()).size)
     }
 
@@ -371,6 +444,54 @@ class CsleInspectionTest : CsleBasePlatformTest() {
         assertEquals(1, inspect("a.html", text, CsleHTMLInspection()).size)
     }
 
+    fun testHtmlExcludedAttributeName() {
+        // 只写属性名即可排除该属性，且排除项会去掉首尾空白、忽略大小写
+        val text = """<p title="软件">软件</p>"""
+        CsleSettings.instance.state.excludedHtml = listOf(" TITLE ")
+        assertEquals(1, inspect("a.html", text, CsleHTMLInspection()).size)
+    }
+
+    fun testHtmlExcludedTagIgnoreCase() {
+        val text = """<p title="软件">软件</p>"""
+        CsleSettings.instance.state.excludedHtml = listOf("P")
+        assertEquals(0, inspect("a.html", text, CsleHTMLInspection()).size)
+    }
+
+    fun testHtmlExcludedTagDotAttribute() {
+        // tag.attr 写法只排除该标签的属性值，标签内的文本仍检查
+        val text = """<p title="软件">软件</p>"""
+        CsleSettings.instance.state.excludedHtml = listOf("p.title")
+        assertEquals(1, inspect("a.html", text, CsleHTMLInspection()).size)
+    }
+
+    fun testHtmlTextAfterComment() {
+        val text = """<p><!-- 注释 -->软件</p>"""
+        assertEquals(1, inspect("a.html", text, CsleHTMLInspection()).size)
+    }
+
+    fun testHtmlScriptAttributeCheckedWithExclusionsConfigured() {
+        // script 的文本内容不按标记文本检查，但它的属性值（src 等）仍要检查，
+        // 否则配置了任意排除项后这些属性会被静默跳过
+        val text = """<script src="软件.js"></script>"""
+        assertEquals(1, inspect("a.html", text, CsleHTMLInspection()).size)
+
+        CsleSettings.instance.state.excludedHtml = listOf("p")
+        assertEquals(1, inspect("a.html", text, CsleHTMLInspection()).size)
+    }
+
+    fun testHtmlEmbeddedScriptAndStyleRespectLiteralSwitch() {
+        // 总开关关闭时，内嵌脚本与样式表也不能报告
+        val text = """
+            <html><head><style>.a{content:"软件"}</style></head>
+            <body><script>var s = "软件";</script></body></html>
+        """.trimIndent()
+
+        assertEquals(2, inspect("a.html", text, CsleHTMLInspection()).size)
+
+        CsleSettings.instance.state.checkLiteralExpression = false
+        assertEquals(0, inspect("a.html", text, CsleHTMLInspection()).size)
+    }
+
     // ---------- CSS ----------
 
     fun testCssStrings() {
@@ -388,6 +509,25 @@ class CsleInspectionTest : CsleBasePlatformTest() {
 
         CsleSettings.instance.state.excludedCss = listOf("content")
         assertEquals(0, inspect("a.css", text, CsleCSSInspection()).size)
+    }
+
+    fun testCssExcludedPropertyNormalized() {
+        // 属性名忽略大小写与首尾空白；自定义属性的 -- 前缀可省略
+        val text = """.a { Content: "软件"; --Brand: "软体"; }"""
+        assertEquals(2, inspect("a.css", text, CsleCSSInspection()).size)
+
+        CsleSettings.instance.state.excludedCss = listOf(" CONTENT ")
+        assertEquals(1, inspect("a.css", text, CsleCSSInspection()).size)
+
+        CsleSettings.instance.state.excludedCss = listOf("content", "brand")
+        assertEquals(0, inspect("a.css", text, CsleCSSInspection()).size)
+    }
+
+    fun testCssLikeLanguages() {
+        // CSS 检查器同时处理 SCSS / LESS
+        val text = """.a::before { content: "软件"; }"""
+        assertEquals(1, inspect("a.scss", text, CsleCSSInspection()).size)
+        assertEquals(1, inspect("a.less", text, CsleCSSInspection()).size)
     }
 
     // ---------- Python ----------
@@ -412,6 +552,30 @@ class CsleInspectionTest : CsleBasePlatformTest() {
         assertEquals(1, inspect("a.py", text, CslePythonInspection()).size)
     }
 
+    fun testPythonDocstringCheckedAsLiteral() {
+        // Python 没有单独的文档注释语法，文档字符串就是字符串字面量
+        val text = "def f():\n    \"\"\"软件\"\"\""
+
+        assertEquals(1, inspect("a.py", text, CslePythonInspection()).size)
+
+        CsleSettings.instance.state.checkLiteralExpression = false
+        assertEquals(0, inspect("a.py", text, CslePythonInspection()).size)
+    }
+
+    fun testPythonDocstringIgnoresDocCommentsSwitch() {
+        val text = "def f():\n    \"\"\"软件\"\"\""
+
+        // “文档注释”开关对 Python 不适用：docstring 始终按字符串字面量处理
+        CsleSettings.instance.state.checkDocComments = true
+        assertEquals(1, inspect("a.py", text, CslePythonInspection()).size)
+
+        CsleSettings.instance.state.checkDocComments = false
+        assertEquals(1, inspect("b.py", text, CslePythonInspection()).size)
+
+        // 三引号单引号（'''...'''）同样是 PyStringLiteralExpression
+        assertEquals(1, inspect("c.py", "def f():\n    '''软件'''", CslePythonInspection()).size)
+    }
+
     // ---------- PHP ----------
 
     fun testPhpStringLiterals() {
@@ -432,6 +596,15 @@ class CsleInspectionTest : CsleBasePlatformTest() {
         assertEquals(2, inspect("a.php", text, CslePHPInspection()).size)
 
         CsleSettings.instance.state.excludedPhp = listOf("echo")
+        assertEquals(1, inspect("a.php", text, CslePHPInspection()).size)
+    }
+
+    fun testPhpDocComments() {
+        val text = "<?php\n/** 软件 */\nfunction f() {}"
+
+        assertEquals(0, inspect("a.php", text, CslePHPInspection()).size)
+
+        CsleSettings.instance.state.checkDocComments = true
         assertEquals(1, inspect("a.php", text, CslePHPInspection()).size)
     }
 
@@ -458,7 +631,54 @@ class CsleInspectionTest : CsleBasePlatformTest() {
         assertEquals(1, inspect("a.dart", text, CsleDartInspection()).size)
     }
 
+    fun testDartDocComments() {
+        // `///` 是普通 PsiComment，`/** */` 才是 DartDocComment，两者都要覆盖
+        val lineDoc = "/// 软件\nvoid main() {}"
+        val blockDoc = "/** 软件 */\nvoid main() {}"
+
+        assertEquals(0, inspect("a.dart", lineDoc, CsleDartInspection()).size)
+        assertEquals(0, inspect("b.dart", blockDoc, CsleDartInspection()).size)
+
+        CsleSettings.instance.state.checkDocComments = true
+        assertEquals(1, inspect("c.dart", lineDoc, CsleDartInspection()).size)
+        assertEquals(1, inspect("d.dart", blockDoc, CsleDartInspection()).size)
+    }
+
     // ---------- 编程语言 x 自然语言矩阵 ----------
+
+    fun testLiteralSwitchDisablesAllLanguages() {
+        // 字面量总开关对所有语言的检查器都生效
+        val snippets = mapOf(
+            "a.kt" to "const val S = \"软件\"",
+            "A.java" to "public class A { String s = \"软件\"; }",
+            "a.js" to "var s = \"软件\";",
+            "a.json" to "{\"k\": \"软件\"}",
+            "a.xml" to "<r><s>软件</s></r>",
+            "a.html" to "<p>软件</p>",
+            "a.css" to ".a::before { content: \"软件\"; }",
+            "a.py" to "s = \"软件\"",
+            "a.php" to "<?php \$s = \"软件\";",
+            "a.dart" to "var s = \"软件\";",
+        )
+        val tools = mapOf(
+            "a.kt" to CsleKotlinInspection(),
+            "A.java" to CsleJavaInspection(),
+            "a.js" to CsleJSInspection(),
+            "a.json" to CsleJsonInspection(),
+            "a.xml" to CsleXMLInspection(),
+            "a.html" to CsleHTMLInspection(),
+            "a.css" to CsleCSSInspection(),
+            "a.py" to CslePythonInspection(),
+            "a.php" to CslePHPInspection(),
+            "a.dart" to CsleDartInspection(),
+        )
+
+        CsleSettings.instance.state.checkLiteralExpression = false
+        for ((fileName, tool) in tools) {
+            val problems = inspect(fileName, snippets.getValue(fileName), tool)
+            assertEquals("$fileName 关闭字面量检查后不应报告", 0, problems.size)
+        }
+    }
 
     fun testSameNaturalLanguageTextAcrossProgrammingLanguages() {
         val snippets = mapOf(

@@ -240,12 +240,15 @@ class CsleSettingsConfigurable : Configurable {
         val inspect = CsleSettings.instance.state.inspect
         inspectComboBox.selectedItem = inspect
         updateQuickFixOptions(inspect, preferredQuickFix = CsleSettings.instance.state.quickFix)
+        // 先切下拉框：切换时 ItemListener 会把文本框内容写入"切换前"目标名的缓存，
+        // 随后这里重填缓存会覆盖它。若先改 currentTarget，监听器会把未应用的文本
+        // 记到默认目标（JS_TS）名下，导致 reset 后显示的仍是编辑中的内容而不是状态里的值
+        targetLanguageComboBox.selectedItem = ExcludedTarget.JS_TS
         excludedTextByTarget.clear()
         ExcludedTarget.entries.forEach { target ->
             excludedTextByTarget[target] = getExcludedFromState(target).joinToString("\n")
         }
         currentTarget = ExcludedTarget.JS_TS
-        targetLanguageComboBox.selectedItem = currentTarget
         excludedField.text = excludedTextByTarget[currentTarget].orEmpty()
         updateExcludedHintLabel()
         literalExpressionCheckBox.isSelected = true

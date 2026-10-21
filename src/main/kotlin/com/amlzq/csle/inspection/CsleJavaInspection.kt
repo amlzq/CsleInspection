@@ -139,18 +139,18 @@ class CsleJavaInspection : CsleLocalInspectionTool() {
 
 class JavaLiteralExpressionQuickFix : CsleLocalQuickFix() {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        // 使用 WriteCommandAction 确保写操作发生在正确的上下文中
+        val element = descriptor.psiElement as? PsiLiteralExpression ?: return
+        // 直接在原文上转换：字符串、字符字面量（'软'）、文本块（"""软"""）都能保留原有引号形式，
+        // 之前按 String 取值再包双引号，遇到字符字面量会 ClassCastException
+        val newText = getConvertedText(element.text)
+        if (newText == element.text) return
+
         WriteCommandAction.runWriteCommandAction(project) {
-            // 将新字形的字符串应用到代码中
-            val element = descriptor.psiElement
-            if (element is PsiLiteralExpression) {
-                val text = (element.value as String)
-                val newText = getConvertedText(text)
-                val newElement =
-                    JavaPsiFacade.getElementFactory(project).createExpressionFromText("\"$newText\"", element.context)
-//        val newElement = PsiElementFactory.getInstance(project).createExpressionFromText(newText, element.context)
-                element.replace(newElement)
-            }
+            val document = PsiDocumentManager.getInstance(project).getDocument(element.containingFile)
+                ?: return@runWriteCommandAction
+            val range = element.textRange
+            document.replaceString(range.startOffset, range.endOffset, newText)
+            PsiDocumentManager.getInstance(project).commitDocument(document)
         }
     }
 }

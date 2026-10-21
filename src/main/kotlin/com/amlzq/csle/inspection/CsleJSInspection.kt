@@ -7,16 +7,16 @@ import com.intellij.lang.javascript.psi.JSCallExpression
 import com.intellij.lang.javascript.psi.JSFile
 import com.intellij.lang.javascript.psi.JSLiteralExpression
 import com.intellij.lang.javascript.psi.ecma6.JSStringTemplateExpression
-import com.intellij.lang.javascript.psi.impl.JSPsiElementFactory
 import com.intellij.lang.javascript.psi.jsdoc.JSDocComment
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.psi.PsiRecursiveElementVisitor
-import com.intellij.psi.XmlElementFactory
 import com.intellij.psi.xml.XmlTokenType
 import org.jetbrains.annotations.NotNull
 
@@ -142,13 +142,19 @@ class CsleJSInspection : CsleLocalInspectionTool() {
                     return
                 }
 
+                if (!CsleSettings.instance.state.checkLiteralExpression) return
+
                 // 检查是否是 JS 字符串字面量表达式
                 // JSLiteralExpression.isStringLiteral 单引号或双引号包裹字符串
                 // JSStringTemplateExpression 模版字符串 反引号（`）声明支持换行和插值的字符串‌
+                // XmlAttributeValue JSX/E4X 属性值，例如：<div title="中文"/>
+                // （JS 插件的实现类直接继承 XmlAttributeValueImpl，没有单独的接口）
                 // XmlToken:XML_DATA_CHARACTERS JSX文件，例如：“<div>中文</div>”
 
                 val isJsString =
-                    (element is JSLiteralExpression && element.isStringLiteral) || element is JSStringTemplateExpression
+                    (element is JSLiteralExpression && element.isStringLiteral) ||
+                            element is JSStringTemplateExpression ||
+                            element is XmlAttributeValue
 
                 val isJsxText = element.node.elementType == XmlTokenType.XML_DATA_CHARACTERS
 
@@ -208,32 +214,17 @@ class JSLiteralExpressionQuickFix : CsleLocalQuickFix() {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement ?: return
-        val text = element.text
+        // 字符串、模板字符串、JSX 文本节点统一按原文范围替换：
+        // 用工厂重建会丢掉多行 JSX 文本的换行，甚至包成 <![CDATA[...]]>
+        val newText = getConvertedText(element.text)
+        if (newText == element.text) return
 
-        // 将原中文字形转换为目标中文字形
-        val newText = getConvertedText(text)
-
-        // 使用 WriteCommandAction 确保写操作发生在正确的上下文中
         WriteCommandAction.runWriteCommandAction(project) {
-            when {
-                element is JSLiteralExpression || element is JSStringTemplateExpression -> {
-                    // 普通字符串字面量（'中文' 或 "中文"）或模版字符串（`中文`）
-                    val newElement = JSPsiElementFactory.createJSExpression(newText, element.context!!)
-                    element.replace(newElement)
-                }
-
-                element.node.elementType == XmlTokenType.XML_DATA_CHARACTERS -> {
-                    // JSX XML 字符节点，例如：<div>中文</div>
-                    element.replace(
-                        XmlElementFactory.getInstance(project).createDisplayText(newText)
-                    )
-                }
-
-                else -> {
-                    // 不支持的类型（理论上不会进入）
-                    debugPrintln("Unsupported element type for fix: ${element.javaClass.name}")
-                }
-            }
+            val document = PsiDocumentManager.getInstance(project).getDocument(element.containingFile)
+                ?: return@runWriteCommandAction
+            val range = element.textRange
+            document.replaceString(range.startOffset, range.endOffset, newText)
+            PsiDocumentManager.getInstance(project).commitDocument(document)
         }
     }
 }
@@ -243,8 +234,13 @@ class JSDocCommentQuickFix : CsleLocalQuickFix() {
         WriteCommandAction.runWriteCommandAction(project) {
             val element = descriptor.psiElement as? JSDocComment ?: return@runWriteCommandAction
             val newText = getConvertedText(element.text)
-            val newElement = JSPsiElementFactory.createJSExpression(newText, element.context!!)
-            element.replace(newElement)
+            if (newText == element.text) return@runWriteCommandAction
+            // 文档注释不是表达式，JSPsiElementFactory.createJSExpression 解析不了，按文本范围替换
+            val document = PsiDocumentManager.getInstance(project).getDocument(element.containingFile)
+                ?: return@runWriteCommandAction
+            val range = element.textRange
+            document.replaceString(range.startOffset, range.endOffset, newText)
+            PsiDocumentManager.getInstance(project).commitDocument(document)
         }
     }
 }

@@ -10,9 +10,9 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.NotNull
@@ -108,27 +108,16 @@ class CsleJsonInspection : CsleLocalInspectionTool() {
 class JsonStringLiteralQuickFix : CsleLocalQuickFix() {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement as? JsonStringLiteral ?: return
-        val text = element.text
-        val newText = getConvertedText(text)
-        if (text == newText) return
+        val newText = getConvertedText(element.text)
+        if (newText == element.text) return
 
+        // 按文本范围替换：键名字面量与虚拟文件里的值字面量互换 PSI 节点会破坏整个文档
         WriteCommandAction.runWriteCommandAction(project) {
-            val replacement = createJsonStringReplacement(project, element, newText) ?: return@runWriteCommandAction
-            element.replace(replacement)
+            val document = PsiDocumentManager.getInstance(project).getDocument(element.containingFile)
+                ?: return@runWriteCommandAction
+            val range = element.textRange
+            document.replaceString(range.startOffset, range.endOffset, newText)
+            PsiDocumentManager.getInstance(project).commitDocument(document)
         }
-    }
-
-    private fun createJsonStringReplacement(
-        project: Project,
-        context: JsonStringLiteral,
-        newText: String
-    ): JsonStringLiteral? {
-        val fileType = context.containingFile.fileType
-        val ext = fileType.defaultExtension.ifBlank { "json" }
-        val dummyFile =
-            PsiFileFactory.getInstance(project).createFileFromText("csle_dummy.$ext", fileType, "{\"k\":$newText}")
-
-        val candidates = PsiTreeUtil.findChildrenOfType(dummyFile, JsonStringLiteral::class.java)
-        return candidates.firstOrNull { it.text == newText } ?: candidates.firstOrNull()
     }
 }

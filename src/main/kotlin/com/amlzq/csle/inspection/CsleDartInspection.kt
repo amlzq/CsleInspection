@@ -7,6 +7,8 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
@@ -70,7 +72,7 @@ class CsleDartInspection : CsleLocalInspectionTool() {
             override fun visitElement(@NotNull element: PsiElement) {
                 super.visitElement(element)
 
-                if (CsleSettings.instance.state.checkDocComments && element is DartDocComment) {
+                if (CsleSettings.instance.state.checkDocComments && isDocComment(element)) {
                     val text = element.text
                     if (!containsChinese(text)) {
                         return
@@ -92,6 +94,8 @@ class CsleDartInspection : CsleLocalInspectionTool() {
                     )
                     return
                 }
+
+                if (!CsleSettings.instance.state.checkLiteralExpression) return
 
                 // 检查是否是 Dart 字符串字面量表达式
                 if (element !is DartStringLiteralExpression) return
@@ -137,6 +141,15 @@ class CsleDartInspection : CsleLocalInspectionTool() {
         })
         return problems.toTypedArray<ProblemDescriptor>()
     }
+
+    /**
+     * 是否为文档注释。
+     *
+     * `/** ... */` 被解析为 [DartDocComment]；Dart 常用的 `///` 只是普通 [PsiComment]，
+     * 需要按前缀单独识别，否则最常见的文档注释写法不会被检查。
+     */
+    private fun isDocComment(element: PsiElement): Boolean =
+        element is DartDocComment || (element is PsiComment && element.text.startsWith("///"))
 }
 
 class DartLiteralExpressionQuickFix : CsleLocalQuickFix() {
@@ -159,11 +172,17 @@ class DartLiteralExpressionQuickFix : CsleLocalQuickFix() {
 
 class DartDocCommentQuickFix : CsleLocalQuickFix() {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val element = descriptor.psiElement
+        val newText = getConvertedText(element.text)
+        if (newText == element.text) return
+
         WriteCommandAction.runWriteCommandAction(project) {
-            val element = descriptor.psiElement as? DartDocComment ?: return@runWriteCommandAction
-            val newText = getConvertedText(element.text)
-            val newElement = DartElementGenerator.createExpressionFromText(project, newText)
-            newElement?.let { element.replace(it) }
+            // 文档注释不是表达式，DartElementGenerator 解析不了，按文本范围替换
+            val document = PsiDocumentManager.getInstance(project).getDocument(element.containingFile)
+                ?: return@runWriteCommandAction
+            val range = element.textRange
+            document.replaceString(range.startOffset, range.endOffset, newText)
+            PsiDocumentManager.getInstance(project).commitDocument(document)
         }
     }
 }

@@ -3,8 +3,6 @@ package com.amlzq.csle.inspection
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.ide.highlighter.HtmlFileType
-import com.intellij.ide.highlighter.XmlFileType
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
@@ -12,7 +10,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.html.HtmlTag
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.*
 import org.jetbrains.annotations.NotNull
 
@@ -49,6 +46,15 @@ abstract class CsleMarkupInspection : CsleLocalInspectionTool() {
     }
 
     private fun inHtmlExcluded(element: PsiElement): Boolean {
+        val tag = generateSequence(element) { it.parent }
+            .filterIsInstance<HtmlTag>()
+            .firstOrNull()
+
+        val tagName = tag?.name?.lowercase()
+        // script/style 的文本内容不是标记文本（字符串由 JS/CSS 逻辑处理），
+        // 但属性值（如 src、style）仍按属性检查，否则配置任意排除项后会被静默跳过
+        if (element !is XmlAttributeValue && (tagName == "script" || tagName == "style")) return true
+
         val excluded = CsleSettings.instance.state.excludedHtml
             .asSequence()
             .map { it.trim() }
@@ -57,12 +63,6 @@ abstract class CsleMarkupInspection : CsleLocalInspectionTool() {
             .toSet()
         if (excluded.isEmpty()) return false
 
-        val tag = generateSequence(element) { it.parent }
-            .filterIsInstance<HtmlTag>()
-            .firstOrNull()
-
-        val tagName = tag?.name?.lowercase()
-        if (tagName == "script" || tagName == "style") return true
         if (tagName != null && excluded.contains(tagName)) return true
 
         if (element is XmlAttributeValue) {
@@ -282,57 +282,38 @@ class XmlTextQuickFix : CsleLocalQuickFix() {
 
         WriteCommandAction.runWriteCommandAction(project) {
             val comments = element.children.filterIsInstance<XmlComment>()
-            if (comments.isEmpty()) {
-                // 纯文本节点：借 XML 虚拟文件构造 XmlText 后整体替换。
-                // 不能用 createDisplayText：多行文本会被包成 <![CDATA[...]]>
-                val replacement = createXmlText(project, converted) ?: return@runWriteCommandAction
-                element.replace(replacement)
-                return@runWriteCommandAction
-            }
-
-            // HTML 中注释是 XmlText 的子节点：拼回"转换后的文本 + 原注释"，
-            // 借 HTML 虚拟文件解析出同样带注释子节点的 XmlText 后整体替换。
-            // 不能逐节点插入：HTML 标签的插入逻辑会合并相邻文本节点而丢弃内容。
-            val fullText = element.text
-            val newContent = buildString {
-                var cursor = 0
-                for (comment in comments) {
-                    val start = comment.startOffsetInParent
-                    if (start > cursor) {
-                        append(escapeForHtmlDummy(getConvertedText(fullText.substring(cursor, start))))
+            val newText = if (comments.isEmpty()) {
+                // 纯文本节点：converted 是解码后的文本（不含 CDATA），写回时只需转义
+                escapeForHtmlDummy(converted)
+            } else {
+                // HTML 中注释是 XmlText 的子节点：拼回"转换后的文本 + 原注释"
+                val fullText = element.text
+                buildString {
+                    var cursor = 0
+                    for (comment in comments) {
+                        val start = comment.startOffsetInParent
+                        if (start > cursor) {
+                            append(escapeForHtmlDummy(getConvertedText(fullText.substring(cursor, start))))
+                        }
+                        append(comment.text)
+                        cursor = start + comment.textLength
                     }
-                    append(comment.text)
-                    cursor = start + comment.textLength
-                }
-                if (cursor < fullText.length) {
-                    append(escapeForHtmlDummy(getConvertedText(fullText.substring(cursor))))
+                    if (cursor < fullText.length) {
+                        append(escapeForHtmlDummy(getConvertedText(fullText.substring(cursor))))
+                    }
                 }
             }
 
-            val dummyFile = PsiFileFactory.getInstance(project).createFileFromText(
-                "csle_dummy.html",
-                HtmlFileType.INSTANCE,
-                "<p>$newContent</p>"
-            )
-            val replacement = PsiTreeUtil.findChildrenOfType(dummyFile, XmlText::class.java)
-                .firstOrNull { it.children.any { child -> child is XmlComment } }
-                ?: createXmlText(project, converted)
+            // 按文本范围就地替换：用另一个文件的 XmlText 去 replace 会在注释后插入多余空格
+            val document = PsiDocumentManager.getInstance(project).getDocument(element.containingFile)
                 ?: return@runWriteCommandAction
-            element.replace(replacement)
+            val range = element.textRange
+            document.replaceString(range.startOffset, range.endOffset, newText)
+            PsiDocumentManager.getInstance(project).commitDocument(document)
         }
     }
 
-    /** 借 XML 虚拟文件构造普通 XmlText（不会引入 CDATA），text 需为解码后的文本 */
-    private fun createXmlText(project: Project, text: String): PsiElement? {
-        val dummyFile = PsiFileFactory.getInstance(project).createFileFromText(
-            "csle_dummy.xml",
-            XmlFileType.INSTANCE,
-            "<a>${text.replace("&", "&amp;").replace("<", "&lt;")}</a>"
-        )
-        return PsiTreeUtil.findChildOfType(dummyFile, XmlText::class.java)
-    }
-
-    /** 转义文本以供 HTML 虚拟文件解析，已有的实体引用不重复转义 */
+    /** 转义文本以供写回标记语言，已有的实体引用不重复转义 */
     private fun escapeForHtmlDummy(text: String): String =
         text.replace(AMP_WITHOUT_ENTITY, "&amp;").replace("<", "&lt;")
 

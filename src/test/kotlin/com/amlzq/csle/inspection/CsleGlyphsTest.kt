@@ -28,6 +28,20 @@ class CsleGlyphsTest : CsleBasePlatformTest() {
         assertEquals(CsleGlyphs.SIMPLIFIED, CsleUtils.getQuickFixGlyphs())
     }
 
+    fun testInspectGlyphsFollowsSettings() {
+        for (glyphs in CsleGlyphs.entries) {
+            CsleSettings.instance.state.inspect = glyphs.label
+            assertEquals(glyphs, CsleUtils.getInspectGlyphs())
+        }
+    }
+
+    fun testQuickFixGlyphsFollowsSettings() {
+        for (glyphs in CsleGlyphs.entries) {
+            CsleSettings.instance.state.quickFix = glyphs.label
+            assertEquals(glyphs, CsleUtils.getQuickFixGlyphs())
+        }
+    }
+
     fun testConvertToSimplified() {
         CsleSettings.instance.state.quickFix = CsleGlyphs.SIMPLIFIED.label
         assertEquals("软体", CsleUtils.getConvertedText("軟體"))

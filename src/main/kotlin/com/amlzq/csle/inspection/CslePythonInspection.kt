@@ -7,6 +7,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
@@ -17,6 +18,10 @@ import org.jetbrains.annotations.NotNull
  * 汉字检查器：Python。
  *
  * 检查字符串字面量中的汉字；排除列表按函数名配置（如 print）。
+ *
+ * Python 没有其他语言那种文档注释语法：PEP 257 的文档字符串（docstring，通常写作
+ * 三引号 `"""..."""` 或 `'''...'''`）在 PSI 里就是 [PyStringLiteralExpression]，
+ * 因此它由“字符串字面量”开关控制，不受“文档注释”开关影响。
  */
 class CslePythonInspection : CsleLocalInspectionTool() {
     /**
@@ -67,6 +72,8 @@ class CslePythonInspection : CsleLocalInspectionTool() {
                 super.visitElement(element)
 
                 debugPrintln("text=${element.text}")
+
+                if (!CsleSettings.instance.state.checkLiteralExpression) return
 
                 // 检查是否是 Python 字符串字面量表达式
                 if (element !is PyStringLiteralExpression) {
@@ -124,22 +131,18 @@ class CslePythonInspection : CsleLocalInspectionTool() {
 class PythonLiteralExpressionQuickFix : CsleLocalQuickFix() {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        debugPrintln("psiElement=${descriptor.psiElement}")
-
         val element = descriptor.psiElement as? PyStringLiteralExpression ?: return
-        val text: String = element.text
-        debugPrintln("text=$text")
 
-        // 根据用户配置转换字形
-        val newText = getConvertedText(text)
-        debugPrintln("converted=$newText")
+        // 在原文上转换：保留前缀（r/b/f）与三引号（文档字符串）等原始写法
+        val newText = getConvertedText(element.text)
+        if (newText == element.text) return
 
-        // 使用 WriteCommandAction 确保写操作发生在正确的上下文中
         WriteCommandAction.runWriteCommandAction(project) {
-            // 将新的字符串应用到代码中
-            val generator = PyElementGenerator.getInstance(project)
-            val newElement = generator.createStringLiteralAlreadyEscaped(newText)
-            newElement?.let { element.replace(it) }
+            val document = PsiDocumentManager.getInstance(project).getDocument(element.containingFile)
+                ?: return@runWriteCommandAction
+            val range = element.textRange
+            document.replaceString(range.startOffset, range.endOffset, newText)
+            PsiDocumentManager.getInstance(project).commitDocument(document)
         }
     }
 }

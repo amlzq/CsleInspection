@@ -22,6 +22,8 @@ class CsleSettings : PersistentStateComponent<CsleSettings> {
     var excludedXml: List<String> = listOf()
     var excludedJson: List<String> = listOf()
     var checkLiteralExpression: Boolean = true
+
+    /** 是否检查文档注释（KDoc/Javadoc/JSDoc/PHPDoc/DartDoc），默认关闭，只检查字符串字面量 */
     var checkDocComments: Boolean = false
 
     override fun getState(): CsleSettings = this

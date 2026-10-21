@@ -7,6 +7,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
@@ -92,6 +93,8 @@ class CslePHPInspection : CsleLocalInspectionTool() {
                     )
                     return
                 }
+
+                if (!CsleSettings.instance.state.checkLiteralExpression) return
 
                 // 检查是否是 PHP 字符串字面量表达式
                 if (element !is StringLiteralExpression) {
@@ -189,7 +192,13 @@ class PhpDocCommentQuickFix : CsleLocalQuickFix() {
         WriteCommandAction.runWriteCommandAction(project) {
             val element = descriptor.psiElement as? PhpDocComment ?: return@runWriteCommandAction
             val newText = getConvertedText(element.text)
-            PhpPsiElementFactory.createFromText(project, StringLiteralExpression::class.java, newText)
+            if (newText == element.text) return@runWriteCommandAction
+            // 按文本范围替换注释内容（文档注释不能用字符串字面量工厂重建）
+            val document = PsiDocumentManager.getInstance(project).getDocument(element.containingFile)
+                ?: return@runWriteCommandAction
+            val range = element.textRange
+            document.replaceString(range.startOffset, range.endOffset, newText)
+            PsiDocumentManager.getInstance(project).commitDocument(document)
         }
     }
 }
