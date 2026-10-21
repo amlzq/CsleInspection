@@ -6,18 +6,17 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
+import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
-import java.awt.Dimension
 import java.awt.event.ItemEvent
+import javax.swing.JEditorPane
 
 class CsleSettingsConfigurable : Configurable {
     private lateinit var inspectComboBox: ComboBox<String>
     private lateinit var quickFixComboBox: ComboBox<String>
     private lateinit var targetLanguageComboBox: ComboBox<ExcludedTarget>
-    private lateinit var excludedHintLabel: JBLabel
+    private lateinit var excludedHintLabel: JEditorPane
     private lateinit var excludedField: JBTextArea
     private lateinit var literalExpressionCheckBox: JBCheckBox
     private lateinit var docCommentsCheckBox: JBCheckBox
@@ -43,25 +42,26 @@ class CsleSettingsConfigurable : Configurable {
             selectedItem = currentTarget
         }
 
-        excludedHintLabel = JBLabel()
-
-        excludedField = JBTextArea().apply {
+        excludedField = JBTextArea(8, 40).apply {
             lineWrap = true
             wrapStyleWord = true
         }
-        val scrollPane = JBScrollPane(excludedField).apply { preferredSize = Dimension(300, 150) }
 
         literalExpressionCheckBox = JBCheckBox(
             CsleBundle.message("inspect.target.literal.expression"),
             CsleSettings.instance.state.checkLiteralExpression,
-        )
-        literalExpressionCheckBox.isEnabled = false
+        ).apply {
+            // 字面量检查是插件的基本功能：始终开启，UI 中只做展示
+            isEnabled = false
+            isSelected = true
+            toolTipText = htmlTooltip(CsleBundle.message("inspect.target.literal.expression.tip"))
+        }
         docCommentsCheckBox = JBCheckBox(
             CsleBundle.message("inspect.target.doc.comments"),
             CsleSettings.instance.state.checkDocComments,
         ).apply {
             // 悬停提示同样给出来，说明只有具备文档注释语法的语言才受此开关影响
-            toolTipText = CsleBundle.message("inspect.target.doc.comments.tip")
+            toolTipText = htmlTooltip(CsleBundle.message("inspect.target.doc.comments.tip"))
         }
 
         val initialInspect = CsleSettings.instance.state.inspect
@@ -87,15 +87,23 @@ class CsleSettingsConfigurable : Configurable {
         val root = panel {
 
             row {
-                text(CsleBundle.message("inspection.label"))
+                label(CsleBundle.message("inspection.label"))
                 cell(inspectComboBox)
-                text(CsleBundle.message("quickfix.label"))
+                label(CsleBundle.message("quickfix.label"))
                 cell(quickFixComboBox)
             }
 
             group(CsleBundle.message("group.inspect.targets")) {
                 row {
                     cell(literalExpressionCheckBox)
+                }
+
+                // 常驻说明为什么这一项不可改动
+                row {
+                    comment(CsleBundle.message("inspect.target.literal.expression.hint"))
+                }
+
+                row {
                     cell(docCommentsCheckBox)
                 }
 
@@ -107,29 +115,41 @@ class CsleSettingsConfigurable : Configurable {
 
             group(CsleBundle.message("group.excluded.list")) {
                 row {
-                    text(CsleBundle.message("target.language.label"))
+                    label(CsleBundle.message("target.language.label"))
                     cell(targetLanguageComboBox)
                 }
 
+                // 整句交给 comment 渲染：跟随面板宽度自动换行，不再手工插入 <br>
                 row {
-                    cell(excludedHintLabel)
+                    excludedHintLabel = comment(excludedHintText(currentTarget)).component
                 }
 
                 row {
-                    cell(scrollPane)
-                }
+                    scrollCell(excludedField)
+                        .align(Align.FILL)
+                        .resizableColumn()
+                }.resizableRow()
             }
         }
         reset()
         return root
     }
 
+    /** tooltip 给定宽度，长文案交给 Swing 的 HTML 渲染自动折行，避免拉成一条超长横条 */
+    private fun htmlTooltip(text: String, widthPx: Int = 360): String =
+        "<html><body style='width:${widthPx}px'>$text</body></html>"
+
+    /** 拼接成一句完整的话，换行位置交给组件按实际宽度决定 */
+    private fun excludedHintText(target: ExcludedTarget): String {
+        return listOf(
+            CsleBundle.message("excluded.label.part1"),
+            CsleBundle.message(excludedLabelPart2Key(target)),
+            CsleBundle.message("excluded.label.part3"),
+        ).joinToString(" ")
+    }
+
     private fun updateExcludedHintLabel() {
-        val part1 = CsleBundle.message("excluded.label.part1")
-        val part2 = CsleBundle.message(excludedLabelPart2Key(currentTarget))
-        val part3 = CsleBundle.message("excluded.label.part3")
-        excludedHintLabel.text =
-            "<html>${escapeHtml(part1)}<br>${escapeHtml(part2)}<br>${escapeHtml(part3)}</html>"
+        excludedHintLabel.text = excludedHintText(currentTarget)
     }
 
     private fun excludedLabelPart2Key(target: ExcludedTarget): String {
@@ -145,13 +165,6 @@ class CsleSettingsConfigurable : Configurable {
             ExcludedTarget.XML -> "excluded.label.part2.xml"
             ExcludedTarget.JSON -> "excluded.label.part2.json"
         }
-    }
-
-    private fun escapeHtml(text: String): String {
-        return text
-            .replace("&", "&amp;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
     }
 
     private fun updateQuickFixOptions(selectedInspect: String, preferredQuickFix: String? = null) {

@@ -3,8 +3,8 @@ package com.amlzq.csle.inspection
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextArea
+import com.intellij.ui.dsl.builder.components.DslLabel
 import java.awt.Component
 import java.awt.Container
 
@@ -57,8 +57,11 @@ class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
         comboBox.selectedItem = item
     }
 
-    private fun hintLabel(root: Container): JBLabel =
-        findAll(root, JBLabel::class.java).first { it.text?.startsWith("<html>") == true }
+    /** 排除列表上方的说明文案（UI DSL 的 comment 组件，会按宽度自动换行） */
+    private fun hintLabel(root: Container): DslLabel {
+        val prefix = CsleBundle.message("excluded.label.part1")
+        return findAll(root, DslLabel::class.java).first { it.userText?.startsWith(prefix) == true }
+    }
 
     fun testDocCommentsUncheckedByDefault() {
         assertFalse(CsleSettings.instance.state.checkDocComments)
@@ -80,6 +83,25 @@ class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
         assertTrue(checkbox!!.isSelected)
     }
 
+    fun testLiteralExpressionAlwaysCheckedAndDisabled() {
+        CsleSettings.instance.state.checkLiteralExpression = false
+
+        val (_, root) = createConfigurable()
+        val checkbox = findCheckBox(root, CsleBundle.message("inspect.target.literal.expression"))
+
+        assertNotNull(checkbox)
+        // 字面量检查是基本功能：始终勾选且不允许用户改动
+        assertTrue(checkbox!!.isSelected)
+        assertFalse(checkbox.isEnabled)
+
+        // 复选框下有常驻说明，悬停提示同样带折行
+        val hint = CsleBundle.message("inspect.target.literal.expression.hint")
+        assertTrue(findAll(root, DslLabel::class.java).any { it.userText == hint })
+        val tooltip = checkbox.toolTipText
+        assertNotNull(tooltip)
+        assertTrue(tooltip!!.contains(CsleBundle.message("inspect.target.literal.expression.tip")))
+    }
+
     fun testInitiallyNotModified() {
         val (configurable, _) = createConfigurable()
         assertFalse(configurable.isModified())
@@ -93,7 +115,11 @@ class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
         // 开关上挂完整说明的悬停提示；设置页里还有一行常驻说明
         val checkbox = findCheckBox(root, CsleBundle.message("inspect.target.doc.comments"))
         assertNotNull(checkbox)
-        assertEquals(tip, checkbox!!.toolTipText)
+        val tooltip = checkbox!!.toolTipText
+        assertNotNull(tooltip)
+        assertTrue(tooltip!!.contains(tip))
+        // 长提示按固定宽度折行，不再是一条超长横条
+        assertTrue(tooltip.startsWith("<html>") && tooltip.contains("width:"))
 
         // 常驻说明与悬停提示都要点名没有文档注释语法的语言
         listOf(hint, tip).forEach {
@@ -205,11 +231,13 @@ class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
         val hint = hintLabel(root)
         val kotlinHint = CsleBundle.message("excluded.label.part2.kotlin")
 
-        assertFalse(hint.text.contains(kotlinHint))
+        assertFalse(hint.userText?.contains(kotlinHint) == true)
+        // 文案不再手工插入 <br>，换行交给组件按宽度决定
+        assertFalse(hint.text.contains("<br"))
 
         selectTarget(targetComboBox(root), "target.language.kotlin")
 
-        assertTrue(hint.text.contains(kotlinHint))
+        assertTrue(hint.userText?.contains(kotlinHint) == true)
     }
 
     fun testDisplayName() {
