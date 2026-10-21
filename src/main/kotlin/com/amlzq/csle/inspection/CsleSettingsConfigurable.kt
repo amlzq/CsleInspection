@@ -59,7 +59,10 @@ class CsleSettingsConfigurable : Configurable {
         docCommentsCheckBox = JBCheckBox(
             CsleBundle.message("inspect.target.doc.comments"),
             CsleSettings.instance.state.checkDocComments,
-        )
+        ).apply {
+            // 悬停提示同样给出来，说明只有具备文档注释语法的语言才受此开关影响
+            toolTipText = CsleBundle.message("inspect.target.doc.comments.tip")
+        }
 
         val initialInspect = CsleSettings.instance.state.inspect
         inspectComboBox.selectedItem = initialInspect
@@ -94,6 +97,11 @@ class CsleSettingsConfigurable : Configurable {
                 row {
                     cell(literalExpressionCheckBox)
                     cell(docCommentsCheckBox)
+                }
+
+                // 说明适用范围：只有具备文档注释语法的语言才受上面的开关影响
+                row {
+                    comment(CsleBundle.message("inspect.target.doc.comments.hint"))
                 }
             }
 

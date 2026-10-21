@@ -85,6 +85,26 @@ class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
         assertFalse(configurable.isModified())
     }
 
+    fun testDocCommentsHintExplainsUnsupportedLanguages() {
+        val (_, root) = createConfigurable()
+        val hint = CsleBundle.message("inspect.target.doc.comments.hint")
+        val tip = CsleBundle.message("inspect.target.doc.comments.tip")
+
+        // 开关上挂完整说明的悬停提示；设置页里还有一行常驻说明
+        val checkbox = findCheckBox(root, CsleBundle.message("inspect.target.doc.comments"))
+        assertNotNull(checkbox)
+        assertEquals(tip, checkbox!!.toolTipText)
+
+        // 常驻说明与悬停提示都要点名没有文档注释语法的语言
+        listOf(hint, tip).forEach {
+            assertTrue(it.contains("HTML"))
+            assertTrue(it.contains("CSS"))
+            assertTrue(it.contains("Python"))
+        }
+        // Python 的替代规则只写在完整提示里
+        assertTrue(tip.contains("docstring", ignoreCase = true))
+    }
+
     fun testSelectingInspectRemovesItFromQuickFixOptions() {
         val (configurable, root) = createConfigurable()
         val inspect = inspectComboBox(root)
