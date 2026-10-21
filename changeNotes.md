@@ -1,3 +1,19 @@
+# Next
+- **IMPROVEMENT** share one implementation for the XML and HTML inspections.
+- **BUGFIX** stop reporting Chinese text from comments in HTML and XML.
+- **BUGFIX** inspect and fix Chinese text inside HTML `<script>` and `<style>` blocks.
+- **BUGFIX** keep the CSS, JSON and markup quick fixes from corrupting the document.
+- **BUGFIX** make doc-comment quick fixes work in JavaScript, PHP and Dart, and recognize Dart `///` comments.
+- **BUGFIX** keep the original syntax in literal quick fixes (template literals, char literals, Python prefixes, multi-line JSX).
+- **BUGFIX** inspect JSX attribute values again.
+- **BUGFIX** honor the literal expression switch in the JavaScript, Python, PHP and Dart inspections.
+- **BUGFIX** show the stored default target when resetting the settings page.
+- **IMPROVEMENT** drive Python docstrings by the string-literal switch, since Python has no doc-comment syntax.
+- **IMPROVEMENT** explain each inspection target on the settings page and let the excluded list resize with the panel.
+- **IMPROVEMENT** name both glyphs and point to the inspection settings in the problem description.
+- **IMPROVEMENT** translate inspection names and settings group labels.
+- **BREAKING** require IntelliJ IDEA 2025.3 or later.
+
 # 0.5.0
 - **FEATURE** add doc-comment inspection and fixes (option)
 - **FEATURE** add support for HTML/CSS, XML, JSON
