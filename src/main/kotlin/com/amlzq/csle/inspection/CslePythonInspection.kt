@@ -50,7 +50,6 @@ class CslePythonInspection : CsleLocalInspectionTool() {
     ): @NotNull Array<ProblemDescriptor>? {
         debugPrintln("checkFile")
 
-        if (!isOnTheFly) return null
 
         // 判断是否为 Python 文件
         if (file !is PyFile) {

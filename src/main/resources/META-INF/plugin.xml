@@ -36,6 +36,17 @@
                                  groupId="tools"/>
         <applicationService
                 serviceImplementation="com.amlzq.csle.inspection.CsleSettings"/>
+        <toolWindow id="CsleInspection" anchor="bottom" canCloseContents="false"
+                    factoryClass="com.amlzq.csle.inspection.ui.CsleResultToolWindowFactory"/>
 
     </extensions>
+
+    <actions>
+        <!-- 文案见 CsleBundle: group.Csle.ToolsGroup.text / action.Csle.InspectAllFiles.text -->
+        <group id="Csle.ToolsGroup" popup="true">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <action id="Csle.InspectAllFiles"
+                    class="com.amlzq.csle.inspection.action.CsleInspectAllAction"/>
+        </group>
+    </actions>
 </idea-plugin>

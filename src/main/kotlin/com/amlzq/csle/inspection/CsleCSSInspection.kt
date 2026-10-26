@@ -52,7 +52,6 @@ class CsleCSSInspection : CsleLocalInspectionTool() {
     override fun checkFile(
         @NotNull file: PsiFile, @NotNull manager: InspectionManager, isOnTheFly: Boolean
     ): @NotNull Array<ProblemDescriptor>? {
-        if (!isOnTheFly) return null
 
         val languageId = file.language.id.lowercase()
         if (languageId != "css" && languageId != "scss" && languageId != "less") {

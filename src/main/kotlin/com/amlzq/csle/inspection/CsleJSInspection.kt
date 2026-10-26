@@ -76,7 +76,6 @@ class CsleJSInspection : CsleLocalInspectionTool() {
     ): @NotNull Array<ProblemDescriptor>? {
         // debugPrintln("checkFile")
 
-        if (!isOnTheFly) return null
 
         // 判断是否为 JS/TS 文件
         // debugPrintln("file.language.id=${file.language.id}")

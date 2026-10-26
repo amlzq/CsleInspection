@@ -50,7 +50,6 @@ class CslePHPInspection : CsleLocalInspectionTool() {
     ): @NotNull Array<ProblemDescriptor>? {
         debugPrintln("checkFile")
 
-        if (!isOnTheFly) return null
 
         // 判断是否为 PHP 文件
         if (file !is PhpFile) {

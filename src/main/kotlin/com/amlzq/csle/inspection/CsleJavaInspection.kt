@@ -44,7 +44,6 @@ class CsleJavaInspection : CsleLocalInspectionTool() {
     override fun checkFile(
         @NotNull file: PsiFile, @NotNull manager: InspectionManager, isOnTheFly: Boolean
     ): @NotNull Array<ProblemDescriptor>? {
-        if (!isOnTheFly) return null
 
         if (file !is PsiJavaFile) return null
 

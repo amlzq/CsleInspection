@@ -100,7 +100,6 @@ abstract class CsleMarkupInspection : CsleLocalInspectionTool() {
         @NotNull manager: InspectionManager,
         isOnTheFly: Boolean
     ): @NotNull Array<ProblemDescriptor>? {
-        if (!isOnTheFly) return null
         // HTML 是 XML 的方言，HtmlFile 同样是 XmlFile；具体处理哪种语言由子类守卫决定
         if (file !is XmlFile) return null
 
