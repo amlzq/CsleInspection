@@ -22,12 +22,21 @@ class CsleResultToolWindowFactory : ToolWindowFactory, DumbAware {
     companion object {
         const val ID = "CsleInspection"
 
-        /** 打开 Tool Window 并展示 [result]。须在 EDT 调用。 */
-        fun show(project: Project, result: ScanResult) {
+        /** 打开 Tool Window 并展示 [result]，[notice] 显示在汇总前面。须在 EDT 调用。 */
+        fun show(project: Project, result: ScanResult, notice: String? = null) {
             val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ID) ?: return
-            toolWindow.activate {
+            // 窗口已有内容时直接更新：已激活的窗口再调用 activate(callback) 不一定会执行回调，
+            // 之前"全部接受"后重扫的结果因此没有刷新
+            fun update() {
                 val panel = toolWindow.contentManager.getContent(0)?.component as? CsleResultPanel
-                panel?.showResult(result)
+                panel?.showResult(result, notice)
+            }
+            if (toolWindow.contentManager.contentCount > 0) {
+                update()
+                toolWindow.activate(null)
+            } else {
+                // 首次打开：内容在窗口显示时才创建
+                toolWindow.activate { update() }
             }
         }
     }

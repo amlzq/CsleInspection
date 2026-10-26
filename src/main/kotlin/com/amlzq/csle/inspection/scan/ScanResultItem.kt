@@ -16,7 +16,6 @@ class ScanResultItem(
     val originalText: String,
     val convertedText: String,
     val descriptor: ProblemDescriptor,
-    var selected: Boolean = true,
 )
 
 /**

@@ -5,7 +5,6 @@ import com.amlzq.csle.inspection.ui.CsleResultPanel
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import javax.swing.JLabel
 
 class CsleInspectAllActionTest : CsleBasePlatformTest() {
 
@@ -26,7 +25,9 @@ class CsleInspectAllActionTest : CsleBasePlatformTest() {
         val result = CsleProjectScanner(project).scan()
         val panel = CsleResultPanel(project)
         panel.showResult(result)
-        val label = (0 until panel.componentCount).map { panel.getComponent(it) }.filterIsInstance<JLabel>().single()
-        assertTrue(label.text, label.text.contains("Found 1 occurrence(s) in 1 file(s)"))
+        assertTrue(panel.statusText, panel.statusText.contains("Found 1 occurrence(s) in 1 file(s)"))
+        assertEquals(1, panel.checkedItems().size)
+        panel.checkAll(false)
+        assertTrue(panel.checkedItems().isEmpty())
     }
 }

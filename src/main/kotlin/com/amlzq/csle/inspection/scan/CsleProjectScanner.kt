@@ -33,6 +33,7 @@ class CsleProjectScanner(private val project: Project) {
         val skippedLanguages = linkedSetOf<String>()
         val tools = collectTools(skippedLanguages)
 
+        indicator?.isIndeterminate = false
         val files = ArrayList<VirtualFile>()
         ReadAction.run<RuntimeException> {
             ProjectFileIndex.getInstance(project).iterateContent { file ->
