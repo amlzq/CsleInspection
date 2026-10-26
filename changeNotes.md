@@ -1,3 +1,7 @@
+# Next
+- **FEATURE** add Tools | Chinese Expression Inspection | Inspect All Files: scan the whole project, review the results in a tool window, and convert every checked occurrence with Accept All (one Undo reverts the batch).
+- **IMPROVEMENT** inspections now also report in batch mode, so Code | Inspect Code lists the occurrences.
+
 # 0.6.0
 - **IMPROVEMENT** share one implementation for the XML and HTML inspections.
 - **BUGFIX** stop reporting Chinese text from comments in HTML and XML.

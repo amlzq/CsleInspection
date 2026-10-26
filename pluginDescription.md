@@ -10,6 +10,8 @@ csle, short for "Chinese String Literal Expression", inspect whether the string 
 
 If you don't want to inspect the strings in certain locations, such as: print, you can exclude them in the settings.
 
+Use Tools | Chinese Expression Inspection | Inspect All Files to scan the whole project, review the results, and convert them all at once with Accept All.
+
 In the plugin settings view, you can modify the Chinese glyphs you want to inspect and the glyphs to quick fix.
 
 好消息，此插件支持`Dart

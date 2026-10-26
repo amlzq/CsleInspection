@@ -6,6 +6,10 @@ In the plugin settings view, you can exclude strings in certain locations, such 
 
 In the plugin settings view, you can modify the Chinese glyphs you want to inspect and the glyphs to quickly fix.
 
+### Inspect all files
+
+Choose **Tools | Chinese Expression Inspection | Inspect All Files** to scan the whole project. The results appear in the *Chinese Expression Inspection* tool window, grouped by file; double-click an entry to jump to the code. Uncheck anything you want to keep, then click **Accept All** to convert every checked occurrence. A single Undo reverts the whole batch.
+
 ### Supported languages
 
 - Dart
