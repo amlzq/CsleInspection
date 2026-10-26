@@ -36,4 +36,14 @@ class CsleRescanFlowTest : CsleBasePlatformTest() {
         assertEquals("NOTICE", second!!.second)
         assertTrue(second.first.items.isEmpty())
     }
+
+    /** 测试环境下任务同步执行：结束后"运行中"标记必须清除，才能再次启动。 */
+    fun testRunningFlagClearedAfterScan() {
+        myFixture.addFileToProject("A.java", "public class A { String a = \"软件\"; }")
+        assertNotNull(scanInBackground(null))
+        assertFalse(CsleScanRunner.isRunning(project))
+        assertTrue(CsleScanRunner.start(project) { _, _ -> })
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+        assertFalse(CsleScanRunner.isRunning(project))
+    }
 }

@@ -38,7 +38,9 @@
                 serviceImplementation="com.amlzq.csle.inspection.settings.CsleSettings"/>
         <toolWindow id="CsleInspection" anchor="bottom" canCloseContents="false"
                     factoryClass="com.amlzq.csle.inspection.scan.CsleResultToolWindowFactory"/>
-
+        <postStartupActivity implementation="com.amlzq.csle.inspection.scan.CsleAutoScanStartupActivity"/>
+        <notificationGroup id="CsleInspection" displayType="BALLOON"
+                           bundle="messages.CsleBundle" key="notification.group.name"/>
     </extensions>
 
     <actions>

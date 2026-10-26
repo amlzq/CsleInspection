@@ -21,6 +21,7 @@ class CsleSettingsConfigurable : Configurable {
     private lateinit var excludedField: JBTextArea
     private lateinit var literalExpressionCheckBox: JBCheckBox
     private lateinit var docCommentsCheckBox: JBCheckBox
+    private lateinit var autoScanCheckBox: JBCheckBox
 
     private val options: Array<String> = CsleGlyphs.entries.map { it.label }.toTypedArray()
     private val excludedTextByTarget: MutableMap<ExcludedTarget, String> = mutableMapOf()
@@ -63,6 +64,13 @@ class CsleSettingsConfigurable : Configurable {
         ).apply {
             // 悬停提示同样给出来，说明只有具备文档注释语法的语言才受此开关影响
             toolTipText = htmlTooltip(CsleBundle.message("inspect.target.doc.comments.tip"))
+        }
+
+        autoScanCheckBox = JBCheckBox(
+            CsleBundle.message("scan.auto.on.open"),
+            CsleSettings.instance.state.autoScanOnOpen,
+        ).apply {
+            toolTipText = htmlTooltip(CsleBundle.message("scan.auto.on.open.tip"))
         }
 
         val initialInspect = CsleSettings.instance.state.inspect
@@ -111,6 +119,16 @@ class CsleSettingsConfigurable : Configurable {
                 // 说明适用范围：只有具备文档注释语法的语言才受上面的开关影响
                 row {
                     comment(CsleBundle.message("inspect.target.doc.comments.hint"))
+                }
+            }
+
+            group(CsleBundle.message("group.scan")) {
+                row {
+                    cell(autoScanCheckBox)
+                }
+
+                row {
+                    comment(CsleBundle.message("scan.auto.on.open.hint"))
                 }
             }
 
@@ -234,6 +252,7 @@ class CsleSettingsConfigurable : Configurable {
             getExcludedFromState(target) != normalizeLines(getExcludedText(target))
         }
                 || docCommentsCheckBox.isSelected != CsleSettings.instance.state.checkDocComments
+                || autoScanCheckBox.isSelected != CsleSettings.instance.state.autoScanOnOpen
     }
 
     override fun apply() {
@@ -247,6 +266,8 @@ class CsleSettingsConfigurable : Configurable {
         }
         CsleSettings.instance.state.checkLiteralExpression = true
         CsleSettings.instance.state.checkDocComments = docCommentsCheckBox.isSelected
+        // 只影响下次打开项目，不需要刷新编辑器中的 inspection
+        CsleSettings.instance.state.autoScanOnOpen = autoScanCheckBox.isSelected
 
         // 在后台执行自动刷新所有 "处于编辑器中的文件" 的 inspection
         // 解决“用户修改字形配置之后处于编辑器中的文件没有自动刷新”的问题
@@ -275,6 +296,7 @@ class CsleSettingsConfigurable : Configurable {
         updateExcludedHintLabel()
         literalExpressionCheckBox.isSelected = true
         docCommentsCheckBox.isSelected = CsleSettings.instance.state.checkDocComments
+        autoScanCheckBox.isSelected = CsleSettings.instance.state.autoScanOnOpen
     }
 
     override fun getDisplayName(): String = CsleBundle.message("display.name")

@@ -16,6 +16,6 @@ class CsleInspectAllAction : AnAction(), DumbAware {
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        CsleScanRunner.start(project)
+        if (!CsleScanRunner.start(project)) CsleNotifications.scanAlreadyRunning(project)
     }
 }

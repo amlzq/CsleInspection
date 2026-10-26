@@ -174,7 +174,9 @@ class CsleResultPanel(private val project: Project) : JPanel(BorderLayout()) {
     private inner class RescanAction : AnAction(
         CsleBundle.message("action.rescan"), null, AllIcons.Actions.Refresh
     ), DumbAware {
-        override fun actionPerformed(e: AnActionEvent) = CsleScanRunner.start(project)
+        override fun actionPerformed(e: AnActionEvent) {
+            if (!CsleScanRunner.start(project)) CsleNotifications.scanAlreadyRunning(project)
+        }
     }
 
     private inner class SelectAllAction(private val checked: Boolean) : AnAction(

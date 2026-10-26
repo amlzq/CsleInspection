@@ -26,6 +26,9 @@ class CsleSettings : PersistentStateComponent<CsleSettings> {
     /** 是否检查文档注释（KDoc/Javadoc/JSDoc/PHPDoc/DartDoc），默认关闭，只检查字符串字面量 */
     var checkDocComments: Boolean = false
 
+    /** 项目打开后是否自动扫描全项目，默认关闭 */
+    var autoScanOnOpen: Boolean = false
+
     override fun getState(): CsleSettings = this
 
     override fun loadState(state: CsleSettings) {
@@ -44,6 +47,7 @@ class CsleSettings : PersistentStateComponent<CsleSettings> {
         excludedJson = if (state.excludedJson.isNotEmpty()) state.excludedJson else state.excluded
         checkLiteralExpression = true
         checkDocComments = state.checkDocComments
+        autoScanOnOpen = state.autoScanOnOpen
     }
 
     companion object {

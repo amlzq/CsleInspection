@@ -265,4 +265,44 @@ class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
         assertEquals("logger", textArea.text)
         assertFalse(configurable.isModified())
     }
+
+    private fun autoScanCheckBox(root: Container) =
+        findCheckBox(root, CsleBundle.message("scan.auto.on.open"))!!
+
+    fun testAutoScanUncheckedByDefault() {
+        assertFalse(CsleSettings.instance.state.autoScanOnOpen)
+        val (configurable, root) = createConfigurable()
+        assertFalse(autoScanCheckBox(root).isSelected)
+        assertFalse(configurable.isModified())
+    }
+
+    fun testAutoScanApplyAndReset() {
+        val (configurable, root) = createConfigurable()
+        val checkbox = autoScanCheckBox(root)
+        try {
+            checkbox.isSelected = true
+            assertTrue(configurable.isModified())
+            configurable.reset()
+            assertFalse(checkbox.isSelected)
+
+            checkbox.isSelected = true
+            configurable.apply()
+            assertTrue(CsleSettings.instance.state.autoScanOnOpen)
+            assertFalse(configurable.isModified())
+        } finally {
+            CsleSettings.instance.autoScanOnOpen = false
+        }
+    }
+
+    fun testAutoScanSurvivesStateRoundTrip() {
+        val settings = CsleSettings.instance
+        try {
+            val saved = CsleSettings().also { it.autoScanOnOpen = true }
+            settings.autoScanOnOpen = false
+            settings.loadState(saved)
+            assertTrue(settings.autoScanOnOpen)
+        } finally {
+            settings.autoScanOnOpen = false
+        }
+    }
 }
