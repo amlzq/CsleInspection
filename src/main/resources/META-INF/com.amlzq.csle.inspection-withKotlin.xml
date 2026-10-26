@@ -8,6 +8,6 @@
                 key="inspection.display.name"
                 groupKey="group.name.kotlin"
                 enabledByDefault="true" level="WARNING" language="kotlin"
-                implementationClass="com.amlzq.csle.inspection.CsleKotlinInspection"/>
+                implementationClass="com.amlzq.csle.inspection.lang.CsleKotlinInspection"/>
     </extensions>
 </idea-plugin>

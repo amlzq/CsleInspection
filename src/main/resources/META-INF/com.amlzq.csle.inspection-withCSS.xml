@@ -8,6 +8,6 @@
                 key="inspection.display.name"
                 groupKey="group.name.css"
                 enabledByDefault="true" level="WARNING" language="CSS"
-                implementationClass="com.amlzq.csle.inspection.CsleCSSInspection"/>
+                implementationClass="com.amlzq.csle.inspection.lang.CsleCSSInspection"/>
     </extensions>
 </idea-plugin>

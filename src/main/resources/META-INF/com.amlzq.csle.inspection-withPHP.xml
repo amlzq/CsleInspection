@@ -8,6 +8,6 @@
                 key="inspection.display.name"
                 groupKey="group.name.php"
                 enabledByDefault="true" level="WARNING" language="PHP"
-                implementationClass="com.amlzq.csle.inspection.CslePHPInspection"/>
+                implementationClass="com.amlzq.csle.inspection.lang.CslePHPInspection"/>
     </extensions>
 </idea-plugin>

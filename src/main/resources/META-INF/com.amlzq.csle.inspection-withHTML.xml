@@ -8,6 +8,6 @@
                 key="inspection.display.name"
                 groupKey="group.name.html"
                 enabledByDefault="true" level="WARNING" language="HTML"
-                implementationClass="com.amlzq.csle.inspection.CsleHTMLInspection"/>
+                implementationClass="com.amlzq.csle.inspection.lang.CsleHTMLInspection"/>
     </extensions>
 </idea-plugin>

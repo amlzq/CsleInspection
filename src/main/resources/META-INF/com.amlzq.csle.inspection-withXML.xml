@@ -8,6 +8,6 @@
                 key="inspection.display.name"
                 groupKey="group.name.xml"
                 enabledByDefault="true" level="WARNING" language="XML"
-                implementationClass="com.amlzq.csle.inspection.CsleXMLInspection"/>
+                implementationClass="com.amlzq.csle.inspection.lang.CsleXMLInspection"/>
     </extensions>
 </idea-plugin>

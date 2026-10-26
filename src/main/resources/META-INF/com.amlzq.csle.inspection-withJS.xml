@@ -8,6 +8,6 @@
                 key="inspection.display.name"
                 groupKey="group.name.js.and.ts"
                 enabledByDefault="true" level="WARNING" language="JavaScript"
-                implementationClass="com.amlzq.csle.inspection.CsleJSInspection"/>
+                implementationClass="com.amlzq.csle.inspection.lang.CsleJSInspection"/>
     </extensions>
 </idea-plugin>

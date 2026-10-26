@@ -1,5 +1,6 @@
 package com.amlzq.csle.inspection
 
+import com.amlzq.csle.inspection.util.CsleUtils
 import com.intellij.codeInspection.LocalQuickFix
 
 /**

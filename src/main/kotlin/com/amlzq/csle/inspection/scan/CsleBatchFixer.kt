@@ -1,7 +1,7 @@
 package com.amlzq.csle.inspection.scan
 
-import com.amlzq.csle.inspection.CsleBundle
 import com.amlzq.csle.inspection.CsleLocalQuickFix
+import com.amlzq.csle.inspection.util.CsleBundle
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor

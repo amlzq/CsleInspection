@@ -8,6 +8,6 @@
                 key="inspection.display.name"
                 groupKey="group.name.json"
                 enabledByDefault="true" level="WARNING" language="JSON"
-                implementationClass="com.amlzq.csle.inspection.CsleJsonInspection"/>
+                implementationClass="com.amlzq.csle.inspection.lang.CsleJsonInspection"/>
     </extensions>
 </idea-plugin>

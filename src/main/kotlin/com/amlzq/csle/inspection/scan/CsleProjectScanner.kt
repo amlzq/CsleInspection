@@ -1,7 +1,7 @@
 package com.amlzq.csle.inspection.scan
 
 import com.amlzq.csle.inspection.CsleLocalInspectionTool
-import com.amlzq.csle.inspection.CsleUtils
+import com.amlzq.csle.inspection.util.CsleUtils
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalInspectionEP

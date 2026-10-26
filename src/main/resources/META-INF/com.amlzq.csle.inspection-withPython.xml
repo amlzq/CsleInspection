@@ -8,6 +8,6 @@
                 key="inspection.display.name"
                 groupKey="group.name.python"
                 enabledByDefault="true" level="WARNING" language="Python"
-                implementationClass="com.amlzq.csle.inspection.CslePythonInspection"/>
+                implementationClass="com.amlzq.csle.inspection.lang.CslePythonInspection"/>
     </extensions>
 </idea-plugin>

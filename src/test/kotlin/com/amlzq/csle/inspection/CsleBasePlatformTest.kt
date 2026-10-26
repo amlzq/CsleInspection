@@ -1,5 +1,7 @@
 package com.amlzq.csle.inspection
 
+import com.amlzq.csle.inspection.settings.CsleGlyphs
+import com.amlzq.csle.inspection.settings.CsleSettings
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 /**

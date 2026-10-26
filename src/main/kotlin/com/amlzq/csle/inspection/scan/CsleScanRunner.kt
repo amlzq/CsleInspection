@@ -1,7 +1,6 @@
 package com.amlzq.csle.inspection.scan
 
-import com.amlzq.csle.inspection.CsleBundle
-import com.amlzq.csle.inspection.ui.CsleResultToolWindowFactory
+import com.amlzq.csle.inspection.util.CsleBundle
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager

@@ -30,14 +30,14 @@
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
-        <applicationConfigurable instance="com.amlzq.csle.inspection.CsleSettingsConfigurable"
+        <applicationConfigurable instance="com.amlzq.csle.inspection.settings.CsleSettingsConfigurable"
                                  bundle="messages.CsleBundle"
                                  key="display.name"
                                  groupId="tools"/>
         <applicationService
-                serviceImplementation="com.amlzq.csle.inspection.CsleSettings"/>
+                serviceImplementation="com.amlzq.csle.inspection.settings.CsleSettings"/>
         <toolWindow id="CsleInspection" anchor="bottom" canCloseContents="false"
-                    factoryClass="com.amlzq.csle.inspection.ui.CsleResultToolWindowFactory"/>
+                    factoryClass="com.amlzq.csle.inspection.scan.CsleResultToolWindowFactory"/>
 
     </extensions>
 
@@ -46,7 +46,7 @@
         <group id="Csle.ToolsGroup" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
             <action id="Csle.InspectAllFiles"
-                    class="com.amlzq.csle.inspection.action.CsleInspectAllAction"/>
+                    class="com.amlzq.csle.inspection.scan.CsleInspectAllAction"/>
         </group>
     </actions>
 </idea-plugin>

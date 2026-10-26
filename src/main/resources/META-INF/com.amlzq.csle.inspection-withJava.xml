@@ -8,6 +8,6 @@
                 key="inspection.display.name"
                 groupKey="group.name.java"
                 enabledByDefault="true" level="WARNING" language="JAVA"
-                implementationClass="com.amlzq.csle.inspection.CsleJavaInspection"/>
+                implementationClass="com.amlzq.csle.inspection.lang.CsleJavaInspection"/>
     </extensions>
 </idea-plugin>

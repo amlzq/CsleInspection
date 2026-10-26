@@ -8,6 +8,6 @@
                 key="inspection.display.name"
                 groupKey="group.name.dart"
                 enabledByDefault="true" level="WARNING" language="Dart"
-                implementationClass="com.amlzq.csle.inspection.CsleDartInspection"/>
+                implementationClass="com.amlzq.csle.inspection.lang.CsleDartInspection"/>
     </extensions>
 </idea-plugin>

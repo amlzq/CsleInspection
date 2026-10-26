@@ -1,5 +1,7 @@
 package com.amlzq.csle.inspection
 
+import com.amlzq.csle.inspection.settings.CsleGlyphs
+import com.amlzq.csle.inspection.util.CsleUtils
 import com.github.houbb.opencc4j.util.ZhConverterUtil
 import com.github.houbb.opencc4j.util.ZhHkConverterUtil
 import com.github.houbb.opencc4j.util.ZhTwConverterUtil
