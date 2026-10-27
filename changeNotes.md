@@ -1,4 +1,4 @@
-# Next
+# 0.7.0
 - **FEATURE** add Tools | Chinese Expression Inspection | Inspect All Files: scan the whole project, review the results in a tool window, and convert every checked occurrence with Accept All (one Undo reverts the batch).
 - **FEATURE** optionally scan the whole project automatically after it opens (Settings | Tools | Chinese Expression Inspection | Scan, off by default); a notification links to the results.
 - **IMPROVEMENT** inspections now also report in batch mode, so Code | Inspect Code lists the occurrences.
