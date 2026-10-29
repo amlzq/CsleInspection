@@ -47,7 +47,9 @@ object CsleUtils {
     }
 
     fun getConvertedText(text: String): String {
-        return when (getQuickFixGlyphs()) {
+        val glyphs = getQuickFixGlyphs()
+        CsleCustomDictionary.convert(glyphs, CsleSettings.instance.state.customDictionary, text)?.let { return it }
+        return when (glyphs) {
             CsleGlyphs.SIMPLIFIED -> ZhConverterUtil.toSimple(text)
             CsleGlyphs.TAIWAN -> ZhTwConverterUtil.toTraditional(text)
             CsleGlyphs.HONGKONG -> ZhHkConverterUtil.toTraditional(text)

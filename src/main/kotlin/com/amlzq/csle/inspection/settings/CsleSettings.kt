@@ -29,6 +29,9 @@ class CsleSettings : PersistentStateComponent<CsleSettings> {
     /** 项目打开后是否自动扫描全项目，默认关闭 */
     var autoScanOnOpen: Boolean = false
 
+    /** 用户导入的自定义惯用语词典（OpenCC 词典格式的原文），为空表示未导入 */
+    var customDictionary: String = ""
+
     override fun getState(): CsleSettings = this
 
     override fun loadState(state: CsleSettings) {
@@ -48,6 +51,7 @@ class CsleSettings : PersistentStateComponent<CsleSettings> {
         checkLiteralExpression = true
         checkDocComments = state.checkDocComments
         autoScanOnOpen = state.autoScanOnOpen
+        customDictionary = state.customDictionary
     }
 
     companion object {

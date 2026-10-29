@@ -1,11 +1,17 @@
 package com.amlzq.csle.inspection.settings
 
 import com.amlzq.csle.inspection.util.CsleBundle
+import com.amlzq.csle.inspection.util.CsleCustomDictionary
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileChooser.FileChooser
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.fileChooser.FileSaverDescriptor
+import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.Messages
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.Align
@@ -22,6 +28,8 @@ class CsleSettingsConfigurable : Configurable {
     private lateinit var literalExpressionCheckBox: JBCheckBox
     private lateinit var docCommentsCheckBox: JBCheckBox
     private lateinit var autoScanCheckBox: JBCheckBox
+    private lateinit var dictionaryStatusLabel: JEditorPane
+    private var pendingDictionary: String = ""
 
     private val options: Array<String> = CsleGlyphs.entries.map { it.label }.toTypedArray()
     private val excludedTextByTarget: MutableMap<ExcludedTarget, String> = mutableMapOf()
@@ -132,6 +140,23 @@ class CsleSettingsConfigurable : Configurable {
                 }
             }
 
+            group(CsleBundle.message("group.custom.dictionary")) {
+                row {
+                    comment(CsleBundle.message("custom.dictionary.hint"))
+                }
+                row {
+                    button(CsleBundle.message("custom.dictionary.import")) { importDictionary() }
+                    button(CsleBundle.message("custom.dictionary.template")) { saveTemplate() }
+                    button(CsleBundle.message("custom.dictionary.clear")) {
+                        pendingDictionary = ""
+                        updateDictionaryStatus()
+                    }
+                }
+                row {
+                    dictionaryStatusLabel = comment("").component
+                }
+            }
+
             group(CsleBundle.message("group.excluded.list")) {
                 row {
                     label(CsleBundle.message("target.language.label"))
@@ -152,6 +177,40 @@ class CsleSettingsConfigurable : Configurable {
         }
         reset()
         return root
+    }
+
+    private fun importDictionary() {
+        val descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor()
+            .withTitle(CsleBundle.message("custom.dictionary.import"))
+        val file = FileChooser.chooseFile(descriptor, null, null) ?: return
+        val text = String(file.contentsToByteArray(), Charsets.UTF_8)
+        val result = CsleCustomDictionary.parse(text)
+        if (result.errors.isNotEmpty()) {
+            val shown = result.errors.take(5).joinToString("\n") { "${it.line}: ${it.content}" }
+            Messages.showErrorDialog(
+                CsleBundle.message("custom.dictionary.invalid", result.errors.size, shown),
+                CsleBundle.message("custom.dictionary.import"),
+            )
+            return
+        }
+        pendingDictionary = text
+        updateDictionaryStatus()
+    }
+
+    private fun saveTemplate() {
+        val descriptor = FileSaverDescriptor(
+            CsleBundle.message("custom.dictionary.template"), "", "txt",
+        )
+        val wrapper = FileChooserFactory.getInstance().createSaveFileDialog(descriptor, null)
+            .save(null as com.intellij.openapi.vfs.VirtualFile?, CsleCustomDictionary.TEMPLATE_FILE_NAME) ?: return
+        wrapper.file.writeText(CsleCustomDictionary.TEMPLATE, Charsets.UTF_8)
+    }
+
+    private fun updateDictionaryStatus() {
+        val count = CsleCustomDictionary.parse(pendingDictionary).entries.size
+        dictionaryStatusLabel.text =
+            if (count == 0) CsleBundle.message("custom.dictionary.empty")
+            else CsleBundle.message("custom.dictionary.count", count)
     }
 
     /** tooltip 给定宽度，长文案交给 Swing 的 HTML 渲染自动折行，避免拉成一条超长横条 */
@@ -253,6 +312,7 @@ class CsleSettingsConfigurable : Configurable {
         }
                 || docCommentsCheckBox.isSelected != CsleSettings.instance.state.checkDocComments
                 || autoScanCheckBox.isSelected != CsleSettings.instance.state.autoScanOnOpen
+                || pendingDictionary != CsleSettings.instance.state.customDictionary
     }
 
     override fun apply() {
@@ -268,6 +328,7 @@ class CsleSettingsConfigurable : Configurable {
         CsleSettings.instance.state.checkDocComments = docCommentsCheckBox.isSelected
         // 只影响下次打开项目，不需要刷新编辑器中的 inspection
         CsleSettings.instance.state.autoScanOnOpen = autoScanCheckBox.isSelected
+        CsleSettings.instance.state.customDictionary = pendingDictionary
 
         // 在后台执行自动刷新所有 "处于编辑器中的文件" 的 inspection
         // 解决“用户修改字形配置之后处于编辑器中的文件没有自动刷新”的问题
@@ -297,6 +358,8 @@ class CsleSettingsConfigurable : Configurable {
         literalExpressionCheckBox.isSelected = true
         docCommentsCheckBox.isSelected = CsleSettings.instance.state.checkDocComments
         autoScanCheckBox.isSelected = CsleSettings.instance.state.autoScanOnOpen
+        pendingDictionary = CsleSettings.instance.state.customDictionary
+        updateDictionaryStatus()
     }
 
     override fun getDisplayName(): String = CsleBundle.message("display.name")
