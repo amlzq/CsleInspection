@@ -29,7 +29,7 @@ class CsleSettingsConfigurable : Configurable {
     private lateinit var docCommentsCheckBox: JBCheckBox
     private lateinit var autoScanCheckBox: JBCheckBox
     private lateinit var dictionaryStatusLabel: JEditorPane
-    private var pendingDictionary: String = ""
+    private var pendingDictionaries: MutableMap<String, String> = mutableMapOf()
 
     private val options: Array<String> = CsleGlyphs.entries.map { it.label }.toTypedArray()
     private val excludedTextByTarget: MutableMap<ExcludedTarget, String> = mutableMapOf()
@@ -84,6 +84,10 @@ class CsleSettingsConfigurable : Configurable {
         val initialInspect = CsleSettings.instance.state.inspect
         inspectComboBox.selectedItem = initialInspect
         updateQuickFixOptions(initialInspect, preferredQuickFix = CsleSettings.instance.state.quickFix)
+
+        quickFixComboBox.addItemListener { e ->
+            if (e.stateChange == ItemEvent.SELECTED && ::dictionaryStatusLabel.isInitialized) updateDictionaryStatus()
+        }
 
         inspectComboBox.addItemListener { e ->
             if (e.stateChange == ItemEvent.SELECTED) {
@@ -148,7 +152,7 @@ class CsleSettingsConfigurable : Configurable {
                     button(CsleBundle.message("custom.dictionary.import")) { importDictionary() }
                     button(CsleBundle.message("custom.dictionary.template")) { saveTemplate() }
                     button(CsleBundle.message("custom.dictionary.clear")) {
-                        pendingDictionary = ""
+                        pendingDictionaries.remove(currentQuickFixGlyph().name)
                         updateDictionaryStatus()
                     }
                 }
@@ -185,6 +189,13 @@ class CsleSettingsConfigurable : Configurable {
         val file = FileChooser.chooseFile(descriptor, null, null) ?: return
         val text = String(file.contentsToByteArray(), Charsets.UTF_8)
         val result = CsleCustomDictionary.parse(text)
+        if (result.entries.isEmpty() && result.errors.isEmpty()) {
+            Messages.showErrorDialog(
+                CsleBundle.message("custom.dictionary.no.entries"),
+                CsleBundle.message("custom.dictionary.import"),
+            )
+            return
+        }
         if (result.errors.isNotEmpty()) {
             val shown = result.errors.take(5).joinToString("\n") { "${it.line}: ${it.content}" }
             Messages.showErrorDialog(
@@ -193,9 +204,12 @@ class CsleSettingsConfigurable : Configurable {
             )
             return
         }
-        pendingDictionary = text
+        pendingDictionaries[currentQuickFixGlyph().name] = text
         updateDictionaryStatus()
     }
+
+    private fun currentQuickFixGlyph(): CsleGlyphs =
+        CsleGlyphs.fromLabel(quickFixComboBox.selectedItem as? String ?: "") ?: CsleGlyphs.SIMPLIFIED
 
     private fun saveTemplate() {
         val descriptor = FileSaverDescriptor(
@@ -206,11 +220,15 @@ class CsleSettingsConfigurable : Configurable {
         wrapper.file.writeText(CsleCustomDictionary.TEMPLATE, Charsets.UTF_8)
     }
 
+    private fun normalizedDictionaries(map: Map<String, String>): Map<String, String> =
+        map.filterValues { it.isNotBlank() }
+
     private fun updateDictionaryStatus() {
-        val count = CsleCustomDictionary.parse(pendingDictionary).entries.size
+        val glyph = currentQuickFixGlyph()
+        val count = CsleCustomDictionary.parse(pendingDictionaries[glyph.name].orEmpty()).entries.size
         dictionaryStatusLabel.text =
-            if (count == 0) CsleBundle.message("custom.dictionary.empty")
-            else CsleBundle.message("custom.dictionary.count", count)
+            if (count == 0) CsleBundle.message("custom.dictionary.empty", glyph.label)
+            else CsleBundle.message("custom.dictionary.count", glyph.label, count)
     }
 
     /** tooltip 给定宽度，长文案交给 Swing 的 HTML 渲染自动折行，避免拉成一条超长横条 */
@@ -312,7 +330,7 @@ class CsleSettingsConfigurable : Configurable {
         }
                 || docCommentsCheckBox.isSelected != CsleSettings.instance.state.checkDocComments
                 || autoScanCheckBox.isSelected != CsleSettings.instance.state.autoScanOnOpen
-                || pendingDictionary != CsleSettings.instance.state.customDictionary
+                || normalizedDictionaries(pendingDictionaries) != normalizedDictionaries(CsleSettings.instance.state.customDictionaries)
     }
 
     override fun apply() {
@@ -328,7 +346,7 @@ class CsleSettingsConfigurable : Configurable {
         CsleSettings.instance.state.checkDocComments = docCommentsCheckBox.isSelected
         // 只影响下次打开项目，不需要刷新编辑器中的 inspection
         CsleSettings.instance.state.autoScanOnOpen = autoScanCheckBox.isSelected
-        CsleSettings.instance.state.customDictionary = pendingDictionary
+        CsleSettings.instance.state.customDictionaries = normalizedDictionaries(pendingDictionaries).toMutableMap()
 
         // 在后台执行自动刷新所有 "处于编辑器中的文件" 的 inspection
         // 解决“用户修改字形配置之后处于编辑器中的文件没有自动刷新”的问题
@@ -358,7 +376,7 @@ class CsleSettingsConfigurable : Configurable {
         literalExpressionCheckBox.isSelected = true
         docCommentsCheckBox.isSelected = CsleSettings.instance.state.checkDocComments
         autoScanCheckBox.isSelected = CsleSettings.instance.state.autoScanOnOpen
-        pendingDictionary = CsleSettings.instance.state.customDictionary
+        pendingDictionaries = CsleSettings.instance.state.customDictionaries.toMutableMap()
         updateDictionaryStatus()
     }
 

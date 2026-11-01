@@ -8,11 +8,28 @@ import org.junit.Assert.assertNull
 
 class CsleCustomDictionaryTest : CsleBasePlatformTest() {
 
-    fun testParseSkipsCommentsAndReportsErrors() {
-        val result = CsleCustomDictionary.parse("# c\n\n服务器\t伺服器\t\t服務器\n只有一列\n甲\t乙\t丙\t丁\t戊\n")
-        assertEquals(1, result.entries.size)
-        assertEquals(listOf("服务器", "伺服器", null, "服務器"), result.entries[0].cells)
-        assertEquals(listOf(4, 5), result.errors.map { it.line })
+    fun testParseTabAndCandidates() {
+        val result = CsleCustomDictionary.parse("# c\n\n服务器\t伺服端 备选\n软件\t軟體\n")
+        assertEquals(listOf("伺服端", "备选"), result.entries["服务器"])
+        assertEquals(listOf("軟體"), result.entries["软件"])
+        assertEquals(0, result.errors.size)
+    }
+
+    fun testParseFallsBackToSpaceWhenNoTab() {
+        val result = CsleCustomDictionary.parse("我的 我的TW\n")
+        assertEquals(listOf("我的TW"), result.entries["我的"])
+    }
+
+    fun testTabAllowsSpacesInSourcePhrase() {
+        val result = CsleCustomDictionary.parse("SQL 注入\tSQL隱碼攻擊\n")
+        assertEquals(listOf("SQL隱碼攻擊"), result.entries["SQL 注入"])
+    }
+
+    fun testParseReportsErrorsAndDuplicates() {
+        val result = CsleCustomDictionary.parse("只有原词\n服务器\t甲\n服务器\t乙\n\t无键\n")
+        assertEquals(listOf(1, 4), result.errors.map { it.line })
+        assertEquals(listOf("乙"), result.entries["服务器"])
+        assertEquals(1, result.duplicates)
     }
 
     fun testTemplateHasNoActiveEntries() {
@@ -23,8 +40,8 @@ class CsleCustomDictionaryTest : CsleBasePlatformTest() {
 
     fun testTemplateExamplesAreValidWhenUncommented() {
         val uncommented = CsleCustomDictionary.TEMPLATE.lines()
-            .filter { it.startsWith("# ") && it.contains('\t') }
-            .joinToString("\n") { it.removePrefix("# ") }
+            .filter { it.startsWith("#") && !it.startsWith("# ") && it.length > 1 }
+            .joinToString("\n") { it.removePrefix("#") }
         val result = CsleCustomDictionary.parse(uncommented)
         assertEquals(4, result.entries.size)
         assertEquals(0, result.errors.size)
@@ -34,51 +51,43 @@ class CsleCustomDictionaryTest : CsleBasePlatformTest() {
         assertNull(CsleCustomDictionary.convert(CsleGlyphs.TAIWAN, "", "服务器"))
     }
 
-    fun testColumnPicksTargetGlyph() {
-        val dict = "服务器\t伺服端\t主機端\t服務端\n"
+    fun testUserEntryOverridesBuiltIn() {
+        val dict = "服务器\t伺服端\n"
         assertEquals("伺服端", CsleCustomDictionary.convert(CsleGlyphs.TAIWAN, dict, "服务器"))
-        assertEquals("主機端", CsleCustomDictionary.convert(CsleGlyphs.HONGKONG, dict, "服务器"))
-        assertEquals("服務端", CsleCustomDictionary.convert(CsleGlyphs.TRADITIONAL, dict, "服务器"))
-        assertEquals("服务器", CsleCustomDictionary.convert(CsleGlyphs.SIMPLIFIED, dict, "服务器"))
-        // 其它词条仍走内置词典
         assertEquals("記憶體", CsleCustomDictionary.convert(CsleGlyphs.TAIWAN, dict, "内存"))
     }
 
-    fun testEmptyTargetColumnSkipsRow() {
-        val dict = "服务器\t\t主機端\t\n"
-        assertEquals("伺服器", CsleUtils_convert(CsleGlyphs.TAIWAN, "服务器", dict))
-        assertEquals("主機端", CsleUtils_convert(CsleGlyphs.HONGKONG, "服务器", dict))
+    fun testFirstCandidateIsUsed() {
+        assertEquals("軟體", CsleCustomDictionary.convert(CsleGlyphs.TAIWAN, "软件\t軟體 软件\n", "软件"))
     }
 
-    fun testTraditionalToSimplified() {
-        val dict = "程序\t程式\t\t\n"
-        assertEquals("程序", CsleCustomDictionary.convert(CsleGlyphs.SIMPLIFIED, dict, "程式"))
+    fun testDictionaryChangeTakesEffect() {
+        assertEquals("甲", CsleCustomDictionary.convert(CsleGlyphs.TAIWAN, "服务器\t甲\n", "服务器"))
+        assertEquals("乙", CsleCustomDictionary.convert(CsleGlyphs.TAIWAN, "服务器\t乙\n", "服务器"))
     }
 
-    fun testSettingsDictionaryUsedByQuickFix() {
+    fun testSimplifiedTarget() {
+        assertEquals("程序", CsleCustomDictionary.convert(CsleGlyphs.SIMPLIFIED, "程式\t程序\n", "程式"))
+    }
+
+    fun testSettingsDictionaryIsPerTarget() {
         val state = CsleSettings.instance.state
         val oldFix = state.quickFix
         try {
+            state.customDictionaries = mutableMapOf(
+                CsleGlyphs.TAIWAN.name to "服务器\t伺服端\n",
+                CsleGlyphs.HONGKONG.name to "服务器\t主機端\n",
+            )
             state.quickFix = CsleGlyphs.TAIWAN.label
-            state.customDictionary = "服务器\t伺服端\t\t\n"
             assertEquals("伺服端", CsleUtils.getConvertedText("服务器"))
-            state.customDictionary = ""
-            assertEquals("伺服器", CsleUtils.getConvertedText("服务器"))
+            state.quickFix = CsleGlyphs.HONGKONG.label
+            assertEquals("主機端", CsleUtils.getConvertedText("服务器"))
+            // 没有为该目标导入词典时走内置转换
+            state.quickFix = CsleGlyphs.TRADITIONAL.label
+            assertEquals("服務器", CsleUtils.getConvertedText("服务器"))
         } finally {
             state.quickFix = oldFix
-            state.customDictionary = ""
-        }
-    }
-
-    private fun CsleUtils_convert(glyph: CsleGlyphs, text: String, dict: String): String {
-        val state = CsleSettings.instance.state
-        val oldFix = state.quickFix
-        state.quickFix = glyph.label
-        state.customDictionary = dict
-        try {
-            return CsleUtils.getConvertedText(text)
-        } finally {
-            state.quickFix = oldFix
+            state.customDictionaries = mutableMapOf()
         }
     }
 }
