@@ -4,20 +4,23 @@ import com.amlzq.csle.inspection.util.CsleBundle
 import com.amlzq.csle.inspection.util.CsleCustomDictionary
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.fileChooser.FileChooser
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.fileChooser.FileSaverDescriptor
-import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import java.awt.event.ItemEvent
+import javax.swing.JButton
+import javax.swing.JComponent
 import javax.swing.JEditorPane
+import javax.swing.event.DocumentEvent
 
 class CsleSettingsConfigurable : Configurable {
     private lateinit var inspectComboBox: ComboBox<String>
@@ -29,6 +32,11 @@ class CsleSettingsConfigurable : Configurable {
     private lateinit var docCommentsCheckBox: JBCheckBox
     private lateinit var autoScanCheckBox: JBCheckBox
     private lateinit var dictionaryStatusLabel: JEditorPane
+    private lateinit var dictionarySourceField: JBTextField
+    private lateinit var dictionaryTargetField: JBTextField
+    private lateinit var dictionaryAddButton: JButton
+    private lateinit var dictionaryAllButton: JButton
+    private lateinit var settingsRoot: JComponent
     private var pendingDictionaries: MutableMap<String, String> = mutableMapOf()
 
     private val options: Array<String> = CsleGlyphs.entries.map { it.label }.toTypedArray()
@@ -105,6 +113,28 @@ class CsleSettingsConfigurable : Configurable {
             updateExcludedHintLabel()
         }
 
+        dictionarySourceField = JBTextField().apply {
+            emptyText.text = CsleBundle.message("custom.dictionary.source")
+        }
+        dictionaryTargetField = JBTextField().apply {
+            emptyText.text = CsleBundle.message("custom.dictionary.target")
+        }
+        dictionaryAddButton = JButton(CsleBundle.message("custom.dictionary.add")).apply {
+            addActionListener { addDictionaryEntry() }
+            isEnabled = false
+        }
+        dictionaryAllButton = JButton().apply {
+            addActionListener { openDictionaryDialog() }
+        }
+        val dictionaryFieldListener = object : DocumentAdapter() {
+            override fun textChanged(e: DocumentEvent) {
+                dictionaryAddButton.isEnabled =
+                    dictionarySourceField.text.isNotBlank() && dictionaryTargetField.text.isNotBlank()
+            }
+        }
+        dictionarySourceField.document.addDocumentListener(dictionaryFieldListener)
+        dictionaryTargetField.document.addDocumentListener(dictionaryFieldListener)
+
         val root = panel {
 
             row {
@@ -149,12 +179,10 @@ class CsleSettingsConfigurable : Configurable {
                     comment(CsleBundle.message("custom.dictionary.hint"))
                 }
                 row {
-                    button(CsleBundle.message("custom.dictionary.import")) { importDictionary() }
-                    button(CsleBundle.message("custom.dictionary.template")) { saveTemplate() }
-                    button(CsleBundle.message("custom.dictionary.clear")) {
-                        pendingDictionaries.remove(currentQuickFixGlyph().name)
-                        updateDictionaryStatus()
-                    }
+                    cell(dictionarySourceField).columns(14)
+                    cell(dictionaryTargetField).columns(14)
+                    cell(dictionaryAddButton)
+                    cell(dictionaryAllButton)
                 }
                 row {
                     dictionaryStatusLabel = comment("").component
@@ -179,45 +207,51 @@ class CsleSettingsConfigurable : Configurable {
                 }.resizableRow()
             }
         }
+        settingsRoot = root
         reset()
         return root
-    }
-
-    private fun importDictionary() {
-        val descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor()
-            .withTitle(CsleBundle.message("custom.dictionary.import"))
-        val file = FileChooser.chooseFile(descriptor, null, null) ?: return
-        val text = String(file.contentsToByteArray(), Charsets.UTF_8)
-        val result = CsleCustomDictionary.parse(text)
-        if (result.entries.isEmpty() && result.errors.isEmpty()) {
-            Messages.showErrorDialog(
-                CsleBundle.message("custom.dictionary.no.entries"),
-                CsleBundle.message("custom.dictionary.import"),
-            )
-            return
-        }
-        if (result.errors.isNotEmpty()) {
-            val shown = result.errors.take(5).joinToString("\n") { "${it.line}: ${it.content}" }
-            Messages.showErrorDialog(
-                CsleBundle.message("custom.dictionary.invalid", result.errors.size, shown),
-                CsleBundle.message("custom.dictionary.import"),
-            )
-            return
-        }
-        pendingDictionaries[currentQuickFixGlyph().name] = text
-        updateDictionaryStatus()
     }
 
     private fun currentQuickFixGlyph(): CsleGlyphs =
         CsleGlyphs.fromLabel(quickFixComboBox.selectedItem as? String ?: "") ?: CsleGlyphs.SIMPLIFIED
 
-    private fun saveTemplate() {
-        val descriptor = FileSaverDescriptor(
-            CsleBundle.message("custom.dictionary.template"), "", "txt",
-        )
-        val wrapper = FileChooserFactory.getInstance().createSaveFileDialog(descriptor, null)
-            .save(null as com.intellij.openapi.vfs.VirtualFile?, CsleCustomDictionary.TEMPLATE_FILE_NAME) ?: return
-        wrapper.file.writeText(CsleCustomDictionary.TEMPLATE, Charsets.UTF_8)
+    private fun addDictionaryEntry() {
+        val glyph = currentQuickFixGlyph()
+        val source = dictionarySourceField.text
+        val target = dictionaryTargetField.text
+        val error = CsleCustomDictionary.validate(source, target)
+        val errorKey = when (error) {
+            CsleCustomDictionary.ValidationError.COMMENT_PREFIX -> "custom.dictionary.invalid.comment.entry"
+            CsleCustomDictionary.ValidationError.TARGET_HAS_SPACE -> "custom.dictionary.invalid.target.space.entry"
+            CsleCustomDictionary.ValidationError.INVALID_CHARACTER -> "custom.dictionary.invalid.character.entry"
+            else -> null
+        }
+        if (errorKey != null) {
+            dictionaryStatusLabel.text = CsleBundle.message(errorKey)
+            return
+        }
+        if (error != null) return
+        val (text, overwritten) = CsleCustomDictionary.put(pendingDictionaries[glyph.name].orEmpty(), source, target)
+        pendingDictionaries[glyph.name] = text
+        dictionarySourceField.text = ""
+        dictionaryTargetField.text = ""
+        updateDictionaryStatus()
+        if (overwritten) {
+            dictionaryStatusLabel.text = CsleBundle.message("custom.dictionary.overwritten", dictionaryStatusLabel.text)
+        }
+        // 清空输入框会让“添加”按钮变为不可用，焦点随之丢失；等焦点稳定后再放回原词输入框，方便连续录入
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown {
+            IdeFocusManager.getGlobalInstance().requestFocus(dictionarySourceField, true)
+        }
+    }
+
+    private fun openDictionaryDialog() {
+        val glyph = currentQuickFixGlyph()
+        val dialog = CsleCustomDictionaryDialog(settingsRoot, glyph, pendingDictionaries[glyph.name].orEmpty())
+        if (!dialog.showAndGet()) return
+        if (dialog.resultText.isBlank()) pendingDictionaries.remove(glyph.name)
+        else pendingDictionaries[glyph.name] = dialog.resultText
+        updateDictionaryStatus()
     }
 
     private fun normalizedDictionaries(map: Map<String, String>): Map<String, String> =
@@ -229,6 +263,7 @@ class CsleSettingsConfigurable : Configurable {
         dictionaryStatusLabel.text =
             if (count == 0) CsleBundle.message("custom.dictionary.empty", glyph.label)
             else CsleBundle.message("custom.dictionary.count", glyph.label, count)
+        dictionaryAllButton.text = CsleBundle.message("custom.dictionary.all", count)
     }
 
     /** tooltip 给定宽度，长文案交给 Swing 的 HTML 渲染自动折行，避免拉成一条超长横条 */

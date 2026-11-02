@@ -9,8 +9,8 @@ import com.github.houbb.opencc4j.support.segment.Segment
 
 /**
  * 用户自定义惯用语词典，沿用 OpenCC 词典文件的格式：
- * UTF-8 文本，每行 `原词<Tab>目标词 [候选2 ...]`，多个候选词用空格分隔，第一个候选词生效；
- * `#` 开头的行和空行会被忽略。
+ * UTF-8 文本，每行 `原词<Tab>目标词`，`#` 开头的行和空行会被忽略。
+ * 目标词是一个不含空白的词；OpenCC 词典里的多个候选词只保留第一个。
  *
  * 词典按“快速修复的目标字形”分别保存：原词就是代码里的原文，不管它属于哪种字形，
  * 所以只需要区分目标。转换时用户词条优先于 Opencc4j 内置词典。
@@ -18,59 +18,50 @@ import com.github.houbb.opencc4j.support.segment.Segment
 object CsleCustomDictionary {
     data class ParseError(val line: Int, val content: String)
 
-    /** [entries] 是 原词 -> 候选词；同一原词重复出现时以后面的为准，次数记在 [duplicates] */
+    /** [entries] 是 原词 -> 目标词；同一原词重复出现时以后面的为准，次数记在 [duplicates] */
     class ParseResult(
-        val entries: Map<String, List<String>>,
+        val entries: Map<String, String>,
         val errors: List<ParseError>,
         val duplicates: Int,
     )
 
     const val TEMPLATE_FILE_NAME = "csle-custom-dictionary.txt"
 
-    /** 下载给用户的模板：带填写说明，示例行以 # 紧跟内容的形式注释掉，导入后不生效 */
-    val TEMPLATE: String = listOf(
-        "# Chinese Expression Inspection - custom phrase dictionary (OpenCC dictionary format)",
-        "# 自定义惯用语词典（OpenCC 词典格式）",
-        "#",
-        "# How to fill in / 填写说明",
-        "# 1. UTF-8 text. One entry per line: <source phrase><Tab><target phrase>.",
-        "#    UTF-8 文本，每行一条：原词<Tab>目标词。",
-        "# 2. Use a Tab between the two columns. If a line has no Tab, the first run of spaces is used instead.",
-        "#    两列之间用 Tab 分隔；如果一行里没有 Tab，则以第一段空格作为分隔。原词本身含空格时必须使用 Tab。",
-        "# 3. To list several candidates, separate them with spaces; only the first one is used.",
-        "#    有多个候选词时用空格分隔，只有第一个会被使用。",
-        "# 4. Import this file while the matching Quick fix target is selected: the file only applies to that",
-        "#    target (the source phrase can be in any script). Each target keeps its own dictionary.",
-        "#    请在选中对应的“快速修复”目标字形时导入：这份词典只对该目标字形生效（原词可以是任意字形），",
-        "#    每个目标字形各自保存一份词典。",
-        "# 5. Lines starting with # and blank lines are ignored. If a source phrase appears more than once, the",
-        "#    last one wins. Entries override the built-in dictionary.",
-        "#    以 # 开头的行和空行会被忽略；同一个原词出现多次时以最后一次为准。这里的词条优先于内置词典。",
-        "# 6. To use an example below, delete the leading # (the example lines start with # and no space).",
-        "#    要使用下面的示例，请删掉行首的 #（示例行的 # 后面没有空格）。",
-        "#",
-        "# Examples / 示例 (Quick fix target: Traditional (Taiwan) / 快速修复目标：繁体（台湾）)",
-        "#服务器\t伺服器",
-        "#内存\t記憶體",
-        "#软件\t軟體 软件",
-        "#",
-        "# Example for Quick fix target Simplified / 快速修复目标为简体时的示例：",
-        "#程式\t程序",
-    ).joinToString("\n") + "\n"
+    /** 各目标字形的示例词条（原词, 目标词） */
+    private fun examplesFor(glyph: CsleGlyphs): List<Pair<String, String>> = when (glyph) {
+        CsleGlyphs.SIMPLIFIED -> listOf("程式" to "程序", "軟體" to "软件", "記憶體" to "内存")
+        CsleGlyphs.TAIWAN -> listOf("程序" to "程式", "软件" to "軟體", "内存" to "記憶體")
+        CsleGlyphs.HONGKONG -> listOf("程序" to "程式", "软件" to "軟件", "内存" to "記憶體")
+        CsleGlyphs.TRADITIONAL -> listOf("服务器" to "服務器", "软件" to "軟件", "内存" to "內存")
+    }
+
+    /** 下载给用户的模板：简短说明加上该目标字形的示例；示例行以 # 紧跟内容的形式注释掉，导入后不生效 */
+    fun templateFor(glyph: CsleGlyphs): String = (
+        listOf(
+            "# Custom phrase dictionary, Quick fix target: ${glyph.label} / 自定义惯用语词典，快速修复目标：${glyph.label}",
+            "# One entry per line: <source><Tab><target>. 每行一条：原词<Tab>目标词。",
+            "# The target is a single phrase without spaces. 目标词是一个不含空格的词。",
+            "# Lines starting with # are comments; for a repeated source the last entry wins.",
+            "# 以 # 开头的行是注释；原词重复时以最后一条为准。",
+            "# To use an example, delete the leading # (no space after it). 去掉示例行行首的 # 即可使用。",
+            "#",
+        ) + examplesFor(glyph).map { (source, target) -> "#$source\t$target" }
+        ).joinToString("\n") + "\n"
 
     fun parse(text: String): ParseResult {
-        val entries = LinkedHashMap<String, List<String>>()
+        val entries = LinkedHashMap<String, String>()
         val errors = mutableListOf<ParseError>()
         var duplicates = 0
         text.lineSequence().forEachIndexed { index, raw ->
             val line = raw.trim('\uFEFF', '\r')
             if (line.isBlank() || line.trimStart().startsWith("#")) return@forEachIndexed
             val (key, rest) = splitKeyAndValues(line.trim())
-            val values = rest.split(Regex("\\s+")).filter { it.isNotEmpty() }
-            if (key.isEmpty() || values.isEmpty()) {
+            // OpenCC 词典的多个候选词用空格分隔，这里只取第一个
+            val value = rest.split(Regex("\\s+")).firstOrNull { it.isNotEmpty() }
+            if (key.isEmpty() || value == null) {
                 errors += ParseError(index + 1, raw)
             } else {
-                if (entries.put(key, values) != null) duplicates++
+                if (entries.put(key, value) != null) duplicates++
             }
         }
         return ParseResult(entries, errors, duplicates)
@@ -83,6 +74,46 @@ object CsleCustomDictionary {
         val space = line.indexOfFirst { it.isWhitespace() }
         if (space < 0) return line to ""
         return line.substring(0, space) to line.substring(space + 1).trim()
+    }
+
+    enum class ValidationError {
+        EMPTY_SOURCE, EMPTY_TARGET,
+
+        /** 原词以 # 开头会被当成注释行 */
+        COMMENT_PREFIX,
+
+        /** 原词含有 Tab、换行，会破坏词典格式 */
+        INVALID_CHARACTER,
+
+        /** 目标词只能是一个不含空白的词 */
+        TARGET_HAS_SPACE,
+    }
+
+    /** 校验一条词条，合法返回 null */
+    fun validate(source: String, target: String): ValidationError? {
+        val key = source.trim()
+        val value = target.trim()
+        return when {
+            key.isEmpty() -> ValidationError.EMPTY_SOURCE
+            value.isEmpty() -> ValidationError.EMPTY_TARGET
+            key.startsWith("#") -> ValidationError.COMMENT_PREFIX
+            key.any { it == '\t' || it == '\n' || it == '\r' } -> ValidationError.INVALID_CHARACTER
+            value.any { it.isWhitespace() } -> ValidationError.TARGET_HAS_SPACE
+            else -> null
+        }
+    }
+
+    /** 输出为词典文本（每条一行，注释和空行不保留） */
+    fun format(entries: Map<String, String>): String =
+        entries.entries.joinToString("") { "${it.key}\t${it.value}\n" }
+
+    /** 往词典文本里加入一条；原词已存在时覆盖。返回新文本和是否覆盖了已有词条 */
+    fun put(text: String, source: String, target: String): Pair<String, Boolean> {
+        val entries = LinkedHashMap(parse(text).entries)
+        val key = source.trim()
+        val overwritten = entries.containsKey(key)
+        entries[key] = target.trim()
+        return format(entries) to overwritten
     }
 
     private class Key(val glyph: CsleGlyphs, val text: String)
@@ -107,7 +138,7 @@ object CsleCustomDictionary {
         cached?.let { (key, bs) ->
             if (key.glyph == glyph && key.text == dictionaryText) return bs
         }
-        val entries = parse(dictionaryText).entries
+        val entries = parse(dictionaryText).entries.mapValues { listOf(it.value) }
         if (entries.isEmpty()) return null
 
         val builtIn: IDataMap = when (glyph) {

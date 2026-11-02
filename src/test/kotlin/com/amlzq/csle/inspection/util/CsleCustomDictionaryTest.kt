@@ -5,46 +5,55 @@ import com.amlzq.csle.inspection.settings.CsleGlyphs
 import com.amlzq.csle.inspection.settings.CsleSettings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 
 class CsleCustomDictionaryTest : CsleBasePlatformTest() {
 
-    fun testParseTabAndCandidates() {
+    fun testParseTabAndOnlyFirstCandidate() {
         val result = CsleCustomDictionary.parse("# c\n\n服务器\t伺服端 备选\n软件\t軟體\n")
-        assertEquals(listOf("伺服端", "备选"), result.entries["服务器"])
-        assertEquals(listOf("軟體"), result.entries["软件"])
+        assertEquals("伺服端", result.entries["服务器"])
+        assertEquals("軟體", result.entries["软件"])
         assertEquals(0, result.errors.size)
     }
 
     fun testParseFallsBackToSpaceWhenNoTab() {
         val result = CsleCustomDictionary.parse("我的 我的TW\n")
-        assertEquals(listOf("我的TW"), result.entries["我的"])
+        assertEquals("我的TW", result.entries["我的"])
     }
 
     fun testTabAllowsSpacesInSourcePhrase() {
         val result = CsleCustomDictionary.parse("SQL 注入\tSQL隱碼攻擊\n")
-        assertEquals(listOf("SQL隱碼攻擊"), result.entries["SQL 注入"])
+        assertEquals("SQL隱碼攻擊", result.entries["SQL 注入"])
     }
 
     fun testParseReportsErrorsAndDuplicates() {
         val result = CsleCustomDictionary.parse("只有原词\n服务器\t甲\n服务器\t乙\n\t无键\n")
         assertEquals(listOf(1, 4), result.errors.map { it.line })
-        assertEquals(listOf("乙"), result.entries["服务器"])
+        assertEquals("乙", result.entries["服务器"])
         assertEquals(1, result.duplicates)
     }
 
     fun testTemplateHasNoActiveEntries() {
-        val result = CsleCustomDictionary.parse(CsleCustomDictionary.TEMPLATE)
-        assertEquals(0, result.entries.size)
-        assertEquals(0, result.errors.size)
+        for (glyph in CsleGlyphs.entries) {
+            val result = CsleCustomDictionary.parse(CsleCustomDictionary.templateFor(glyph))
+            assertEquals(0, result.entries.size)
+            assertEquals(0, result.errors.size)
+        }
     }
 
-    fun testTemplateExamplesAreValidWhenUncommented() {
-        val uncommented = CsleCustomDictionary.TEMPLATE.lines()
-            .filter { it.startsWith("#") && !it.startsWith("# ") && it.length > 1 }
-            .joinToString("\n") { it.removePrefix("#") }
-        val result = CsleCustomDictionary.parse(uncommented)
-        assertEquals(4, result.entries.size)
-        assertEquals(0, result.errors.size)
+    fun testTemplateHasOneExampleSetForItsGlyph() {
+        for (glyph in CsleGlyphs.entries) {
+            val template = CsleCustomDictionary.templateFor(glyph)
+            assertTrue(template.contains(glyph.label))
+            val uncommented = template.lines()
+                .filter { it.startsWith("#") && !it.startsWith("# ") && it.length > 1 }
+                .joinToString("\n") { it.removePrefix("#") }
+            val result = CsleCustomDictionary.parse(uncommented)
+            assertEquals(3, result.entries.size)
+            assertEquals(0, result.errors.size)
+        }
+        assertTrue(CsleCustomDictionary.templateFor(CsleGlyphs.SIMPLIFIED).contains("#程式\t程序"))
+        assertTrue(CsleCustomDictionary.templateFor(CsleGlyphs.TAIWAN).contains("#软件\t軟體"))
     }
 
     fun testEmptyDictionaryFallsBack() {
@@ -68,6 +77,32 @@ class CsleCustomDictionaryTest : CsleBasePlatformTest() {
 
     fun testSimplifiedTarget() {
         assertEquals("程序", CsleCustomDictionary.convert(CsleGlyphs.SIMPLIFIED, "程式\t程序\n", "程式"))
+    }
+
+    fun testValidate() {
+        assertNull(CsleCustomDictionary.validate("服务器", "伺服器"))
+        assertEquals(CsleCustomDictionary.ValidationError.EMPTY_SOURCE, CsleCustomDictionary.validate(" ", "伺服器"))
+        assertEquals(CsleCustomDictionary.ValidationError.EMPTY_TARGET, CsleCustomDictionary.validate("服务器", ""))
+        assertEquals(CsleCustomDictionary.ValidationError.COMMENT_PREFIX, CsleCustomDictionary.validate("#号", "號"))
+        assertEquals(CsleCustomDictionary.ValidationError.INVALID_CHARACTER, CsleCustomDictionary.validate("服务\t器", "伺服器"))
+        assertEquals(CsleCustomDictionary.ValidationError.TARGET_HAS_SPACE, CsleCustomDictionary.validate("服务器", "伺服 器"))
+    }
+
+    fun testPutAppendsAndOverwrites() {
+        val (first, overwrittenFirst) = CsleCustomDictionary.put("# 注释\n", "服务器", "伺服器")
+        assertEquals("服务器\t伺服器\n", first)
+        assertEquals(false, overwrittenFirst)
+        val (second, overwritten) = CsleCustomDictionary.put(first, "服务器", "伺服端")
+        assertEquals("服务器\t伺服端\n", second)
+        assertEquals(true, overwritten)
+    }
+
+    fun testFormatRoundTripKeepsSpacesInSource() {
+        val text = CsleCustomDictionary.format(mapOf("SQL 注入" to "SQL隱碼攻擊", "软件" to "軟體"))
+        val parsed = CsleCustomDictionary.parse(text)
+        assertEquals("SQL隱碼攻擊", parsed.entries["SQL 注入"])
+        assertEquals("軟體", parsed.entries["软件"])
+        assertEquals(0, parsed.errors.size)
     }
 
     fun testSettingsDictionaryIsPerTarget() {

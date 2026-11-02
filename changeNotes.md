@@ -1,5 +1,5 @@
 # Next
-- **FEATURE** import a custom phrase dictionary (OpenCC dictionary format: `source<Tab>target`) per Quick fix target in Settings | Tools | Chinese Expression Inspection; its entries take priority over the built-in dictionary when converting. A template can be downloaded from the same page.
+- **FEATURE** custom phrase dictionary per Quick fix target (OpenCC dictionary format, `source<Tab>target`): add entries from Settings | Tools | Chinese Expression Inspection, or edit, import and export them in the Custom Dictionary dialog; entries take priority over the built-in dictionary. A template can be downloaded from the dialog.
 
 # 0.7.0
 - **FEATURE** add Tools | Chinese Expression Inspection | Inspect All Files: scan the whole project, review the results in a tool window, and convert every checked occurrence with Accept All (one Undo reverts the batch).
