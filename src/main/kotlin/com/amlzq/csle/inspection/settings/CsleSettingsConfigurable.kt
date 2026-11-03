@@ -254,6 +254,8 @@ class CsleSettingsConfigurable : Configurable {
             if (count == 0) CsleBundle.message("custom.dictionary.empty", glyph.label)
             else CsleBundle.message("custom.dictionary.count", glyph.label, count)
         dictionaryAllButton.text = CsleBundle.message("custom.dictionary.all", count)
+        // 没有词条时没有可查看的内容，“全部”按钮不显示
+        dictionaryAllButton.isVisible = count > 0
     }
 
     /** tooltip 给定宽度，长文案交给 Swing 的 HTML 渲染自动折行，避免拉成一条超长横条 */

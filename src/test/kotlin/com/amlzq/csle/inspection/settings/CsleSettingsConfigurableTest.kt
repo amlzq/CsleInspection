@@ -303,4 +303,22 @@ class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
             settings.autoScanOnOpen = false
         }
     }
+
+    fun testAllButtonIsVisibleOnlyWhenDictionaryHasEntries() {
+        val state = CsleSettings.instance.state
+        try {
+            state.customDictionaries = mutableMapOf()
+            val (configurable, root) = createConfigurable()
+            val allButton = findAll(root, javax.swing.JButton::class.java).first { it.text.contains(CsleBundle.message("custom.dictionary.all", 0).substringBefore("0")) }
+            assertFalse(allButton.isVisible)
+
+            val quickFix = quickFixComboBox(root).selectedItem as String
+            val glyph = CsleGlyphs.fromLabel(quickFix)!!
+            state.customDictionaries = mutableMapOf(glyph.name to "服务器\t伺服器\n")
+            configurable.reset()
+            assertTrue(allButton.isVisible)
+        } finally {
+            state.customDictionaries = mutableMapOf()
+        }
+    }
 }

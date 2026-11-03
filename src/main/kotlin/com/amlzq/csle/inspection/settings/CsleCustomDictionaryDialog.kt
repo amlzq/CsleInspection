@@ -144,10 +144,10 @@ class CsleCustomDictionaryDialog(
     }
 
     override fun createCenterPanel(): JComponent {
-        // 列表标题栏：左侧标题，右侧是 IDE 标准的“更多”选项菜单（竖向三点）
+        // 列表标题栏：左侧标题，右侧是 IDE 标准的“选项”菜单（齿轮图标）
         val optionsGroup = DefaultActionGroup().apply {
             isPopup = true
-            templatePresentation.icon = AllIcons.Actions.More
+            templatePresentation.icon = AllIcons.General.GearPlain
             templatePresentation.description = CsleBundle.message("custom.dictionary.more")
             templatePresentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
             add(menuAction("custom.dictionary.import") { importFile() })
@@ -169,7 +169,7 @@ class CsleCustomDictionaryDialog(
         }
 
         val note = JBLabel(
-            "<html><body style='width:${JBUI.scale(600)}px'>${CsleBundle.message("custom.dictionary.dialog.note")}</body></html>",
+            "<html><body style='width:${JBUI.scale(440)}px'>${CsleBundle.message("custom.dictionary.dialog.note")}</body></html>",
             UIUtil.ComponentStyle.SMALL,
             UIUtil.FontColor.BRIGHTER,
         )
@@ -177,7 +177,7 @@ class CsleCustomDictionaryDialog(
             add(titleBar, BorderLayout.NORTH)
             add(JBScrollPane(table), BorderLayout.CENTER)
             add(note, BorderLayout.SOUTH)
-            preferredSize = Dimension(JBUI.scale(640), JBUI.scale(440))
+            preferredSize = Dimension(JBUI.scale(480), JBUI.scale(360))
         }
     }
 
