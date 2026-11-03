@@ -8,8 +8,11 @@ import com.intellij.openapi.components.Storage
 @State(name = "CseSettings", storages = [Storage("CseSettings.xml")])
 @Service
 class CsleSettings : PersistentStateComponent<CsleSettings> {
-    var inspect: String = CsleGlyphs.SIMPLIFIED.label
-    var quickFix: String = CsleGlyphs.TAIWAN.label
+    /** 检查字形的标签；空串表示用户没设置过，读取时按 界面语言 > 简体 解析（见 CsleUtils.getInspect） */
+    var inspect: String = ""
+
+    /** 修复目标字形的标签；空串表示用户没设置过，读取时按 界面语言 > 检查字形 解析（见 CsleUtils.getQuickFix） */
+    var quickFix: String = ""
     var excluded: List<String> = listOf()
     var excludedJs: List<String> = listOf()
     var excludedJava: List<String> = listOf()
@@ -57,6 +60,24 @@ class CsleSettings : PersistentStateComponent<CsleSettings> {
     }
 
     companion object {
+        /** 由 IDE 界面语言推断检查字形：zh_CN/zh_SG/zh_MY 为简体，zh_TW 为台湾繁体，zh_HK 为香港繁体，其余回落为简体。 */
+        fun glyphsForLocale(locale: java.util.Locale): CsleGlyphs? {
+            if (locale.language != "zh") return null
+            return when (locale.country) {
+                "CN", "SG", "MY" -> CsleGlyphs.SIMPLIFIED
+                "TW" -> CsleGlyphs.TAIWAN
+                "HK" -> CsleGlyphs.HONGKONG
+                else -> null
+            }
+        }
+
+        fun defaultInspect(): CsleGlyphs =
+            glyphsForLocale(com.intellij.DynamicBundle.getLocale()) ?: CsleGlyphs.SIMPLIFIED
+
+        /** 修复目标的默认值：先取界面语言对应的字形，回落为检查字形。 */
+        fun defaultQuickFix(inspect: CsleGlyphs): CsleGlyphs =
+            glyphsForLocale(com.intellij.DynamicBundle.getLocale()) ?: inspect
+
         val instance: CsleSettings
             get() = com.intellij.openapi.components.service()
     }

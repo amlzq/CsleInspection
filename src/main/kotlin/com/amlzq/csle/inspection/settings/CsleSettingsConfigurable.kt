@@ -2,6 +2,7 @@ package com.amlzq.csle.inspection.settings
 
 import com.amlzq.csle.inspection.util.CsleBundle
 import com.amlzq.csle.inspection.util.CsleCustomDictionary
+import com.amlzq.csle.inspection.util.CsleUtils
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
@@ -49,7 +50,7 @@ class CsleSettingsConfigurable : Configurable {
         inspectComboBox = ComboBox(options).apply {
             setPrototypeDisplayValue(longest)
         }
-        quickFixComboBox = ComboBox(emptyArray<String>()).apply {
+        quickFixComboBox = ComboBox(options).apply {
             setPrototypeDisplayValue(longest)
         }
 
@@ -89,19 +90,12 @@ class CsleSettingsConfigurable : Configurable {
             toolTipText = htmlTooltip(CsleBundle.message("scan.auto.on.open.tip"))
         }
 
-        val initialInspect = CsleSettings.instance.state.inspect
+        val initialInspect = CsleUtils.getInspect()
         inspectComboBox.selectedItem = initialInspect
-        updateQuickFixOptions(initialInspect, preferredQuickFix = CsleSettings.instance.state.quickFix)
+        quickFixComboBox.selectedItem = CsleUtils.getQuickFix()
 
         quickFixComboBox.addItemListener { e ->
             if (e.stateChange == ItemEvent.SELECTED && ::dictionaryStatusLabel.isInitialized) updateDictionaryStatus()
-        }
-
-        inspectComboBox.addItemListener { e ->
-            if (e.stateChange == ItemEvent.SELECTED) {
-                val selectedInspect = inspectComboBox.selectedItem as? String ?: return@addItemListener
-                updateQuickFixOptions(selectedInspect)
-            }
         }
 
         targetLanguageComboBox.addItemListener { e ->
@@ -298,22 +292,6 @@ class CsleSettingsConfigurable : Configurable {
         }
     }
 
-    private fun updateQuickFixOptions(selectedInspect: String, preferredQuickFix: String? = null) {
-        val currentQuickFix = quickFixComboBox.selectedItem as? String
-        val items = options.filter { it != selectedInspect }
-        quickFixComboBox.removeAllItems()
-        items.forEach { quickFixComboBox.addItem(it) }
-
-        val toSelect = when {
-            preferredQuickFix != null && items.contains(preferredQuickFix) -> preferredQuickFix
-            currentQuickFix != null && items.contains(currentQuickFix) -> currentQuickFix
-            else -> items.firstOrNull()
-        }
-        if (toSelect != null) {
-            quickFixComboBox.selectedItem = toSelect
-        }
-    }
-
     private fun normalizeLines(text: String): List<String> {
         return text.trim().split("\n").map { it.trim() }.filter { it.isNotEmpty() }
     }
@@ -358,8 +336,8 @@ class CsleSettingsConfigurable : Configurable {
     override fun isModified(): Boolean {
         val inspect = inspectComboBox.selectedItem as? String ?: ""
         val quickFix = quickFixComboBox.selectedItem as? String ?: ""
-        return inspect != CsleSettings.instance.state.inspect
-                || quickFix != CsleSettings.instance.state.quickFix
+        return inspect != CsleUtils.getInspect()
+                || quickFix != CsleUtils.getQuickFix()
                 || ExcludedTarget.entries.any { target ->
             getExcludedFromState(target) != normalizeLines(getExcludedText(target))
         }
@@ -370,9 +348,9 @@ class CsleSettingsConfigurable : Configurable {
 
     override fun apply() {
         CsleSettings.instance.state.inspect =
-            inspectComboBox.selectedItem as? String ?: CsleSettings.instance.state.inspect
+            inspectComboBox.selectedItem as? String ?: CsleUtils.getInspect()
         CsleSettings.instance.state.quickFix =
-            quickFixComboBox.selectedItem as? String ?: CsleSettings.instance.state.quickFix
+            quickFixComboBox.selectedItem as? String ?: CsleUtils.getQuickFix()
         excludedTextByTarget[currentTarget] = excludedField.text
         ExcludedTarget.entries.forEach { target ->
             setExcludedToState(target, normalizeLines(getExcludedText(target)))
@@ -394,9 +372,9 @@ class CsleSettingsConfigurable : Configurable {
     }
 
     override fun reset() {
-        val inspect = CsleSettings.instance.state.inspect
+        val inspect = CsleUtils.getInspect()
         inspectComboBox.selectedItem = inspect
-        updateQuickFixOptions(inspect, preferredQuickFix = CsleSettings.instance.state.quickFix)
+        quickFixComboBox.selectedItem = CsleUtils.getQuickFix()
         // 先切下拉框：切换时 ItemListener 会把文本框内容写入"切换前"目标名的缓存，
         // 随后这里重填缓存会覆盖它。若先改 currentTarget，监听器会把未应用的文本
         // 记到默认目标（JS_TS）名下，导致 reset 后显示的仍是编辑中的内容而不是状态里的值

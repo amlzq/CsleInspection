@@ -14,7 +14,7 @@ object CsleUtils {
     }
 
     fun getInspect(): String {
-        return CsleSettings.instance.state.inspect
+        return CsleSettings.instance.state.inspect.ifBlank { CsleSettings.defaultInspect().label }
     }
 
     fun getInspectGlyphs(): CsleGlyphs {
@@ -23,7 +23,9 @@ object CsleUtils {
     }
 
     fun getQuickFix(): String {
-        return CsleSettings.instance.state.quickFix
+        return CsleSettings.instance.state.quickFix.ifBlank {
+            CsleSettings.defaultQuickFix(getInspectGlyphs()).label
+        }
     }
 
     fun getQuickFixGlyphs(): CsleGlyphs {

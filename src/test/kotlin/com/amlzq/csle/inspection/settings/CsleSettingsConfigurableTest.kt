@@ -36,15 +36,13 @@ class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
         return result
     }
 
-    /** 字形选择框（含全部字形，且区别于不含当前检查项的目标字形下拉框） */
-    private fun inspectComboBox(root: Container): ComboBox<*> =
-        findAll(root, ComboBox::class.java).first { it.itemCount == CsleGlyphs.entries.size }
+    /** 两个字形下拉框（检查字形在前，修复目标在后），都含全部字形 */
+    private fun glyphComboBoxes(root: Container): List<ComboBox<*>> =
+        findAll(root, ComboBox::class.java).filter { it.itemCount == CsleGlyphs.entries.size }
 
-    private fun quickFixComboBox(root: Container): ComboBox<*> {
-        val inspect = inspectComboBox(root)
-        return findAll(root, ComboBox::class.java)
-            .first { it !== inspect && it.itemCount == CsleGlyphs.entries.size - 1 }
-    }
+    private fun inspectComboBox(root: Container): ComboBox<*> = glyphComboBoxes(root)[0]
+
+    private fun quickFixComboBox(root: Container): ComboBox<*> = glyphComboBoxes(root)[1]
 
     private fun items(comboBox: ComboBox<*>): List<Any?> =
         (0 until comboBox.itemCount).map { comboBox.getItemAt(it) }
@@ -133,20 +131,20 @@ class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
         assertTrue(tip.contains("docstring", ignoreCase = true))
     }
 
-    fun testSelectingInspectRemovesItFromQuickFixOptions() {
+    fun testQuickFixOptionsIncludeInspectGlyph() {
         val (configurable, root) = createConfigurable()
         val inspect = inspectComboBox(root)
         val quickFix = quickFixComboBox(root)
 
         inspect.selectedItem = CsleGlyphs.HONGKONG.label
+        quickFix.selectedItem = CsleGlyphs.HONGKONG.label
 
-        val options = items(quickFix)
-        assertFalse(options.contains(CsleGlyphs.HONGKONG.label))
+        assertTrue(items(quickFix).contains(CsleGlyphs.HONGKONG.label))
         assertTrue(configurable.isModified())
 
         configurable.apply()
         assertEquals(CsleGlyphs.HONGKONG.label, CsleSettings.instance.state.inspect)
-        assertFalse(CsleSettings.instance.state.quickFix == CsleGlyphs.HONGKONG.label)
+        assertEquals(CsleGlyphs.HONGKONG.label, CsleSettings.instance.state.quickFix)
         assertFalse(configurable.isModified())
     }
 
