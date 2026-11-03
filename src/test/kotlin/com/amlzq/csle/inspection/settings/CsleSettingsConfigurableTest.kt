@@ -5,7 +5,6 @@ import com.amlzq.csle.inspection.util.CsleBundle
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.components.DslLabel
 import java.awt.Component
 import java.awt.Container
@@ -15,7 +14,7 @@ import java.awt.Container
  *
  * 「Doc comments」控制是否检查文档注释（KDoc/Javadoc/JSDoc/PHPDoc/DartDoc），默认必须关闭，
  * 只检查字符串字面量；这里断言 UI 的初始状态，避免状态字段与界面绑定被改反。
- * 同时覆盖 apply / isModified / reset：排除列表按行解析、回填，以及检查项选择联动。
+ * 同时覆盖 apply / isModified / reset：排除列表按标签解析、回填，以及检查项选择联动。
  */
 class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
 
@@ -150,14 +149,15 @@ class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
 
     fun testApplyNormalizesExcludedLines() {
         val (configurable, root) = createConfigurable()
-        val textArea = findAll(root, JBTextArea::class.java).single()
-        textArea.text = "  logger \n\n println  "
+        val chips = findAll(root, ChipsInputField::class.java).single()
+        // 逗号 / 换行都是分隔符，空项与重复项被丢弃
+        chips.items = listOf("  logger ", "", " println  ", "logger")
 
         assertTrue(configurable.isModified())
         configurable.apply()
 
         val state = CsleSettings.instance.state
-        // 按行解析：去掉首尾空白与空行，只写回当前选中的语言
+        // 去掉首尾空白、空项与重复项，只写回当前选中的语言
         assertEquals(listOf("logger", "println"), state.excludedJs)
         assertTrue(state.excludedJava.isEmpty())
         assertFalse(configurable.isModified())
@@ -179,18 +179,18 @@ class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
 
     fun testSwitchTargetKeepsEditedText() {
         val (configurable, root) = createConfigurable()
-        val textArea = findAll(root, JBTextArea::class.java).single()
+        val chips = findAll(root, ChipsInputField::class.java).single()
         val targets = targetComboBox(root)
 
-        textArea.text = "logger"
+        chips.items = listOf("logger")
         selectTarget(targets, "target.language.kotlin")
         // 切到未编辑的目标时显示其自身状态（默认空）
-        assertEquals("", textArea.text)
+        assertEquals(emptyList<String>(), chips.items)
 
-        textArea.text = "println"
+        chips.items = listOf("println")
         selectTarget(targets, "target.language.js_ts")
         // 切回来时保留未应用的编辑内容
-        assertEquals("logger", textArea.text)
+        assertEquals(listOf("logger"), chips.items)
 
         configurable.apply()
         assertEquals(listOf("logger"), CsleSettings.instance.state.excludedJs)
@@ -201,10 +201,10 @@ class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
         CsleSettings.instance.state.excludedKotlin = listOf("println", "logger")
 
         val (_, root) = createConfigurable()
-        val textArea = findAll(root, JBTextArea::class.java).single()
+        val chips = findAll(root, ChipsInputField::class.java).single()
         selectTarget(targetComboBox(root), "target.language.kotlin")
 
-        assertEquals("println\nlogger", textArea.text)
+        assertEquals(listOf("println", "logger"), chips.items)
     }
 
     fun testResetSelectsJsTargetAndReloadsText() {
@@ -212,17 +212,17 @@ class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
         CsleSettings.instance.state.excludedKotlin = listOf("println")
 
         val (configurable, root) = createConfigurable()
-        val textArea = findAll(root, JBTextArea::class.java).single()
+        val chips = findAll(root, ChipsInputField::class.java).single()
         val targets = targetComboBox(root)
 
         selectTarget(targets, "target.language.kotlin")
-        textArea.text = ""
+        chips.items = emptyList()
         assertTrue(configurable.isModified())
 
         configurable.reset()
 
         assertEquals(CsleBundle.message("target.language.js_ts"), targets.selectedItem.toString())
-        assertEquals("logger", textArea.text)
+        assertEquals(listOf("logger"), chips.items)
         assertFalse(configurable.isModified())
     }
 
@@ -250,17 +250,17 @@ class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
 
         val (configurable, root) = createConfigurable()
         val checkbox = findCheckBox(root, CsleBundle.message("inspect.target.doc.comments"))!!
-        val textArea = findAll(root, JBTextArea::class.java).single()
-        assertEquals("logger", textArea.text)
+        val chips = findAll(root, ChipsInputField::class.java).single()
+        assertEquals(listOf("logger"), chips.items)
 
         checkbox.isSelected = false
-        textArea.text = ""
+        chips.items = emptyList()
         assertTrue(configurable.isModified())
 
         configurable.reset()
 
         assertTrue(checkbox.isSelected)
-        assertEquals("logger", textArea.text)
+        assertEquals(listOf("logger"), chips.items)
         assertFalse(configurable.isModified())
     }
 

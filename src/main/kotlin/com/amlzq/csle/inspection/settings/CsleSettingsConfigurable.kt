@@ -13,7 +13,6 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
@@ -28,7 +27,7 @@ class CsleSettingsConfigurable : Configurable {
     private lateinit var quickFixComboBox: ComboBox<String>
     private lateinit var targetLanguageComboBox: ComboBox<ExcludedTarget>
     private lateinit var excludedHintLabel: JEditorPane
-    private lateinit var excludedField: JBTextArea
+    private lateinit var excludedField: ChipsInputField
     private lateinit var literalExpressionCheckBox: JBCheckBox
     private lateinit var docCommentsCheckBox: JBCheckBox
     private lateinit var autoScanCheckBox: JBCheckBox
@@ -41,7 +40,7 @@ class CsleSettingsConfigurable : Configurable {
     private var pendingDictionaries: MutableMap<String, String> = mutableMapOf()
 
     private val options: Array<String> = CsleGlyphs.entries.map { it.label }.toTypedArray()
-    private val excludedTextByTarget: MutableMap<ExcludedTarget, String> = mutableMapOf()
+    private val excludedTextByTarget: MutableMap<ExcludedTarget, List<String>> = mutableMapOf()
     private var currentTarget: ExcludedTarget = ExcludedTarget.JS_TS
 
     override fun createComponent(): javax.swing.JComponent {
@@ -61,10 +60,7 @@ class CsleSettingsConfigurable : Configurable {
             selectedItem = currentTarget
         }
 
-        excludedField = JBTextArea(8, 40).apply {
-            lineWrap = true
-            wrapStyleWord = true
-        }
+        excludedField = ChipsInputField()
 
         literalExpressionCheckBox = JBCheckBox(
             CsleBundle.message("inspect.target.literal.expression"),
@@ -100,10 +96,10 @@ class CsleSettingsConfigurable : Configurable {
 
         targetLanguageComboBox.addItemListener { e ->
             if (e.stateChange != ItemEvent.SELECTED) return@addItemListener
-            excludedTextByTarget[currentTarget] = excludedField.text
+            excludedTextByTarget[currentTarget] = excludedField.items
             val selected = targetLanguageComboBox.selectedItem as? ExcludedTarget ?: return@addItemListener
             currentTarget = selected
-            excludedField.text = excludedTextByTarget[selected] ?: getExcludedFromState(selected).joinToString("\n")
+            excludedField.items = excludedTextByTarget[selected] ?: getExcludedFromState(selected)
             updateExcludedHintLabel()
         }
 
@@ -195,10 +191,10 @@ class CsleSettingsConfigurable : Configurable {
                 }
 
                 row {
-                    scrollCell(excludedField)
+                    cell(excludedField)
                         .align(Align.FILL)
                         .resizableColumn()
-                }.resizableRow()
+                }
             }
         }
         settingsRoot = root
@@ -292,10 +288,6 @@ class CsleSettingsConfigurable : Configurable {
         }
     }
 
-    private fun normalizeLines(text: String): List<String> {
-        return text.trim().split("\n").map { it.trim() }.filter { it.isNotEmpty() }
-    }
-
     private fun getExcludedFromState(target: ExcludedTarget): List<String> {
         val state = CsleSettings.instance.state
         return when (target) {
@@ -328,9 +320,9 @@ class CsleSettingsConfigurable : Configurable {
         }
     }
 
-    private fun getExcludedText(target: ExcludedTarget): String {
-        if (target == currentTarget) return excludedField.text
-        return excludedTextByTarget[target] ?: getExcludedFromState(target).joinToString("\n")
+    private fun getExcludedItems(target: ExcludedTarget): List<String> {
+        if (target == currentTarget) return excludedField.items
+        return excludedTextByTarget[target] ?: getExcludedFromState(target)
     }
 
     override fun isModified(): Boolean {
@@ -339,7 +331,7 @@ class CsleSettingsConfigurable : Configurable {
         return inspect != CsleUtils.getInspect()
                 || quickFix != CsleUtils.getQuickFix()
                 || ExcludedTarget.entries.any { target ->
-            getExcludedFromState(target) != normalizeLines(getExcludedText(target))
+            getExcludedFromState(target) != getExcludedItems(target)
         }
                 || docCommentsCheckBox.isSelected != CsleSettings.instance.state.checkDocComments
                 || autoScanCheckBox.isSelected != CsleSettings.instance.state.autoScanOnOpen
@@ -351,9 +343,10 @@ class CsleSettingsConfigurable : Configurable {
             inspectComboBox.selectedItem as? String ?: CsleUtils.getInspect()
         CsleSettings.instance.state.quickFix =
             quickFixComboBox.selectedItem as? String ?: CsleUtils.getQuickFix()
-        excludedTextByTarget[currentTarget] = excludedField.text
+        excludedField.commitPending()
+        excludedTextByTarget[currentTarget] = excludedField.items
         ExcludedTarget.entries.forEach { target ->
-            setExcludedToState(target, normalizeLines(getExcludedText(target)))
+            setExcludedToState(target, getExcludedItems(target))
         }
         CsleSettings.instance.state.checkLiteralExpression = true
         CsleSettings.instance.state.checkDocComments = docCommentsCheckBox.isSelected
@@ -381,10 +374,10 @@ class CsleSettingsConfigurable : Configurable {
         targetLanguageComboBox.selectedItem = ExcludedTarget.JS_TS
         excludedTextByTarget.clear()
         ExcludedTarget.entries.forEach { target ->
-            excludedTextByTarget[target] = getExcludedFromState(target).joinToString("\n")
+            excludedTextByTarget[target] = getExcludedFromState(target)
         }
         currentTarget = ExcludedTarget.JS_TS
-        excludedField.text = excludedTextByTarget[currentTarget].orEmpty()
+        excludedField.items = excludedTextByTarget[currentTarget].orEmpty()
         updateExcludedHintLabel()
         literalExpressionCheckBox.isSelected = true
         docCommentsCheckBox.isSelected = CsleSettings.instance.state.checkDocComments
