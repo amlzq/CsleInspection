@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull
 class CsleJsonInspection : CsleLocalInspectionTool() {
 
     override fun inExcludedCallExpression(element: PsiElement): Boolean {
-        val excluded = CsleSettings.instance.state.excludedJson
+        val excluded = CsleSettings.effective().excludedJson
         if (excluded.isEmpty()) return false
 
         val property = PsiTreeUtil.getParentOfType(element, JsonProperty::class.java, false) ?: return false
@@ -56,7 +56,7 @@ class CsleJsonInspection : CsleLocalInspectionTool() {
     }
 
     @NotNull
-    override fun checkFile(
+    override fun doCheckFile(
         @NotNull file: PsiFile, @NotNull manager: InspectionManager, isOnTheFly: Boolean
     ): @NotNull Array<ProblemDescriptor>? {
 
@@ -68,7 +68,7 @@ class CsleJsonInspection : CsleLocalInspectionTool() {
         val project: Project = file.project
         if (!ProjectRootManager.getInstance(project).fileIndex.isInContent(virtualFile)) return null
 
-        if (!CsleSettings.instance.state.checkLiteralExpression) return null
+        if (!CsleSettings.effective().checkLiteralExpression) return null
 
         val problems: MutableList<ProblemDescriptor> = ArrayList()
 

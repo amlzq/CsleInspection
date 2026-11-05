@@ -1,6 +1,9 @@
 package com.amlzq.csle.inspection
 
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -14,6 +17,10 @@ class CsleCleanPatternTest {
 
     private val inspection = object : CsleLocalInspectionTool() {
         override fun inExcludedCallExpression(element: PsiElement): Boolean = false
+
+        override fun doCheckFile(
+            file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean
+        ): Array<ProblemDescriptor>? = null
     }
 
     private fun clean(text: String): String =

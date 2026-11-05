@@ -5,7 +5,11 @@ import com.amlzq.csle.inspection.util.CsleUtils
 import com.github.houbb.opencc4j.util.ZhConverterUtil
 import com.github.houbb.opencc4j.util.ZhHkConverterUtil
 import com.github.houbb.opencc4j.util.ZhTwConverterUtil
+import com.amlzq.csle.inspection.util.CsleContext
+import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiElement
 import java.util.regex.Pattern
 
@@ -24,6 +28,17 @@ abstract class CsleLocalInspectionTool : LocalInspectionTool() {
      */
     val cleanPattern: Pattern =
         Pattern.compile("[A-Za-z0-9\\p{Punct}\\s\u3000\u2014\u2018\u2019\u201C\u201D\uFF08\uFF09\uFF1B\uFF1A\uFF1F\uFF01\u3001\uFF0C\u3002]")
+
+    /**
+     * 检查入口：记录当前项目后交给子类的 [doCheckFile]，让设置按项目方案或 IDE 方案读取。
+     */
+    final override fun checkFile(
+        file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean
+    ): Array<ProblemDescriptor>? = CsleContext.with(file.project) { doCheckFile(file, manager, isOnTheFly) }
+
+    abstract fun doCheckFile(
+        file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean
+    ): Array<ProblemDescriptor>?
 
     abstract fun inExcludedCallExpression(element: PsiElement): Boolean
 

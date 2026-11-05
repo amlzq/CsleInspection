@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull
 class CsleCSSInspection : CsleLocalInspectionTool() {
     
     override fun inExcludedCallExpression(element: PsiElement): Boolean {
-        val excluded = CsleSettings.instance.state.excludedCss
+        val excluded = CsleSettings.effective().excludedCss
         if (excluded.isEmpty()) return false
 
         val declaration = PsiTreeUtil.getParentOfType(element, CssDeclaration::class.java, false) ?: return false
@@ -54,7 +54,7 @@ class CsleCSSInspection : CsleLocalInspectionTool() {
     private fun normalizeCssPropertyName(name: String): String = name.trim().lowercase()
 
     @NotNull
-    override fun checkFile(
+    override fun doCheckFile(
         @NotNull file: PsiFile, @NotNull manager: InspectionManager, isOnTheFly: Boolean
     ): @NotNull Array<ProblemDescriptor>? {
 
@@ -72,7 +72,7 @@ class CsleCSSInspection : CsleLocalInspectionTool() {
 
         val problems: MutableList<ProblemDescriptor> = ArrayList()
 
-        if (!CsleSettings.instance.state.checkLiteralExpression) return null
+        if (!CsleSettings.effective().checkLiteralExpression) return null
 
         // 遍历文件中的所有 PSI 元素
         file.accept(object : PsiRecursiveElementVisitor() {

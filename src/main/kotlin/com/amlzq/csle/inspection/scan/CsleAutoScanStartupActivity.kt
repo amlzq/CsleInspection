@@ -16,7 +16,7 @@ class CsleAutoScanStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
         val app = ApplicationManager.getApplication()
         if (!shouldAutoScan(
-                enabled = CsleSettings.instance.state.autoScanOnOpen,
+                enabled = CsleSettings.effective(project).autoScanOnOpen,
                 isDefaultProject = project.isDefault,
                 isDisposed = project.isDisposed,
                 isTestOrHeadless = app.isUnitTestMode || app.isHeadlessEnvironment,
@@ -28,7 +28,7 @@ class CsleAutoScanStartupActivity : ProjectActivity {
         DumbService.getInstance(project).runWhenSmart {
             // 等待索引期间开关可能被关闭、项目可能被关闭、用户可能已手动开始扫描
             if (!shouldAutoScan(
-                    enabled = CsleSettings.instance.state.autoScanOnOpen,
+                    enabled = CsleSettings.effective(project).autoScanOnOpen,
                     isDefaultProject = project.isDefault,
                     isDisposed = project.isDisposed,
                     isTestOrHeadless = false,

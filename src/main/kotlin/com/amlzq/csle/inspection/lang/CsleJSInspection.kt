@@ -41,7 +41,7 @@ class CsleJSInspection : CsleLocalInspectionTool() {
         while (parent != null) {
             if (parent is JSCallExpression) {
                 val text = parent.methodExpression?.text ?: ""
-                for (functionName in CsleSettings.instance.state.excludedJs) {
+                for (functionName in CsleSettings.effective().excludedJs) {
                     if (functionName == text || text.contains(".$functionName")) {
                         debugPrintln("$text is on the exclusion list.")
                         return true
@@ -76,7 +76,7 @@ class CsleJSInspection : CsleLocalInspectionTool() {
 //    }
 
     @NotNull
-    override fun checkFile(
+    override fun doCheckFile(
         @NotNull file: PsiFile, @NotNull manager: InspectionManager, isOnTheFly: Boolean
     ): @NotNull Array<ProblemDescriptor>? {
         // debugPrintln("checkFile")
@@ -123,7 +123,7 @@ class CsleJSInspection : CsleLocalInspectionTool() {
 
                 // debugPrintln("element:$element")
 
-                if (CsleSettings.instance.state.checkDocComments && element is JSDocComment) {
+                if (CsleSettings.effective().checkDocComments && element is JSDocComment) {
                     val text = element.text
                     if (!containsChinese(text)) {
                         return
@@ -146,7 +146,7 @@ class CsleJSInspection : CsleLocalInspectionTool() {
                     return
                 }
 
-                if (!CsleSettings.instance.state.checkLiteralExpression) return
+                if (!CsleSettings.effective().checkLiteralExpression) return
 
                 // 检查是否是 JS 字符串字面量表达式
                 // JSLiteralExpression.isStringLiteral 单引号或双引号包裹字符串

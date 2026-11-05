@@ -59,7 +59,7 @@ abstract class CsleMarkupInspection : CsleLocalInspectionTool() {
         // 但属性值（如 src、style）仍按属性检查，否则配置任意排除项后会被静默跳过
         if (element !is XmlAttributeValue && (tagName == "script" || tagName == "style")) return true
 
-        val excluded = CsleSettings.instance.state.excludedHtml
+        val excluded = CsleSettings.effective().excludedHtml
             .asSequence()
             .map { it.trim() }
             .filter { it.isNotEmpty() }
@@ -87,7 +87,7 @@ abstract class CsleMarkupInspection : CsleLocalInspectionTool() {
         while (parent != null) {
             if (parent is XmlTag) {
                 val tagName = parent.name.lowercase()
-                for (excludedName in CsleSettings.instance.state.excludedXml) {
+                for (excludedName in CsleSettings.effective().excludedXml) {
                     if (excludedName.lowercase() == tagName) {
                         return true
                     }
@@ -99,7 +99,7 @@ abstract class CsleMarkupInspection : CsleLocalInspectionTool() {
     }
 
     @NotNull
-    override fun checkFile(
+    override fun doCheckFile(
         @NotNull file: PsiFile,
         @NotNull manager: InspectionManager,
         isOnTheFly: Boolean
@@ -128,7 +128,7 @@ abstract class CsleMarkupInspection : CsleLocalInspectionTool() {
                 // 内嵌脚本内部是 JS / JSX，交给 JS 逻辑处理；
                 // 不再向下遍历，避免脚本内的 JSX 属性被当成 HTML 属性检查
                 if (inspectEmbeddedJs && CsleEmbeddedJSInspection.isEmbeddedContent(element)) {
-                    if (CsleSettings.instance.state.checkLiteralExpression) {
+                    if (CsleSettings.effective().checkLiteralExpression) {
                         CsleEmbeddedJSInspection.collectProblems(element, manager, isOnTheFly, problems)
                     }
                     return
@@ -137,7 +137,7 @@ abstract class CsleMarkupInspection : CsleLocalInspectionTool() {
                 // 内嵌样式表内部是 CSS，交给 CSS 逻辑处理；
                 // 内联 style 属性由下面的属性值检查处理，这里不处理
                 if (inspectEmbeddedCss && CsleEmbeddedCSSInspection.isEmbeddedString(element)) {
-                    if (CsleSettings.instance.state.checkLiteralExpression) {
+                    if (CsleSettings.effective().checkLiteralExpression) {
                         CsleEmbeddedCSSInspection.checkString(element, manager, isOnTheFly)?.let(problems::add)
                     }
                     return
@@ -145,7 +145,7 @@ abstract class CsleMarkupInspection : CsleLocalInspectionTool() {
 
                 super.visitElement(element)
 
-                if (!CsleSettings.instance.state.checkLiteralExpression) return
+                if (!CsleSettings.effective().checkLiteralExpression) return
 
                 when (element) {
                     is XmlAttributeValue -> {

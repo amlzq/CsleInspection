@@ -14,12 +14,12 @@ import org.jetbrains.annotations.NotNull
 class CsleHTMLInspection : CsleMarkupInspection() {
 
     @NotNull
-    override fun checkFile(
+    override fun doCheckFile(
         @NotNull file: PsiFile,
         @NotNull manager: InspectionManager,
         isOnTheFly: Boolean
     ): @NotNull Array<ProblemDescriptor>? {
         if (!file.language.id.equals("HTML", ignoreCase = true)) return null
-        return super.checkFile(file, manager, isOnTheFly)
+        return super.doCheckFile(file, manager, isOnTheFly)
     }
 }

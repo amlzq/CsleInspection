@@ -30,7 +30,7 @@
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
-        <applicationConfigurable instance="com.amlzq.csle.inspection.settings.CsleSettingsConfigurable"
+        <projectConfigurable instance="com.amlzq.csle.inspection.settings.CsleSettingsConfigurable"
                                  bundle="messages.CsleBundle"
                                  key="display.name"
                                  groupId="tools"/>

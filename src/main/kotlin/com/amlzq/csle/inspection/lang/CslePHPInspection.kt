@@ -35,7 +35,7 @@ class CslePHPInspection : CsleLocalInspectionTool() {
      * 检查字符串是否在用户设置的排除方法中，比如：print
      */
     override fun inExcludedCallExpression(element: PsiElement): Boolean {
-        val excluded = CsleSettings.instance.state.excludedPhp
+        val excluded = CsleSettings.effective().excludedPhp
         var parent = element.parent
         while (parent != null) {
             debugPrintln("parent=$parent text=${parent.text} isSpecialCallExpression")
@@ -50,7 +50,7 @@ class CslePHPInspection : CsleLocalInspectionTool() {
     }
 
     @NotNull
-    override fun checkFile(
+    override fun doCheckFile(
         @NotNull file: PsiFile, @NotNull manager: InspectionManager, isOnTheFly: Boolean
     ): @NotNull Array<ProblemDescriptor>? {
         debugPrintln("checkFile")
@@ -75,7 +75,7 @@ class CslePHPInspection : CsleLocalInspectionTool() {
             override fun visitElement(@NotNull element: PsiElement) {
                 super.visitElement(element)
 
-                if (CsleSettings.instance.state.checkDocComments && element is PhpDocComment) {
+                if (CsleSettings.effective().checkDocComments && element is PhpDocComment) {
                     val text = element.text
                     if (!containsChinese(text)) {
                         return
@@ -98,7 +98,7 @@ class CslePHPInspection : CsleLocalInspectionTool() {
                     return
                 }
 
-                if (!CsleSettings.instance.state.checkLiteralExpression) return
+                if (!CsleSettings.effective().checkLiteralExpression) return
 
                 // 检查是否是 PHP 字符串字面量表达式
                 if (element !is StringLiteralExpression) {

@@ -37,7 +37,7 @@ class CslePythonInspection : CsleLocalInspectionTool() {
         while (parent != null) {
             if (parent is PyCallExpression) {
                 val text = (parent.callee as? PyReferenceExpression)?.referencedName ?: break
-                for (functionName in CsleSettings.instance.state.excludedPython) {
+                for (functionName in CsleSettings.effective().excludedPython) {
                     if (functionName == text || text.contains(".$functionName")) {
                         debugPrintln("$text is on the exclusion list.")
                         return true
@@ -50,7 +50,7 @@ class CslePythonInspection : CsleLocalInspectionTool() {
     }
 
     @NotNull
-    override fun checkFile(
+    override fun doCheckFile(
         @NotNull file: PsiFile, @NotNull manager: InspectionManager, isOnTheFly: Boolean
     ): @NotNull Array<ProblemDescriptor>? {
         debugPrintln("checkFile")
@@ -77,7 +77,7 @@ class CslePythonInspection : CsleLocalInspectionTool() {
 
                 debugPrintln("text=${element.text}")
 
-                if (!CsleSettings.instance.state.checkLiteralExpression) return
+                if (!CsleSettings.effective().checkLiteralExpression) return
 
                 // 检查是否是 Python 字符串字面量表达式
                 if (element !is PyStringLiteralExpression) {

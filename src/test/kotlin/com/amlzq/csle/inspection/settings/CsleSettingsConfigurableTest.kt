@@ -19,7 +19,7 @@ import java.awt.Container
 class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
 
     private fun createConfigurable(): Pair<Configurable, Container> {
-        val configurable = CsleSettingsConfigurable()
+        val configurable = CsleSettingsConfigurable(project)
         return configurable to (configurable.createComponent() as Container)
     }
 
@@ -48,7 +48,7 @@ class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
 
     /** 排除列表上方的目标语言下拉框（选项是 ExcludedTarget，不是字形名） */
     private fun targetComboBox(root: Container): ComboBox<*> =
-        findAll(root, ComboBox::class.java).first { it.itemCount > 0 && it.getItemAt(0) !is String }
+        findAll(root, ComboBox::class.java).first { it.itemCount > 0 && it.getItemAt(0)?.javaClass?.simpleName == "ExcludedTarget" }
 
     private fun selectTarget(comboBox: ComboBox<*>, labelKey: String) {
         val label = CsleBundle.message(labelKey)
@@ -241,7 +241,7 @@ class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
     }
 
     fun testDisplayName() {
-        assertEquals(CsleBundle.message("display.name"), CsleSettingsConfigurable().displayName)
+        assertEquals(CsleBundle.message("display.name"), CsleSettingsConfigurable(project).displayName)
     }
 
     fun testResetRestoresUiFromState() {

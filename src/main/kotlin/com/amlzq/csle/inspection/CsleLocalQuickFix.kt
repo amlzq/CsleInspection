@@ -1,6 +1,8 @@
 package com.amlzq.csle.inspection
 
+import com.amlzq.csle.inspection.util.CsleContext
 import com.amlzq.csle.inspection.util.CsleUtils
+import com.intellij.openapi.project.Project
 import com.intellij.codeInspection.LocalQuickFix
 
 /**
@@ -11,9 +13,12 @@ import com.intellij.codeInspection.LocalQuickFix
  */
 abstract class CsleLocalQuickFix : LocalQuickFix {
 
+    /** 创建修复时所属的项目，用来按项目方案或 IDE 方案取转换目标 */
+    private val project: Project? = CsleContext.project()
+
     override fun getName(): String {
         // 菜单里显示的是动作（“转换为中文（台湾）”），而不是问题描述
-        return CsleUtils.quickFixName()
+        return CsleUtils.quickFixName(project)
     }
 
     override fun getFamilyName(): String {
@@ -25,6 +30,6 @@ abstract class CsleLocalQuickFix : LocalQuickFix {
     }
 
     fun getConvertedText(text: String): String {
-        return CsleUtils.getConvertedText(text)
+        return CsleUtils.getConvertedText(text, project)
     }
 }

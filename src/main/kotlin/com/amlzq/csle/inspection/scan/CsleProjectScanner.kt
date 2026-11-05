@@ -105,7 +105,7 @@ class CsleProjectScanner(private val project: Project) {
                         lineNumber = document?.getLineNumber(start)?.plus(1) ?: 0,
                         startOffset = start,
                         originalText = text,
-                        convertedText = CsleUtils.getConvertedText(text),
+                        convertedText = CsleUtils.getConvertedText(text, project),
                         descriptor = descriptor,
                     )
                 )

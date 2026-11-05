@@ -33,7 +33,7 @@ class CsleJavaInspection : CsleLocalInspectionTool() {
             if (parent is PsiMethodCallExpression) {
                 val text = parent.methodExpression.referenceName ?: continue
                 debugPrintln("text=$text isSpecialCallExpression")
-                for (functionName in CsleSettings.instance.state.excludedJava) {
+                for (functionName in CsleSettings.effective().excludedJava) {
                     if (functionName == text || text.contains(".$functionName")) {
                         debugPrintln("$text is on the exclusion list.")
                         return true
@@ -46,7 +46,7 @@ class CsleJavaInspection : CsleLocalInspectionTool() {
     }
 
     @NotNull
-    override fun checkFile(
+    override fun doCheckFile(
         @NotNull file: PsiFile, @NotNull manager: InspectionManager, isOnTheFly: Boolean
     ): @NotNull Array<ProblemDescriptor>? {
 
@@ -65,7 +65,7 @@ class CsleJavaInspection : CsleLocalInspectionTool() {
             override fun visitElement(@NotNull element: PsiElement) {
                 super.visitElement(element)
 
-                if (CsleSettings.instance.state.checkDocComments && element is PsiDocComment) {
+                if (CsleSettings.effective().checkDocComments && element is PsiDocComment) {
                     val text = element.text
                     if (!containsChinese(text)) {
                         return
@@ -88,7 +88,7 @@ class CsleJavaInspection : CsleLocalInspectionTool() {
                     return
                 }
 
-                if (!CsleSettings.instance.state.checkLiteralExpression) return
+                if (!CsleSettings.effective().checkLiteralExpression) return
 
                 // 检查是否是 Java 字符串字面量表达式
                 if (element !is PsiLiteralExpression) return

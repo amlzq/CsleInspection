@@ -149,7 +149,7 @@ class CsleResultPanel(private val project: Project) : JPanel(BorderLayout()) {
         val fileCount = items.map { it.file }.distinct().size
         val answer = Messages.showYesNoDialog(
             project,
-            CsleBundle.message("accept.confirm.message", items.size, fileCount, CsleUtils.getQuickFix()),
+            CsleBundle.message("accept.confirm.message", items.size, fileCount, CsleUtils.getQuickFix(project)),
             CsleBundle.message("accept.confirm.title"),
             Messages.getQuestionIcon()
         )

@@ -42,7 +42,7 @@ class CsleDartInspection : CsleLocalInspectionTool() {
         while (parent != null) {
             if (parent is DartCallExpression) {
                 val text = parent.expression!!.text
-                for (functionName in CsleSettings.instance.state.excludedDart) {
+                for (functionName in CsleSettings.effective().excludedDart) {
                     if (functionName == text || text.contains(".$functionName")) {
                         debugPrintln("$text is on the exclusion list.")
                         return true
@@ -55,7 +55,7 @@ class CsleDartInspection : CsleLocalInspectionTool() {
     }
 
     @NotNull
-    override fun checkFile(
+    override fun doCheckFile(
         @NotNull file: PsiFile, @NotNull manager: InspectionManager, isOnTheFly: Boolean
     ): @NotNull Array<ProblemDescriptor>? {
 
@@ -76,7 +76,7 @@ class CsleDartInspection : CsleLocalInspectionTool() {
             override fun visitElement(@NotNull element: PsiElement) {
                 super.visitElement(element)
 
-                if (CsleSettings.instance.state.checkDocComments && isDocComment(element)) {
+                if (CsleSettings.effective().checkDocComments && isDocComment(element)) {
                     val text = element.text
                     if (!containsChinese(text)) {
                         return
@@ -99,7 +99,7 @@ class CsleDartInspection : CsleLocalInspectionTool() {
                     return
                 }
 
-                if (!CsleSettings.instance.state.checkLiteralExpression) return
+                if (!CsleSettings.effective().checkLiteralExpression) return
 
                 // 检查是否是 Dart 字符串字面量表达式
                 if (element !is DartStringLiteralExpression) return

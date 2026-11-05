@@ -4,6 +4,8 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
+import com.amlzq.csle.inspection.util.CsleContext
 
 @State(name = "CseSettings", storages = [Storage("CseSettings.xml")])
 @Service
@@ -38,6 +40,17 @@ class CsleSettings : PersistentStateComponent<CsleSettings> {
     fun customDictionaryFor(glyph: CsleGlyphs): String = customDictionaries[glyph.name].orEmpty()
 
     override fun getState(): CsleSettings = this
+
+    /** 解析后的检查字形标签：用户设置 > 界面语言 > 简体 */
+    fun resolvedInspect(): String = inspect.ifBlank { defaultInspect().label }
+
+    /** 解析后的修复目标标签：用户设置 > 界面语言 > 检查字形 */
+    fun resolvedQuickFix(): String = quickFix.ifBlank {
+        defaultQuickFix(CsleGlyphs.fromLabel(resolvedInspect()) ?: CsleGlyphs.SIMPLIFIED).label
+    }
+
+    /** 把另一份设置的全部内容复制过来（“复制到项目”使用） */
+    fun copyFrom(other: CsleSettings) = loadState(other)
 
     override fun loadState(state: CsleSettings) {
         inspect = state.inspect
@@ -78,7 +91,15 @@ class CsleSettings : PersistentStateComponent<CsleSettings> {
         fun defaultQuickFix(inspect: CsleGlyphs): CsleGlyphs =
             glyphsForLocale(com.intellij.DynamicBundle.getLocale()) ?: inspect
 
+        /** 应用级（IDE 方案）设置 */
         val instance: CsleSettings
-            get() = com.intellij.openapi.components.service()
+            get() = service()
+
+        /** 项目已启用项目方案时返回项目级设置，否则返回应用级设置；默认按当前检查所属的项目判断。 */
+        fun effective(project: com.intellij.openapi.project.Project? = CsleContext.project()): CsleSettings {
+            if (project == null || project.isDisposed || project.isDefault) return instance
+            val projectSettings = project.service<CsleProjectSettings>()
+            return if (projectSettings.enabled) projectSettings.scheme else instance
+        }
     }
 }

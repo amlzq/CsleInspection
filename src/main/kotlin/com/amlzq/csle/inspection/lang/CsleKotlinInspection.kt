@@ -36,7 +36,7 @@ class CsleKotlinInspection : CsleLocalInspectionTool() {
             if (parent is KtCallExpression) {
                 val text = parent.calleeExpression?.text ?: continue
                 debugPrintln("text=$text isSpecialCallExpression")
-                for (functionName in CsleSettings.instance.state.excludedKotlin) {
+                for (functionName in CsleSettings.effective().excludedKotlin) {
                     if (functionName == text || text.contains(".$functionName")) {
                         debugPrintln("$text is on the exclusion list.")
                         return true
@@ -49,7 +49,7 @@ class CsleKotlinInspection : CsleLocalInspectionTool() {
     }
 
     @NotNull
-    override fun checkFile(
+    override fun doCheckFile(
         @NotNull file: PsiFile, @NotNull manager: InspectionManager, isOnTheFly: Boolean
     ): @NotNull Array<ProblemDescriptor>? {
 
@@ -68,7 +68,7 @@ class CsleKotlinInspection : CsleLocalInspectionTool() {
             override fun visitElement(@NotNull element: PsiElement) {
                 super.visitElement(element)
 
-                if (CsleSettings.instance.state.checkDocComments && element is KDoc) {
+                if (CsleSettings.effective().checkDocComments && element is KDoc) {
                     val text = element.text
                     if (!containsChinese(text)) {
                         return
@@ -91,7 +91,7 @@ class CsleKotlinInspection : CsleLocalInspectionTool() {
                     return
                 }
 
-                if (!CsleSettings.instance.state.checkLiteralExpression) return
+                if (!CsleSettings.effective().checkLiteralExpression) return
 
                 // 检查是否是 Kotlin 字符串字面量表达式
                 if (element !is KtStringTemplateExpression) return
