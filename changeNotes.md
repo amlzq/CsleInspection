@@ -1,9 +1,9 @@
-# Next
-- **FEATURE** settings now have two schemes, like Code Style: Default (IDE) applies to every project, Project is stored in `.idea/csleInspection.xml` and can be committed with the project. Pick one from the Scheme drop-down on the settings page, or use the gear menu | Copy to Project to start from the IDE values. The settings page moved to Settings | Tools (project level).
-- **IMPROVEMENT** the Inspect and Quick fix glyphs now default to the IDE display language when they have not been set: zh_CN, zh_SG and zh_MY use Simplified Chinese, zh_TW uses Chinese (Taiwan) and zh_HK uses Chinese (Hong Kong). Other languages fall back to Simplified Chinese for Inspect, and Quick fix falls back to the Inspect glyph. Values you have saved are never overridden.
+# 0.8.0
+- **FEATURE** settings can now be stored per project (Project) or shared by all projects (Default (IDE)); switch between them with the Scheme drop-down on the settings page.
+- **IMPROVEMENT** the Inspect and Quick fix glyphs now follow the IDE display language until you choose your own.
 - **IMPROVEMENT** the Inspect and Quick fix glyphs may now be the same.
-- **FEATURE** custom phrase dictionary per Quick fix target, in OpenCC dictionary format (`source<Tab>target`, one target phrase without spaces; entries take priority over the built-in dictionary, the last entry wins for a repeated source). Add entries with the source/target fields in Settings | Tools | Chinese Expression Inspection; once a dictionary has entries, the All button opens the Custom Dictionary dialog to edit rows, and the options menu (gear) there imports (append or replace), exports, downloads a template for the current target and clears the list. Comments and blank lines in imported files are not kept, and only the first candidate of an OpenCC entry is used.
-- **IMPROVEMENT** the excluded list on the settings page is now a chip input: press Enter or comma to add a name, click × (or press Delete / Backspace) to remove it, and paste several names at once. Chips beyond three rows are collapsed behind a Show more / Show less link.
+- **FEATURE** add your own phrase dictionary for each Quick fix target; its entries take priority over the built-in dictionary.
+- **IMPROVEMENT** the excluded list is now a chip input that is quicker to add to, remove from and paste into.
 
 # 0.7.0
 - **FEATURE** add Tools | Chinese Expression Inspection | Inspect All Files: scan the whole project, review the results in a tool window, and convert every checked occurrence with Accept All (one Undo reverts the batch).
