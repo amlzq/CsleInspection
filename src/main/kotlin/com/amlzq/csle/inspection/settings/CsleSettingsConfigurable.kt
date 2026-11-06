@@ -191,7 +191,7 @@ class CsleSettingsConfigurable(private val project: Project) : Configurable {
                 cell(quickFixComboBox)
             }
 
-            group(CsleBundle.message("group.inspect.targets")) {
+            group(CsleBundle.message("group.inspect.item")) {
                 row {
                     cell(literalExpressionCheckBox)
                 }
@@ -208,6 +208,24 @@ class CsleSettingsConfigurable(private val project: Project) : Configurable {
                 // 说明适用范围：只有具备文档注释语法的语言才受上面的开关影响
                 row {
                     comment(CsleBundle.message("inspect.target.doc.comments.hint"))
+                }
+            }
+
+            group(CsleBundle.message("group.excluded.item")) {
+                row {
+                    label(CsleBundle.message("target.language.label"))
+                    cell(targetLanguageComboBox)
+                }
+
+                // 整句交给 comment 渲染：跟随面板宽度自动换行，不再手工插入 <br>
+                row {
+                    excludedHintLabel = comment(excludedHintText(currentTarget)).component
+                }
+
+                row {
+                    cell(excludedField)
+                        .align(Align.FILL)
+                        .resizableColumn()
                 }
             }
 
@@ -233,24 +251,6 @@ class CsleSettingsConfigurable(private val project: Project) : Configurable {
                 }
                 row {
                     dictionaryStatusLabel = comment("").component
-                }
-            }
-
-            group(CsleBundle.message("group.excluded.list")) {
-                row {
-                    label(CsleBundle.message("target.language.label"))
-                    cell(targetLanguageComboBox)
-                }
-
-                // 整句交给 comment 渲染：跟随面板宽度自动换行，不再手工插入 <br>
-                row {
-                    excludedHintLabel = comment(excludedHintText(currentTarget)).component
-                }
-
-                row {
-                    cell(excludedField)
-                        .align(Align.FILL)
-                        .resizableColumn()
                 }
             }
         }
