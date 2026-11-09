@@ -337,10 +337,12 @@ class CsleSettingsConfigurable(private val project: Project) : Configurable {
 
     private fun openDictionaryDialog() {
         val glyph = currentQuickFixGlyph()
-        val dialog = CsleCustomDictionaryDialog(settingsRoot, glyph, pendingDictionaries[glyph.name].orEmpty())
+        val dialog = CsleCustomDictionaryDialog(settingsRoot, glyph, pendingDictionaries[glyph.name].orEmpty(), pendingDictionaries)
         if (!dialog.showAndGet()) return
-        if (dialog.resultText.isBlank()) pendingDictionaries.remove(glyph.name)
-        else pendingDictionaries[glyph.name] = dialog.resultText
+        // 弹窗内可切换字形编辑，所有字形的结果都要写回
+        for ((name, text) in dialog.resultTexts) {
+            if (text.isBlank()) pendingDictionaries.remove(name) else pendingDictionaries[name] = text
+        }
         updateDictionaryStatus()
     }
 

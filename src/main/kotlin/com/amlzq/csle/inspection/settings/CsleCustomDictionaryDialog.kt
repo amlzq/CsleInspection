@@ -9,7 +9,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.ui.ComboBox
+import com.intellij.ui.SearchTextField
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBLabel
+import javax.swing.RowFilter
+import javax.swing.event.DocumentEvent
+import javax.swing.table.TableRowSorter
+import com.intellij.ui.DocumentAdapter
 import com.intellij.util.ui.UIUtil
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -44,19 +51,53 @@ import javax.swing.table.TableCellRenderer
  *
  * 弹窗里编辑的是副本，点确定后才通过 [resultText] 交回设置页；注释和空行不会保留。
  */
-class CsleCustomDictionaryDialog(
+class CsleCustomDictionaryDialog @JvmOverloads constructor(
     parent: Component,
     private val glyph: CsleGlyphs,
     initialText: String,
+    /** 其它字形当前的词典文本（键为字形名），弹窗内可通过下拉框切换编辑；缺省时只有 [glyph] 一份 */
+    otherDictionaries: Map<String, String> = emptyMap(),
 ) : DialogWrapper(parent, true) {
 
-    /** 点确定后的词典文本（OpenCC 格式）；取消时无意义 */
+    /** 点确定后 [glyph] 的词典文本（OpenCC 格式）；取消时无意义 */
     var resultText: String = initialText
         private set
 
-    private val model = RowsModel(
-        CsleCustomDictionary.parse(initialText).entries.map { arrayOf(it.key, it.value) },
-    )
+    /** 点确定后所有字形的词典文本（键为字形名）；取消时无意义 */
+    var resultTexts: Map<String, String> = emptyMap()
+        private set
+
+    private fun parseRows(text: String): List<Array<String>> =
+        CsleCustomDictionary.parse(text).entries.map { arrayOf(it.key, it.value) }
+
+    /** 各字形的编辑副本；当前显示的字形以 [model] 为准，切换时回写到这里 */
+    private val stored: MutableMap<CsleGlyphs, List<Array<String>>> =
+        CsleGlyphs.entries.associateWithTo(LinkedHashMap()) { g ->
+            parseRows(if (g == glyph) initialText else otherDictionaries[g.name].orEmpty())
+        }
+    private var currentGlyph: CsleGlyphs = glyph
+
+    private val model = RowsModel(stored.getValue(glyph))
+    private var query: String = ""
+    private val sorter = TableRowSorter(model).apply {
+        rowFilter = object : RowFilter<RowsModel, Int>() {
+            override fun include(entry: Entry<out RowsModel, out Int>): Boolean {
+                val index = entry.identifier
+                // “新增行”条目、尚未填写的空行始终显示，否则新增后看不到
+                if (index >= model.rows.size || query.isEmpty()) return true
+                val (source, target) = model.rows[index]
+                if (source.isBlank() && target.isBlank()) return true
+                return source.contains(query, ignoreCase = true) || target.contains(query, ignoreCase = true)
+            }
+        }
+    }
+    private val glyphCombo = ComboBox(CsleGlyphs.entries.toTypedArray()).apply {
+        renderer = SimpleListCellRenderer.create("") { it.label }
+        selectedItem = glyph
+    }
+    private val searchField = SearchTextField(false).apply {
+        textEditor.emptyText.text = CsleBundle.message("custom.dictionary.search")
+    }
     internal val table: JTable = object : JBTable(model) {
         private val addRowRenderer = object : DefaultTableCellRenderer() {
             override fun getTableCellRendererComponent(
@@ -83,11 +124,23 @@ class CsleCustomDictionaryDialog(
 
         // 最后一行是“新增行”条目，用专用渲染
         override fun getCellRenderer(row: Int, column: Int): TableCellRenderer =
-            if (row == this@CsleCustomDictionaryDialog.model.rows.size) addRowRenderer else super.getCellRenderer(row, column)
+            if (convertRowIndexToModel(row) == this@CsleCustomDictionaryDialog.model.rows.size) addRowRenderer else super.getCellRenderer(row, column)
     }
 
     init {
         title = CsleBundle.message("custom.dictionary.dialog.title", glyph.label)
+        table.rowSorter = sorter
+        glyphCombo.addActionListener {
+            val target = glyphCombo.selectedItem as? CsleGlyphs ?: return@addActionListener
+            if (target != currentGlyph) switchGlyph(target)
+        }
+        searchField.addDocumentListener(object : DocumentAdapter() {
+            override fun textChanged(e: DocumentEvent) {
+                table.cellEditor?.stopCellEditing()
+                query = searchField.text.trim()
+                sorter.allRowsChanged()
+            }
+        })
         configureTable()
         init()
     }
@@ -119,7 +172,7 @@ class CsleCustomDictionaryDialog(
         table.actionMap.put("csle.addRowOrNext", object : AbstractAction() {
             override fun actionPerformed(e: ActionEvent) {
                 when {
-                    table.selectedRow == model.rows.size -> addRow()
+                    selectedModelRow() == model.rows.size -> addRow()
                     defaultEnter != null -> defaultEnter.actionPerformed(e)
                     else -> {
                         val next = minOf(table.selectedRow + 1, table.rowCount - 1)
@@ -130,8 +183,9 @@ class CsleCustomDictionaryDialog(
         })
         table.addMouseListener(object : MouseAdapter() {
             override fun mouseClicked(e: MouseEvent) {
-                val row = table.rowAtPoint(e.point)
-                if (row < 0) return
+                val viewRow = table.rowAtPoint(e.point)
+                if (viewRow < 0) return
+                val row = table.convertRowIndexToModel(viewRow)
                 when {
                     row == model.rows.size -> addRow()
                     table.columnAtPoint(e.point) == 0 -> {
@@ -144,7 +198,7 @@ class CsleCustomDictionaryDialog(
     }
 
     override fun createCenterPanel(): JComponent {
-        // 列表标题栏：左侧标题，右侧是 IDE 标准的“选项”菜单（齿轮图标）
+        // 顶部栏：字形下拉、搜索框，右侧是 IDE 标准的“选项”菜单（齿轮图标）
         val optionsGroup = DefaultActionGroup().apply {
             isPopup = true
             templatePresentation.icon = AllIcons.General.GearPlain
@@ -162,9 +216,10 @@ class CsleCustomDictionaryDialog(
         val toolbar = ActionManager.getInstance()
             .createActionToolbar("CsleCustomDictionary", DefaultActionGroup(optionsGroup), true)
             .apply { targetComponent = table }
-        val titleBar = JPanel(BorderLayout()).apply {
+        val filterBar = JPanel(BorderLayout(JBUI.scale(8), 0)).apply {
             border = JBUI.Borders.empty(0, 2)
-            add(JBLabel(CsleBundle.message("custom.dictionary.entries")), BorderLayout.WEST)
+            add(glyphCombo, BorderLayout.WEST)
+            add(searchField, BorderLayout.CENTER)
             add(toolbar.component, BorderLayout.EAST)
         }
 
@@ -174,7 +229,7 @@ class CsleCustomDictionaryDialog(
             UIUtil.FontColor.BRIGHTER,
         )
         return JPanel(BorderLayout(0, JBUI.scale(4))).apply {
-            add(titleBar, BorderLayout.NORTH)
+            add(filterBar, BorderLayout.NORTH)
             add(JBScrollPane(table), BorderLayout.CENTER)
             add(note, BorderLayout.SOUTH)
             preferredSize = Dimension(JBUI.scale(480), JBUI.scale(360))
@@ -186,12 +241,37 @@ class CsleCustomDictionaryDialog(
             override fun actionPerformed(e: AnActionEvent) = action()
         }
 
+    private fun selectedModelRow(): Int =
+        table.selectedRow.let { if (it < 0) -1 else table.convertRowIndexToModel(it) }
+
+    /** 选中模型中的某一行；被搜索过滤掉时先清空搜索 */
+    private fun selectModelRow(modelRow: Int): Int {
+        var view = table.convertRowIndexToView(modelRow)
+        if (view < 0) {
+            searchField.text = ""
+            query = ""
+            sorter.allRowsChanged()
+            view = table.convertRowIndexToView(modelRow)
+        }
+        if (view >= 0) table.setRowSelectionInterval(view, view)
+        return view
+    }
+
+    private fun switchGlyph(target: CsleGlyphs) {
+        table.cellEditor?.stopCellEditing()
+        stored[currentGlyph] = model.rows.map { it.copyOf() }
+        currentGlyph = target
+        model.setRows(stored.getValue(target))
+        title = CsleBundle.message("custom.dictionary.dialog.title", target.label)
+    }
+
     private fun addRow() {
         table.cellEditor?.stopCellEditing()
         val row = model.addRow()
-        table.setRowSelectionInterval(row, row)
-        table.scrollRectToVisible(table.getCellRect(row, 1, true))
-        table.editCellAt(row, 1)
+        val view = selectModelRow(row)
+        if (view < 0) return
+        table.scrollRectToVisible(table.getCellRect(view, 1, true))
+        table.editCellAt(view, 1)
         table.editorComponent?.requestFocusInWindow()
     }
 
@@ -199,11 +279,22 @@ class CsleCustomDictionaryDialog(
 
     override fun doValidate(): ValidationInfo? {
         table.cellEditor?.stopCellEditing()
-        for (i in 0 until model.rows.size) {
-            val (source, target) = model.rows[i]
+        stored[currentGlyph] = model.rows.map { it.copyOf() }
+        // 先检查当前字形，再检查其它字形，出错时切换到出错的字形
+        for (g in listOf(currentGlyph) + CsleGlyphs.entries.filter { it != currentGlyph }) {
+            val info = validateRows(g, stored.getValue(g))
+            if (info != null) return info
+        }
+        return null
+    }
+
+    private fun validateRows(g: CsleGlyphs, rows: List<Array<String>>): ValidationInfo? {
+        for (i in rows.indices) {
+            val (source, target) = rows[i]
             if (source.isBlank() && target.isBlank()) continue
             val error = CsleCustomDictionary.validate(source, target) ?: continue
-            table.setRowSelectionInterval(i, i)
+            if (g != currentGlyph) glyphCombo.selectedItem = g
+            selectModelRow(i)
             val key = when (error) {
                 CsleCustomDictionary.ValidationError.COMMENT_PREFIX -> "custom.dictionary.invalid.comment.entry"
                 CsleCustomDictionary.ValidationError.INVALID_CHARACTER -> "custom.dictionary.invalid.character"
@@ -216,14 +307,19 @@ class CsleCustomDictionaryDialog(
     }
 
     override fun doOKAction() {
-        resultText = CsleCustomDictionary.format(currentEntries())
+        table.cellEditor?.stopCellEditing()
+        stored[currentGlyph] = model.rows.map { it.copyOf() }
+        resultTexts = stored.entries.associate { (g, rows) -> g.name to CsleCustomDictionary.format(entriesOf(rows)) }
+        resultText = resultTexts.getValue(glyph.name)
         super.doOKAction()
     }
 
     /** 当前表格里的有效词条；原词重复时以后面的为准，全空的行忽略 */
-    private fun currentEntries(): Map<String, String> {
+    private fun currentEntries(): Map<String, String> = entriesOf(model.rows)
+
+    private fun entriesOf(rows: List<Array<String>>): Map<String, String> {
         val entries = LinkedHashMap<String, String>()
-        for ((source, target) in model.rows) {
+        for ((source, target) in rows) {
             if (CsleCustomDictionary.validate(source, target) != null) continue
             entries[source.trim()] = target.trim()
         }
@@ -283,7 +379,7 @@ class CsleCustomDictionaryDialog(
         val descriptor = FileSaverDescriptor(CsleBundle.message("custom.dictionary.template"), "", "txt")
         val wrapper = FileChooserFactory.getInstance().createSaveFileDialog(descriptor, contentPanel)
             .save(null as VirtualFile?, CsleCustomDictionary.TEMPLATE_FILE_NAME) ?: return
-        wrapper.file.writeText(CsleCustomDictionary.templateFor(glyph), Charsets.UTF_8)
+        wrapper.file.writeText(CsleCustomDictionary.templateFor(currentGlyph), Charsets.UTF_8)
     }
 
     /** 三列：删除按钮、原词、目标词；只有后两列可编辑 */
