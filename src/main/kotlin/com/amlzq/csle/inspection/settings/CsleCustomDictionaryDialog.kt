@@ -95,6 +95,7 @@ class CsleCustomDictionaryDialog @JvmOverloads constructor(
         renderer = SimpleListCellRenderer.create("") { it.label }
         selectedItem = glyph
     }
+    private val searchCards = JPanel(java.awt.CardLayout())
     private val searchField = SearchTextField(false).apply {
         textEditor.emptyText.text = CsleBundle.message("custom.dictionary.search")
     }
@@ -216,10 +217,34 @@ class CsleCustomDictionaryDialog @JvmOverloads constructor(
         val toolbar = ActionManager.getInstance()
             .createActionToolbar("CsleCustomDictionary", DefaultActionGroup(optionsGroup), true)
             .apply { targetComponent = table }
+        // 搜索区：收起时只显示搜索图标，点击后展开成输入框；失焦且无内容、或按 Esc 时收起
+        val expandAction = object : DumbAwareAction(
+            CsleBundle.message("custom.dictionary.search"), null, AllIcons.Actions.Search,
+        ) {
+            override fun actionPerformed(e: AnActionEvent) = setSearchExpanded(true)
+        }
+        val searchToolbar = ActionManager.getInstance()
+            .createActionToolbar("CsleCustomDictionarySearch", DefaultActionGroup(expandAction), true)
+            .apply { targetComponent = table }
+        searchCards.add(JPanel(BorderLayout()).apply { add(searchToolbar.component, BorderLayout.WEST) }, SEARCH_COLLAPSED)
+        searchCards.add(searchField, SEARCH_EXPANDED)
+        searchField.textEditor.addFocusListener(object : java.awt.event.FocusAdapter() {
+            override fun focusLost(e: java.awt.event.FocusEvent) {
+                if (searchField.text.isEmpty()) setSearchExpanded(false)
+            }
+        })
+        searchField.textEditor.addKeyListener(object : java.awt.event.KeyAdapter() {
+            override fun keyPressed(e: KeyEvent) {
+                if (e.keyCode == KeyEvent.VK_ESCAPE && searchField.text.isEmpty()) {
+                    e.consume()
+                    setSearchExpanded(false)
+                }
+            }
+        })
         val filterBar = JPanel(BorderLayout(JBUI.scale(8), 0)).apply {
             border = JBUI.Borders.empty(0, 2)
             add(glyphCombo, BorderLayout.WEST)
-            add(searchField, BorderLayout.CENTER)
+            add(searchCards, BorderLayout.CENTER)
             add(toolbar.component, BorderLayout.EAST)
         }
 
@@ -234,6 +259,11 @@ class CsleCustomDictionaryDialog @JvmOverloads constructor(
             add(note, BorderLayout.SOUTH)
             preferredSize = Dimension(JBUI.scale(480), JBUI.scale(360))
         }
+    }
+
+    private fun setSearchExpanded(expanded: Boolean) {
+        (searchCards.layout as java.awt.CardLayout).show(searchCards, if (expanded) SEARCH_EXPANDED else SEARCH_COLLAPSED)
+        if (expanded) searchField.textEditor.requestFocusInWindow() else table.requestFocusInWindow()
     }
 
     private fun menuAction(key: String, action: () -> Unit): AnAction =
@@ -421,5 +451,10 @@ class CsleCustomDictionaryDialog @JvmOverloads constructor(
             rows.addAll(newRows.map { it.copyOf() })
             fireTableDataChanged()
         }
+    }
+
+    private companion object {
+        const val SEARCH_COLLAPSED = "collapsed"
+        const val SEARCH_EXPANDED = "expanded"
     }
 }
