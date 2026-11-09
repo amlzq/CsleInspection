@@ -366,6 +366,13 @@ class CsleCustomDictionaryDialog @JvmOverloads constructor(
             Messages.showErrorDialog(CsleBundle.message("custom.dictionary.no.entries"), importTitle)
             return
         }
+        if (result.entries.size > MAX_IMPORT_ENTRIES) {
+            Messages.showErrorDialog(
+                CsleBundle.message("custom.dictionary.import.too.many", result.entries.size, MAX_IMPORT_ENTRIES),
+                importTitle,
+            )
+            return
+        }
         if (result.errors.isNotEmpty()) {
             val shown = result.errors.take(5).joinToString("\n") { "${it.line}: ${it.content}" }
             Messages.showErrorDialog(
@@ -454,6 +461,8 @@ class CsleCustomDictionaryDialog @JvmOverloads constructor(
     }
 
     private companion object {
+        /** 单次导入的词条上限，超出时拒绝导入，避免弹窗卡顿 */
+        const val MAX_IMPORT_ENTRIES = 20000
         const val SEARCH_COLLAPSED = "collapsed"
         const val SEARCH_EXPANDED = "expanded"
     }
