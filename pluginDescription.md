@@ -6,13 +6,13 @@ TypeScript
 PHP
 Python`, no need to install multiple anymore. You can uninstall the old plugin and then install this one.
 
-csle, short for "Chinese String Literal Expression", inspect whether the string literal expression contains Chinese characters, and can quickly fix them between simplified or traditional glyphs.
+csle, short for "Chinese String Literal Expression", inspect whether the string literal expression contains Chinese characters, and can quickly convert them to the wording and characters used in another Chinese-speaking region (Mainland China, Taiwan, Hong Kong).
 
 If you don't want to inspect the strings in certain locations, such as: print, you can exclude them in the settings.
 
 Use Tools | Chinese Expression Inspection | Inspect All Files to scan the whole project, review the results, and convert them all at once with Accept All.
 
-In the plugin settings view, you can modify the Chinese glyphs you want to inspect and the glyphs to quick fix.
+In the plugin settings view, you can choose which regional Chinese usage to inspect and which to quick fix to.
 
 好消息，此插件支持`Dart
 Java
@@ -22,10 +22,10 @@ TypeScript
 PHP
 Python`语言，无需再安装多个。您可以卸载旧插件，然后安装此插件。
 
-检查字符串字面表达式是否包含中文汉字，并可以在简体字或繁体字之间快速修复它们。
+检查字符串字面表达式是否包含中文汉字，并可以在不同中文地区（中国大陆、台湾、香港）的用字和习惯用语之间快速转换。
 
 如果您不想检查某些位置的字符串，例如：print 方法的字符串形参，则可以在设置中排除它们。
 
-在插件设置视图中，您可以修改要检查的字形以及快速修复的字形。
+在插件设置视图中，您可以选择要检查的中文地区用法以及快速修复成的用法。
 
 [VSCode extension](https://marketplace.visualstudio.com/items?itemName=amlzq.csle-diagnostic)
