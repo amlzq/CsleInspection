@@ -37,6 +37,7 @@ abstract class CsleBasePlatformTest : BasePlatformTestCase() {
         state.excludedCss = emptyList()
         state.excludedXml = emptyList()
         state.excludedJson = emptyList()
+        state.lastExcludedTarget = ""
         state.checkLiteralExpression = true
         state.checkDocComments = false
     }

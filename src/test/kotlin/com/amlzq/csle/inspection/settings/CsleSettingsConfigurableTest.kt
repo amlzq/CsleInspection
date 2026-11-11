@@ -58,8 +58,8 @@ class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
 
     /** 排除列表上方的说明文案（UI DSL 的 comment 组件，会按宽度自动换行） */
     private fun hintLabel(root: Container): DslLabel {
-        val prefix = CsleBundle.message("excluded.label.part1")
-        return findAll(root, DslLabel::class.java).first { it.userText?.startsWith(prefix) == true }
+        val prefixes = listOf(CsleBundle.message("excluded.label.part1"), CsleBundle.message("excluded.hint.none"))
+        return findAll(root, DslLabel::class.java).first { label -> prefixes.any { label.userText?.startsWith(it) == true } }
     }
 
     fun testDocCommentsUncheckedByDefault() {
@@ -149,6 +149,7 @@ class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
     fun testApplyNormalizesExcludedLines() {
         val (configurable, root) = createConfigurable()
         val chips = findAll(root, ChipsInputField::class.java).single()
+        selectTarget(targetComboBox(root), "target.language.js_ts")
         // 逗号 / 换行都是分隔符，空项与重复项被丢弃
         chips.items = listOf("  logger ", "", " println  ", "logger")
 
@@ -185,6 +186,7 @@ class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
         val chips = findAll(root, ChipsInputField::class.java).single()
         val targets = targetComboBox(root)
 
+        selectTarget(targets, "target.language.js_ts")
         chips.items = listOf("logger")
         selectTarget(targets, "target.language.kotlin")
         // 切到未编辑的目标时显示其自身状态（默认空）
@@ -210,13 +212,15 @@ class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
         assertEquals(listOf("println", "logger"), chips.items)
     }
 
-    fun testResetSelectsJsTargetAndReloadsText() {
+    fun testResetSelectsLastEditedTargetAndReloadsText() {
         CsleSettings.instance.state.excludedJs = listOf("logger")
         CsleSettings.instance.state.excludedKotlin = listOf("println")
+        CsleSettings.instance.state.lastExcludedTarget = "JS_TS"
 
         val (configurable, root) = createConfigurable()
         val chips = findAll(root, ChipsInputField::class.java).single()
         val targets = targetComboBox(root)
+        assertEquals(CsleBundle.message("target.language.js_ts"), targets.selectedItem.toString())
 
         selectTarget(targets, "target.language.kotlin")
         chips.items = emptyList()
@@ -227,6 +231,45 @@ class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
         assertEquals(CsleBundle.message("target.language.js_ts"), targets.selectedItem.toString())
         assertEquals(listOf("logger"), chips.items)
         assertFalse(configurable.isModified())
+    }
+
+    fun testTargetItemsSortedAlphabetically() {
+        val (_, root) = createConfigurable()
+        val labels = items(targetComboBox(root)).map { it.toString() }
+
+        assertEquals(labels.sortedWith(String.CASE_INSENSITIVE_ORDER), labels)
+    }
+
+    fun testNoTargetSelectedByDefaultAndFieldDisabled() {
+        val (configurable, root) = createConfigurable()
+        val targets = targetComboBox(root)
+        val chips = findAll(root, ChipsInputField::class.java).single()
+
+        assertNull(targets.selectedItem)
+        assertFalse(chips.isEnabled)
+        assertEquals(CsleBundle.message("excluded.hint.none"), hintLabel(root).userText)
+        assertFalse(configurable.isModified())
+
+        selectTarget(targets, "target.language.java")
+        assertTrue(chips.isEnabled)
+    }
+
+    fun testApplyRemembersLastEditedTarget() {
+        val (configurable, root) = createConfigurable()
+        val targets = targetComboBox(root)
+        val chips = findAll(root, ChipsInputField::class.java).single()
+
+        selectTarget(targets, "target.language.kotlin")
+        chips.items = listOf("println")
+        // 只是切过去看看、没有改动，不算“最近编辑”
+        selectTarget(targets, "target.language.java")
+        configurable.apply()
+
+        assertEquals("KOTLIN", CsleSettings.instance.state.lastExcludedTarget)
+
+        val (_, root2) = createConfigurable()
+        assertEquals(CsleBundle.message("target.language.kotlin"), targetComboBox(root2).selectedItem.toString())
+        assertEquals(listOf("println"), findAll(root2, ChipsInputField::class.java).single().items)
     }
 
     fun testExcludedHintLabelFollowsTarget() {
@@ -250,6 +293,7 @@ class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
     fun testResetRestoresUiFromState() {
         CsleSettings.instance.state.checkDocComments = true
         CsleSettings.instance.state.excludedJs = listOf("logger")
+        CsleSettings.instance.state.lastExcludedTarget = "JS_TS"
 
         val (configurable, root) = createConfigurable()
         val checkbox = findCheckBox(root, CsleBundle.message("inspect.target.doc.comments"))!!

@@ -91,6 +91,12 @@ class ChipsInputField : JPanel(BorderLayout()) {
             refresh()
         }
 
+    /** 禁用时输入框不可用，标签上的删除按钮也不会响应（没有可编辑目标时使用） */
+    override fun setEnabled(enabled: Boolean) {
+        super.setEnabled(enabled)
+        input.isEnabled = enabled
+    }
+
     init {
         flow.layout = layout
         flow.isOpaque = false

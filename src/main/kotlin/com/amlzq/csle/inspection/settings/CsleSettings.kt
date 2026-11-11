@@ -26,6 +26,8 @@ class CsleSettings : PersistentStateComponent<CsleSettings> {
     var excludedCss: List<String> = listOf()
     var excludedXml: List<String> = listOf()
     var excludedJson: List<String> = listOf()
+    /** 排除列表里上一次编辑过的语言（[ExcludedTarget] 的枚举名）；空串表示还没编辑过，设置页下拉框显示占位提示 */
+    var lastExcludedTarget: String = ""
     var checkLiteralExpression: Boolean = true
 
     /** 是否检查文档注释（KDoc/Javadoc/JSDoc/PHPDoc/DartDoc），默认关闭，只检查字符串字面量 */
@@ -66,6 +68,7 @@ class CsleSettings : PersistentStateComponent<CsleSettings> {
         excludedCss = if (state.excludedCss.isNotEmpty()) state.excludedCss else state.excluded
         excludedXml = if (state.excludedXml.isNotEmpty()) state.excludedXml else state.excluded
         excludedJson = if (state.excludedJson.isNotEmpty()) state.excludedJson else state.excluded
+        lastExcludedTarget = state.lastExcludedTarget
         checkLiteralExpression = state.checkLiteralExpression
         checkDocComments = state.checkDocComments
         autoScanOnOpen = state.autoScanOnOpen

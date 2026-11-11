@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.DocumentAdapter
@@ -57,7 +58,14 @@ class CsleSettingsConfigurable(private val project: Project) : Configurable {
 
     private val options: Array<String> = CsleGlyphs.entries.map { it.label }.toTypedArray()
     private val excludedTextByTarget: MutableMap<ExcludedTarget, List<String>> = mutableMapOf()
-    private var currentTarget: ExcludedTarget = ExcludedTarget.JS_TS
+    /** 当前选中的语言；null 表示还没选，此时排除列表不可编辑 */
+    private var currentTarget: ExcludedTarget? = null
+
+    /** 用户最近一次改动过排除列表的语言，应用时写入设置，下次打开设置页自动选中 */
+    private var lastEditedTarget: ExcludedTarget? = null
+
+    /** 程序性地改动下拉框选择时置位，避免监听器把它当成用户切换 */
+    private var loadingTarget = false
 
     private fun projectSettings(): CsleProjectSettings = project.service<CsleProjectSettings>()
 
@@ -83,11 +91,14 @@ class CsleSettingsConfigurable(private val project: Project) : Configurable {
             setPrototypeDisplayValue(longest)
         }
 
-        val excludedTargets = ExcludedTarget.entries.toTypedArray()
+        // 按显示名的首字母顺序排列（不区分大小写）
+        val excludedTargets = ExcludedTarget.entries.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.toString() }).toTypedArray()
         val longestTarget = excludedTargets.maxByOrNull { it.toString().length } ?: ExcludedTarget.JS_TS
         targetLanguageComboBox = ComboBox(excludedTargets).apply {
             setPrototypeDisplayValue(longestTarget)
-            selectedItem = currentTarget
+            // 未选择时（selectedItem 为 null）显示占位提示
+            renderer = SimpleListCellRenderer.create(CsleBundle.message("target.language.placeholder")) { it.toString() }
+            selectedItem = null
         }
 
         excludedField = ChipsInputField()
@@ -143,12 +154,10 @@ class CsleSettingsConfigurable(private val project: Project) : Configurable {
         }
 
         targetLanguageComboBox.addItemListener { e ->
-            if (e.stateChange != ItemEvent.SELECTED) return@addItemListener
-            excludedTextByTarget[currentTarget] = excludedField.items
+            if (e.stateChange != ItemEvent.SELECTED || loadingTarget) return@addItemListener
             val selected = targetLanguageComboBox.selectedItem as? ExcludedTarget ?: return@addItemListener
-            currentTarget = selected
-            excludedField.items = excludedTextByTarget[selected] ?: getExcludedFromState(selected)
-            updateExcludedHintLabel()
+            saveCurrentTarget()
+            showTarget(selected)
         }
 
         dictionarySourceField = JBTextField().apply {
@@ -362,7 +371,8 @@ class CsleSettingsConfigurable(private val project: Project) : Configurable {
         "<html><body style='width:${widthPx}px'>$text</body></html>"
 
     /** 拼接成一句完整的话，换行位置交给组件按实际宽度决定 */
-    private fun excludedHintText(target: ExcludedTarget): String {
+    private fun excludedHintText(target: ExcludedTarget?): String {
+        if (target == null) return CsleBundle.message("excluded.hint.none")
         return listOf(
             CsleBundle.message("excluded.label.part1"),
             CsleBundle.message(excludedLabelPart2Key(target)),
@@ -422,6 +432,22 @@ class CsleSettingsConfigurable(private val project: Project) : Configurable {
         }
     }
 
+    /** 把输入框里的内容存进缓存；内容与已保存的设置不同时，记为“最近编辑的语言” */
+    private fun saveCurrentTarget() {
+        val target = currentTarget ?: return
+        val items = excludedField.items
+        excludedTextByTarget[target] = items
+        if (items != getExcludedFromState(target)) lastEditedTarget = target
+    }
+
+    /** 切换到指定语言（null 表示未选）：填充列表、更新说明；未选时输入框不可用 */
+    private fun showTarget(target: ExcludedTarget?) {
+        currentTarget = target
+        excludedField.isEnabled = target != null
+        excludedField.items = if (target == null) emptyList() else excludedTextByTarget[target] ?: getExcludedFromState(target)
+        updateExcludedHintLabel()
+    }
+
     private fun getExcludedItems(target: ExcludedTarget): List<String> {
         if (target == currentTarget) return excludedField.items
         return excludedTextByTarget[target] ?: getExcludedFromState(target)
@@ -448,10 +474,11 @@ class CsleSettingsConfigurable(private val project: Project) : Configurable {
         state.inspect = inspectComboBox.selectedItem as? String ?: state.resolvedInspect()
         state.quickFix = quickFixComboBox.selectedItem as? String ?: state.resolvedQuickFix()
         excludedField.commitPending()
-        excludedTextByTarget[currentTarget] = excludedField.items
+        saveCurrentTarget()
         ExcludedTarget.entries.forEach { target ->
             setExcludedToState(target, getExcludedItems(target))
         }
+        state.lastExcludedTarget = lastEditedTarget?.name ?: state.lastExcludedTarget
         state.checkLiteralExpression = literalExpressionCheckBox.isSelected
         state.checkDocComments = docCommentsCheckBox.isSelected
         // 只影响下次打开项目，不需要刷新编辑器中的 inspection
@@ -483,17 +510,21 @@ class CsleSettingsConfigurable(private val project: Project) : Configurable {
     private fun loadFrom(source: CsleSettings) {
         inspectComboBox.selectedItem = source.resolvedInspect()
         quickFixComboBox.selectedItem = source.resolvedQuickFix()
-        // 先切下拉框：切换时 ItemListener 会把文本框内容写入"切换前"目标名的缓存，
-        // 随后这里重填缓存会覆盖它。若先改 currentTarget，监听器会把未应用的文本
-        // 记到默认目标（JS_TS）名下，导致 reset 后显示的仍是编辑中的内容而不是状态里的值
-        targetLanguageComboBox.selectedItem = ExcludedTarget.JS_TS
+        // 默认选中上一次编辑的语言；没有记录就不选，下拉框显示占位提示。
+        // 这里程序性地改选择，不能让监听器把输入框里未应用的文本存进缓存或记成“最近编辑”
+        val last = ExcludedTarget.entries.firstOrNull { it.name == source.lastExcludedTarget }
+        lastEditedTarget = last
+        loadingTarget = true
+        try {
+            targetLanguageComboBox.selectedItem = last
+        } finally {
+            loadingTarget = false
+        }
         excludedTextByTarget.clear()
         ExcludedTarget.entries.forEach { target ->
             excludedTextByTarget[target] = excludedOf(source, target)
         }
-        currentTarget = ExcludedTarget.JS_TS
-        excludedField.items = excludedTextByTarget[currentTarget].orEmpty()
-        updateExcludedHintLabel()
+        showTarget(last)
         literalExpressionCheckBox.isSelected = source.checkLiteralExpression
         docCommentsCheckBox.isSelected = source.checkDocComments
         autoScanCheckBox.isSelected = source.autoScanOnOpen
