@@ -127,7 +127,7 @@ class CsleCSSInspection : CsleLocalInspectionTool() {
         if (text == converted) return null
 
         // 创建问题描述，显示黄色波浪线
-        return manager.createProblemDescriptor(
+        return manager.createCsleDescriptor(
             element,
             CsleUtils.problemDescription(),
             CssStringQuickFix(),

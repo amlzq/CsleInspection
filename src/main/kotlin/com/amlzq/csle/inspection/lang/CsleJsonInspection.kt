@@ -93,7 +93,7 @@ class CsleJsonInspection : CsleLocalInspectionTool() {
                 if (text == converted) return
 
                 problems.add(
-                    manager.createProblemDescriptor(
+                    manager.createCsleDescriptor(
                         element,
                         CsleUtils.problemDescription(),
                         JsonStringLiteralQuickFix(),

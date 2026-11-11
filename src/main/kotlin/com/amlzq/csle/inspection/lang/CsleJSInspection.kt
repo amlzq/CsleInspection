@@ -135,7 +135,7 @@ class CsleJSInspection : CsleLocalInspectionTool() {
                     }
 
                     problems.add(
-                        manager.createProblemDescriptor(
+                        manager.createCsleDescriptor(
                             element,
                             CsleUtils.problemDescription(),
                             JSDocCommentQuickFix(),
@@ -201,7 +201,7 @@ class CsleJSInspection : CsleLocalInspectionTool() {
 
                 // 创建问题描述，显示黄色波浪线
                 problems.add(
-                    manager.createProblemDescriptor(
+                    manager.createCsleDescriptor(
                         element,
                         CsleUtils.problemDescription(),
                         JSLiteralExpressionQuickFix(),

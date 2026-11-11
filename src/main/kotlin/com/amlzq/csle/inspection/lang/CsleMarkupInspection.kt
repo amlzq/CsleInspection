@@ -1,6 +1,7 @@
 package com.amlzq.csle.inspection.lang
 
 import com.amlzq.csle.inspection.CsleLocalInspectionTool
+import com.amlzq.csle.inspection.CsleAddToDictionaryQuickFix
 import com.amlzq.csle.inspection.CsleLocalQuickFix
 import com.amlzq.csle.inspection.settings.CsleSettings
 import com.amlzq.csle.inspection.util.CsleUtils
@@ -154,7 +155,7 @@ abstract class CsleMarkupInspection : CsleLocalInspectionTool() {
                         if (!reportedRanges.add(element.textRange)) return
 
                         problems.add(
-                            manager.createProblemDescriptor(
+                            manager.createCsleDescriptor(
                                 element,
                                 CsleUtils.problemDescription(),
                                 XmlAttributeValueQuickFix(),
@@ -181,6 +182,9 @@ abstract class CsleMarkupInspection : CsleLocalInspectionTool() {
                                     ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                                     isOnTheFly,
                                     XmlTextQuickFix(),
+                                    CsleAddToDictionaryQuickFix(
+                                        element.text.substring(range.startOffset, range.endOffset).trim(),
+                                    ),
                                 )
                             )
                         }

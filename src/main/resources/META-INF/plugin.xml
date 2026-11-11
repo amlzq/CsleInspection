@@ -50,5 +50,10 @@
             <action id="Csle.InspectAllFiles"
                     class="com.amlzq.csle.inspection.scan.CsleInspectAllAction"/>
         </group>
+
+        <action id="Csle.AddToCustomDictionary"
+                class="com.amlzq.csle.inspection.CsleAddToDictionaryAction">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
     </actions>
 </idea-plugin>

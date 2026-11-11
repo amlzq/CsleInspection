@@ -8,7 +8,9 @@ import com.github.houbb.opencc4j.util.ZhTwConverterUtil
 import com.amlzq.csle.inspection.util.CsleContext
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiElement
 import java.util.regex.Pattern
@@ -54,4 +56,21 @@ abstract class CsleLocalInspectionTool : LocalInspectionTool() {
     fun getConvertedText(text: String): String {
         return CsleUtils.getConvertedText(text)
     }
+
+    /**
+     * 创建问题描述：除了转换修复，再附带“添加到自定义词典”修复（原词为被标出的字符串内容）。
+     */
+    fun InspectionManager.createCsleDescriptor(
+        element: PsiElement,
+        description: String,
+        fix: LocalQuickFix,
+        highlightType: ProblemHighlightType,
+        isOnTheFly: Boolean,
+    ): ProblemDescriptor = createProblemDescriptor(
+        element,
+        description,
+        isOnTheFly,
+        arrayOf(fix, CsleAddToDictionaryQuickFix(CsleAddToDictionaryQuickFix.sourceOf(element.text))),
+        highlightType,
+    )
 }

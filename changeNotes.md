@@ -1,3 +1,11 @@
+# Unreleased
+- **FEATURE** add the "Add to custom dictionary" quick fix: fill in the target phrase and save it to the custom dictionary of the Quick fix target in the active settings scheme.
+- **FEATURE** add "Add to Custom Dictionary" to the editor context menu for the selected text.
+- **FEATURE** switch between the Quick fix target dictionaries inside the custom dictionary dialog, without changing the setting outside.
+- **FEATURE** search the entries of the custom dictionary dialog.
+- **IMPROVEMENT** the custom dictionary dialog offers Import, Export, Download template and Clear from a menu next to the search field.
+- **IMPROVEMENT** importing a dictionary file with more than 20,000 entries is refused.
+
 # 0.8.0
 - **FEATURE** settings can now be stored per project (Project) or shared by all projects (Default (IDE)); switch between them with the Scheme drop-down on the settings page.
 - **IMPROVEMENT** the Inspect and Quick fix glyphs now follow the IDE display language until you choose your own.
