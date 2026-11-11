@@ -10,7 +10,7 @@
 - **FEATURE** settings can now be stored per project (Project) or shared by all projects (Default (IDE)); switch between them with the Scheme drop-down on the settings page.
 - **IMPROVEMENT** the Inspect and Quick fix glyphs now follow the IDE display language until you choose your own.
 - **IMPROVEMENT** the Inspect and Quick fix glyphs may now be the same.
-- **FEATURE** add your own phrase dictionary for each Quick fix target; its entries take priority over the built-in dictionary.
+- **FEATURE** add your own dictionary for each Quick fix target; its entries take priority over the built-in dictionary.
 - **IMPROVEMENT** the excluded list is now a chip input that is quicker to add to, remove from and paste into.
 
 # 0.7.0

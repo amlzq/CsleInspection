@@ -82,23 +82,22 @@ class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
         assertTrue(checkbox!!.isSelected)
     }
 
-    fun testLiteralExpressionAlwaysCheckedAndDisabled() {
-        CsleSettings.instance.state.checkLiteralExpression = false
-
+    fun testLiteralExpressionCheckedByDefaultAndEditable() {
         val (_, root) = createConfigurable()
         val checkbox = findCheckBox(root, CsleBundle.message("inspect.target.literal.expression"))
 
         assertNotNull(checkbox)
-        // 字面量检查是基本功能：始终勾选且不允许用户改动
         assertTrue(checkbox!!.isSelected)
-        assertFalse(checkbox.isEnabled)
+        assertTrue(checkbox.isEnabled)
+    }
 
-        // 复选框下有常驻说明，悬停提示同样带折行
-        val hint = CsleBundle.message("inspect.target.literal.expression.hint")
-        assertTrue(findAll(root, DslLabel::class.java).any { it.userText == hint })
-        val tooltip = checkbox.toolTipText
-        assertNotNull(tooltip)
-        assertTrue(tooltip!!.contains(CsleBundle.message("inspect.target.literal.expression.tip")))
+    fun testLiteralExpressionReflectsStoredSwitch() {
+        CsleSettings.instance.state.checkLiteralExpression = false
+
+        val (_, root) = createConfigurable()
+        val checkbox = findCheckBox(root, CsleBundle.message("inspect.target.literal.expression"))!!
+
+        assertFalse(checkbox.isSelected)
     }
 
     fun testInitiallyNotModified() {
@@ -164,17 +163,21 @@ class CsleSettingsConfigurableTest : CsleBasePlatformTest() {
     }
 
     fun testApplyPersistsDocCommentsAndLiteralSwitch() {
-        CsleSettings.instance.state.checkLiteralExpression = false
         val (configurable, root) = createConfigurable()
-        val checkbox = findCheckBox(root, CsleBundle.message("inspect.target.doc.comments"))!!
+        val docComments = findCheckBox(root, CsleBundle.message("inspect.target.doc.comments"))!!
+        val literal = findCheckBox(root, CsleBundle.message("inspect.target.literal.expression"))!!
 
-        checkbox.isSelected = true
+        docComments.isSelected = true
+        literal.isSelected = false
         assertTrue(configurable.isModified())
         configurable.apply()
 
         assertTrue(CsleSettings.instance.state.checkDocComments)
-        // 字面量检查项在 UI 中不可关闭，apply 时保持开启
-        assertTrue(CsleSettings.instance.state.checkLiteralExpression)
+        assertFalse(CsleSettings.instance.state.checkLiteralExpression)
+        assertFalse(configurable.isModified())
+
+        configurable.reset()
+        assertFalse(literal.isSelected)
     }
 
     fun testSwitchTargetKeepsEditedText() {

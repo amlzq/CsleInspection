@@ -8,7 +8,7 @@ import com.github.houbb.opencc4j.support.datamap.impl.DataMaps
 import com.github.houbb.opencc4j.support.segment.Segment
 
 /**
- * 用户自定义惯用语词典，沿用 OpenCC 词典文件的格式：
+ * 用户自定义词典，沿用 OpenCC 词典文件的格式：
  * UTF-8 文本，每行 `原词<Tab>目标词`，`#` 开头的行和空行会被忽略。
  * 目标词是一个不含空白的词；OpenCC 词典里的多个候选词只保留第一个。
  *
@@ -38,7 +38,7 @@ object CsleCustomDictionary {
     /** 下载给用户的模板：简短说明加上该目标字形的示例；示例行以 # 紧跟内容的形式注释掉，导入后不生效 */
     fun templateFor(glyph: CsleGlyphs): String = (
         listOf(
-            "# Custom phrase dictionary, Quick fix target: ${glyph.label} / 自定义惯用语词典，快速修复目标：${glyph.label}",
+            "# Custom dictionary, Quick fix target: ${glyph.label} / 自定义词典，快速修复目标：${glyph.label}",
             "# One entry per line: <source><Tab><target>. 每行一条：原词<Tab>目标词。",
             "# The target is a single phrase without spaces. 目标词是一个不含空格的词。",
             "# Lines starting with # are comments; for a repeated source the last entry wins.",

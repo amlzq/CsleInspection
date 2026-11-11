@@ -66,7 +66,7 @@ class CsleSettings : PersistentStateComponent<CsleSettings> {
         excludedCss = if (state.excludedCss.isNotEmpty()) state.excludedCss else state.excluded
         excludedXml = if (state.excludedXml.isNotEmpty()) state.excludedXml else state.excluded
         excludedJson = if (state.excludedJson.isNotEmpty()) state.excludedJson else state.excluded
-        checkLiteralExpression = true
+        checkLiteralExpression = state.checkLiteralExpression
         checkDocComments = state.checkDocComments
         autoScanOnOpen = state.autoScanOnOpen
         customDictionaries = state.customDictionaries.filterValues { it.isNotBlank() }.toMutableMap()

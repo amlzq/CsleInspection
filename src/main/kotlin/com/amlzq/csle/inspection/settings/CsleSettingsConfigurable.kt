@@ -96,9 +96,6 @@ class CsleSettingsConfigurable(private val project: Project) : Configurable {
             CsleBundle.message("inspect.target.literal.expression"),
             CsleSettings.instance.state.checkLiteralExpression,
         ).apply {
-            // 字面量检查是插件的基本功能：始终开启，UI 中只做展示
-            isEnabled = false
-            isSelected = true
             toolTipText = htmlTooltip(CsleBundle.message("inspect.target.literal.expression.tip"))
         }
         docCommentsCheckBox = JBCheckBox(
@@ -196,7 +193,7 @@ class CsleSettingsConfigurable(private val project: Project) : Configurable {
                     cell(literalExpressionCheckBox)
                 }
 
-                // 常驻说明为什么这一项不可改动
+                // 说明取消勾选后的效果
                 row {
                     comment(CsleBundle.message("inspect.target.literal.expression.hint"))
                 }
@@ -440,6 +437,7 @@ class CsleSettingsConfigurable(private val project: Project) : Configurable {
                 || ExcludedTarget.entries.any { target ->
             getExcludedFromState(target) != getExcludedItems(target)
         }
+                || literalExpressionCheckBox.isSelected != state.checkLiteralExpression
                 || docCommentsCheckBox.isSelected != state.checkDocComments
                 || autoScanCheckBox.isSelected != state.autoScanOnOpen
                 || normalizedDictionaries(pendingDictionaries) != normalizedDictionaries(state.customDictionaries)
@@ -454,7 +452,7 @@ class CsleSettingsConfigurable(private val project: Project) : Configurable {
         ExcludedTarget.entries.forEach { target ->
             setExcludedToState(target, getExcludedItems(target))
         }
-        state.checkLiteralExpression = true
+        state.checkLiteralExpression = literalExpressionCheckBox.isSelected
         state.checkDocComments = docCommentsCheckBox.isSelected
         // 只影响下次打开项目，不需要刷新编辑器中的 inspection
         state.autoScanOnOpen = autoScanCheckBox.isSelected
@@ -496,7 +494,7 @@ class CsleSettingsConfigurable(private val project: Project) : Configurable {
         currentTarget = ExcludedTarget.JS_TS
         excludedField.items = excludedTextByTarget[currentTarget].orEmpty()
         updateExcludedHintLabel()
-        literalExpressionCheckBox.isSelected = true
+        literalExpressionCheckBox.isSelected = source.checkLiteralExpression
         docCommentsCheckBox.isSelected = source.checkDocComments
         autoScanCheckBox.isSelected = source.autoScanOnOpen
         pendingDictionaries = source.customDictionaries.toMutableMap()
