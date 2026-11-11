@@ -5,7 +5,7 @@
     <name>Chinese Expression Inspection</name>
 
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
-    <vendor email="" url="https://github.com/amlzq">Zeaon</vendor>
+    <vendor email="support@zeaon.dev" url="https://github.com/amlzq">Zeaon</vendor>
 
     <!-- Product and plugin compatibility requirements.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
