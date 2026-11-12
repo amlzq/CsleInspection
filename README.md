@@ -35,3 +35,7 @@ If you want more supported languages, new an [issue](https://github.com/amlzq/Cs
 ### Thanks
 
 [Opencc4j](https://github.com/houbb/opencc4j)
+
+### License
+
+[Apache License 2.0](LICENSE)

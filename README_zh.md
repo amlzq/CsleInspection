@@ -35,3 +35,7 @@
 ### 感谢
 
 [Opencc4j](https://github.com/houbb/opencc4j)
+
+### 许可证
+
+[Apache License 2.0](LICENSE)
