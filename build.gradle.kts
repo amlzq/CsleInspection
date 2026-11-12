@@ -52,3 +52,18 @@ dependencies {
 kotlin {
     jvmToolchain(21)
 }
+
+tasks.register("generateGettingStarted") {
+    group = "publishing"
+    description = "Converts gettingStarted.md to HTML for pasting into the Marketplace admin page."
+    val source = layout.projectDirectory.file("gettingStarted.md")
+    val output = layout.buildDirectory.file("gettingStarted.html")
+    inputs.file(source)
+    outputs.file(output)
+    doLast {
+        val target = output.get().asFile
+        target.parentFile.mkdirs()
+        target.writeText(markdownToHTML(source.asFile.readText()))
+        println("Generated ${target.absolutePath}")
+    }
+}

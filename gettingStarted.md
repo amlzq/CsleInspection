@@ -12,7 +12,7 @@ Put the caret on a highlighted string and press **Alt+Enter** (**Option+Return**
 
 ### 4. Choose your regions
 
-Open **Settings | Tools | Chinese Expression Inspection**. Under **Inspect contains**, pick the regional Chinese usage you want to find, and under **quick fix to**, the usage you want to convert to (Simplified Chinese, Chinese (Taiwan), Chinese (Hong Kong) or Traditional Chinese).
+Open **Settings | Tools | Chinese Expression Inspection**. Pick the regional Chinese usage to find in **Inspect contains**, and the usage to convert to after **and quick fix to** (Simplified Chinese, Chinese (Taiwan), Chinese (Hong Kong) or Traditional Chinese).
 
 ### 5. Skip what you don't want checked
 

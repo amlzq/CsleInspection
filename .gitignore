@@ -42,3 +42,5 @@ bin/
 .DS_Store
 
 *.log
+
+docs/ignored/
