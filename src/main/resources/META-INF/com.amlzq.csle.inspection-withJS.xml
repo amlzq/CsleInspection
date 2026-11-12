@@ -10,4 +10,9 @@
                 enabledByDefault="true" level="WARNING" language="JavaScript"
                 implementationClass="com.amlzq.csle.inspection.lang.CsleJSInspection"/>
     </extensions>
+
+    <!-- HTML 内嵌 <script> 的检查：引用 JavaScript 插件的类，只在这里注册 -->
+    <extensions defaultExtensionNs="com.amlzq.csle.inspection">
+        <embeddedInspector implementation="com.amlzq.csle.inspection.lang.CsleEmbeddedJSInspection"/>
+    </extensions>
 </idea-plugin>

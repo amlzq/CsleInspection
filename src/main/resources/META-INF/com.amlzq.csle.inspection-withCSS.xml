@@ -10,4 +10,9 @@
                 enabledByDefault="true" level="WARNING" language="CSS"
                 implementationClass="com.amlzq.csle.inspection.lang.CsleCSSInspection"/>
     </extensions>
+
+    <!-- HTML 内嵌 <style> 的检查：引用 CSS 插件的类，只在这里注册 -->
+    <extensions defaultExtensionNs="com.amlzq.csle.inspection">
+        <embeddedInspector implementation="com.amlzq.csle.inspection.lang.CsleEmbeddedCSSInspection"/>
+    </extensions>
 </idea-plugin>

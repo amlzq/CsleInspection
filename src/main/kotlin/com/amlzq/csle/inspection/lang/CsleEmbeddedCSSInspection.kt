@@ -8,7 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttributeValue
 
 /**
- * HTML 内嵌样式表的检查入口。
+ * HTML 内嵌样式表的检查入口（CSS 插件可用时由 `withCSS.xml` 注册）。
  *
  * HTML 中 `<style>` 的内容由 CSS 解析器在 HTML 文件内直接解析成 [CssString] 等节点，
  * 它们不是注入片段，HTML 文件也不会交给注册为 CSS 语言的 [CsleCSSInspection]，
@@ -20,24 +20,24 @@ import com.intellij.psi.xml.XmlAttributeValue
  * `style="..."` 内联样式同样会解析出 [CssString]，但标记语言的属性值检查已经覆盖，
  * 这里跳过，避免同一段文本被重复报告。
  *
- * 本对象引用了 CSS 插件的类，调用方必须先确认 CSS 插件可用（见 [CsleMarkupInspection]），
- * 否则没装插件时会加载失败。
+ * 本类引用了 CSS 插件的类，只在 `withCSS.xml` 里注册，没装插件时不会被加载。
  */
-internal object CsleEmbeddedCSSInspection {
+class CsleEmbeddedCSSInspection : CsleEmbeddedInspector {
 
     /** 是否是内嵌样式表中、且不属于内联 `style` 属性值的字符串 */
-    fun isEmbeddedString(element: PsiElement): Boolean {
+    override fun accepts(element: PsiElement): Boolean {
         if (element !is CssString) return false
         return PsiTreeUtil.getParentOfType(element, XmlAttributeValue::class.java, false) == null
     }
 
     /** 检查内嵌样式表中的字符串 */
-    fun checkString(
+    override fun collectProblems(
         element: PsiElement,
         manager: InspectionManager,
-        isOnTheFly: Boolean
-    ): ProblemDescriptor? {
-        val cssString = element as? CssString ?: return null
-        return CsleCSSInspection().checkString(cssString, manager, isOnTheFly)
+        isOnTheFly: Boolean,
+        problems: MutableList<ProblemDescriptor>
+    ) {
+        val cssString = element as? CssString ?: return
+        CsleCSSInspection().checkString(cssString, manager, isOnTheFly)?.let(problems::add)
     }
 }

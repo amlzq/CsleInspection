@@ -27,6 +27,13 @@
 
     <resource-bundle>messages.CsleBundle</resource-bundle>
 
+    <!-- HTML 内嵌 JavaScript / CSS 的检查入口，由可选依赖配置（withJS.xml、withCSS.xml）提供实现 -->
+    <extensionPoints>
+        <extensionPoint name="embeddedInspector"
+                        interface="com.amlzq.csle.inspection.lang.CsleEmbeddedInspector"
+                        dynamic="true"/>
+    </extensionPoints>
+
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
