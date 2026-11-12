@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.ui.GroupedComboBoxRenderer
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
@@ -336,9 +337,10 @@ class CsleSettingsConfigurable(private val project: Project) : Configurable {
             dictionaryStatusLabel.text = CsleBundle.message("custom.dictionary.overwritten", dictionaryStatusLabel.text)
         }
         // 清空输入框会让“添加”按钮变为不可用，焦点随之丢失；等焦点稳定后再放回原词输入框，方便连续录入
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown {
-            IdeFocusManager.getGlobalInstance().requestFocus(dictionarySourceField, true)
-        }
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(
+            { IdeFocusManager.getGlobalInstance().requestFocus(dictionarySourceField, true) },
+            ModalityState.stateForComponent(dictionarySourceField),
+        )
     }
 
     private fun openDictionaryDialog() {
@@ -491,7 +493,7 @@ class CsleSettingsConfigurable(private val project: Project) : Configurable {
         ApplicationManager.getApplication().invokeLater {
             val projectManager = ProjectManager.getInstance()
             projectManager.openProjects.forEach { project ->
-                DaemonCodeAnalyzer.getInstance(project).restart()
+                DaemonCodeAnalyzer.getInstance(project).restart("CsleSettingsConfigurable.apply")
             }
         }
     }

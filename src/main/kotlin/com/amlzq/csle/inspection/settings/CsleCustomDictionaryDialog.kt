@@ -357,7 +357,7 @@ class CsleCustomDictionaryDialog @JvmOverloads constructor(
     }
 
     private fun importFile() {
-        val descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor()
+        val descriptor = FileChooserDescriptorFactory.singleFile()
             .withTitle(CsleBundle.message("custom.dictionary.import"))
         val file = FileChooser.chooseFile(descriptor, null, null) ?: return
         val result = CsleCustomDictionary.parse(String(file.contentsToByteArray(), Charsets.UTF_8))

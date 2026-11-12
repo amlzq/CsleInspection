@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.CheckboxTree
+import com.intellij.ui.CheckboxTreeHelper
 import com.intellij.ui.CheckedTreeNode
 import com.intellij.ui.JBColor
 import com.intellij.ui.ScrollPaneFactory
@@ -46,7 +47,7 @@ class CsleResultPanel(private val project: Project) : JPanel(BorderLayout()) {
         addActionListener { acceptAll() }
     }
     private val root = CheckedTreeNode()
-    private val tree = CheckboxTree(Renderer(), root).apply {
+    private val tree = CheckboxTree(Renderer(), root, CheckboxTreeHelper.DEFAULT_POLICY).apply {
         isRootVisible = false
         showsRootHandles = true
         addCheckboxTreeListener(object : com.intellij.ui.CheckboxTreeListener {

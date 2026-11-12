@@ -1,4 +1,5 @@
 import org.jetbrains.changelog.markdownToHTML
+import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 plugins {
@@ -51,6 +52,11 @@ dependencies {
 
 kotlin {
     jvmToolchain(21)
+    compilerOptions {
+        // 不为 Java 接口的默认方法生成桥接方法：否则实现 ToolWindowFactory 等接口时，
+        // 桥接代码会"使用"其中已废弃的默认方法，被 Plugin Verifier 报成废弃 API 用法
+        jvmDefault.set(JvmDefaultMode.NO_COMPATIBILITY)
+    }
 }
 
 tasks.register("generateGettingStarted") {

@@ -5,6 +5,12 @@
 - **FEATURE** search the entries of the custom dictionary dialog.
 - **IMPROVEMENT** the custom dictionary dialog offers Import, Export, Download template and Clear from a menu next to the search field.
 - **IMPROVEMENT** importing a dictionary file with more than 20,000 entries is refused.
+- **IMPROVEMENT** the Literal expression option can now be turned off; it stays checked by default.
+- **IMPROVEMENT** the Excluded items language drop-down is sorted alphabetically, selects the language you edited last, and shows "Select programming language" until you pick one.
+- **IMPROVEMENT** the settings group "Scan" is now "Project inspection" and the option reads "Inspect the project automatically after it opens".
+- **IMPROVEMENT** the descriptions in Settings | Editor | Inspections follow the IDE display language (Simplified and Traditional Chinese).
+- **BUGFIX** fix compatibility problems in IDEs without the JavaScript or CSS plugin, such as Android Studio: inspecting `<script>` and `<style>` in HTML now loads only when the plugin is present.
+- **REFACTOR** stop using deprecated IntelliJ Platform APIs.
 
 # 0.8.0
 - **FEATURE** settings can now be stored per project (Project) or shared by all projects (Default (IDE)); switch between them with the Scheme drop-down on the settings page.

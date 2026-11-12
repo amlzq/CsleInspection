@@ -6,11 +6,12 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalInspectionEP
 import com.intellij.lang.Language
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiDocumentManager
@@ -35,7 +36,7 @@ class CsleProjectScanner(private val project: Project) {
 
         indicator?.isIndeterminate = false
         val files = ArrayList<VirtualFile>()
-        ReadAction.run<RuntimeException> {
+        readAction {
             ProjectFileIndex.getInstance(project).iterateContent { file ->
                 if (!file.isDirectory && file.isInLocalFileSystem) files.add(file)
                 true
@@ -57,14 +58,21 @@ class CsleProjectScanner(private val project: Project) {
                 skippedLarge++
                 continue
             }
-            val found = ReadAction.compute<List<ScanResultItem>, RuntimeException> {
-                scanFile(file, tools, manager)
-            }
+            val found = readAction { scanFile(file, tools, manager) }
             scanned++
             items.addAll(found)
         }
         return ScanResult(items, scanned, skippedLarge, skippedLanguages.toList())
     }
+
+    /**
+     * 在读操作里执行 [block]。
+     *
+     * 等价于已废弃的 `ReadAction.compute`，后台线程和 EDT 上都能调用
+     * （`ReadAction.computeCancellable` 不允许在 EDT 上调用，测试里会直接在 EDT 上扫描）。
+     */
+    private fun <T> readAction(block: () -> T): T =
+        ApplicationManager.getApplication().runReadAction(ThrowableComputable<T, RuntimeException> { block() })
 
     private fun collectTools(skippedLanguages: MutableSet<String>): List<ToolEntry> {
         val profile = InspectionProjectProfileManager.getInstance(project).currentProfile

@@ -85,7 +85,7 @@ class CsleAddToDictionaryDialog(
             val latest = settings.customDictionaryFor(glyph)
             settings.customDictionaries[glyph.name] = CsleCustomDictionary.put(latest, dialog.source, dialog.target).first
             // 词条会影响转换结果，让编辑器重新分析
-            DaemonCodeAnalyzer.getInstance(project).restart()
+            DaemonCodeAnalyzer.getInstance(project).restart("CsleAddToDictionaryDialog.save")
             return true
         }
     }
