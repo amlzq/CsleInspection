@@ -1,4 +1,5 @@
-# Unreleased
+# 0.9.0
+
 - **FEATURE** add the "Add to custom dictionary" quick fix: fill in the target phrase and save it to the custom dictionary of the Quick fix target in the active settings scheme.
 - **FEATURE** add "Add to Custom Dictionary" to the editor context menu for the selected text.
 - **FEATURE** switch between the Quick fix target dictionaries inside the custom dictionary dialog, without changing the setting outside.
@@ -9,10 +10,11 @@
 - **IMPROVEMENT** the Excluded items language drop-down is sorted alphabetically, selects the language you edited last, and shows "Select programming language" until you pick one.
 - **IMPROVEMENT** the settings group "Scan" is now "Project inspection" and the option reads "Inspect the project automatically after it opens".
 - **IMPROVEMENT** the descriptions in Settings | Editor | Inspections follow the IDE display language (Simplified and Traditional Chinese).
+- **IMPROVEMENT** stop using deprecated IntelliJ Platform APIs.
 - **BUGFIX** fix compatibility problems in IDEs without the JavaScript or CSS plugin, such as Android Studio: inspecting `<script>` and `<style>` in HTML now loads only when the plugin is present.
-- **REFACTOR** stop using deprecated IntelliJ Platform APIs.
 
 # 0.8.0
+
 - **FEATURE** settings can now be stored per project (Project) or shared by all projects (Default (IDE)); switch between them with the Scheme drop-down on the settings page.
 - **IMPROVEMENT** the Inspect and Quick fix glyphs now follow the IDE display language until you choose your own.
 - **IMPROVEMENT** the Inspect and Quick fix glyphs may now be the same.
@@ -20,11 +22,13 @@
 - **IMPROVEMENT** the excluded list is now a chip input that is quicker to add to, remove from and paste into.
 
 # 0.7.0
+
 - **FEATURE** add Tools | Chinese Expression Inspection | Inspect All Files: scan the whole project, review the results in a tool window, and convert every checked occurrence with Accept All (one Undo reverts the batch).
 - **FEATURE** optionally scan the whole project automatically after it opens (Settings | Tools | Chinese Expression Inspection | Scan, off by default); a notification links to the results.
 - **IMPROVEMENT** inspections now also report in batch mode, so Code | Inspect Code lists the occurrences.
 
 # 0.6.0
+
 - **IMPROVEMENT** share one implementation for the XML and HTML inspections.
 - **BUGFIX** stop reporting Chinese text from comments in HTML and XML.
 - **BUGFIX** inspect and fix Chinese text inside HTML `<script>` and `<style>` blocks.
@@ -41,41 +45,53 @@
 - **BREAKING** require IntelliJ IDEA 2025.3 or later.
 
 # 0.5.0
+
 - **FEATURE** add doc-comment inspection and fixes (option)
 - **FEATURE** add support for HTML/CSS, XML, JSON
 - **REFACTOR** per-language excluded lists and target selector
 
 # 0.4.0
+
 - Re-run the inspection after modifying the glyph configuration.
 - Support checking and converting tag attribute values in JSX files.
 - Upgrading third-party dependencies.
 
 # 0.3.1
+
 - Added Traditional Chinese (Hong Kong) support.
 
 # 0.3.0
+
 - Add support for Python languages
 
 # 0.2.1
+
 - Fix dart multi-line string.
 
 # 0.2.0
+
 - Add support for PHP languages
 
 # 0.1.0
+
 - Add support for JavaScript and TypeScript languages
 
 # 0.0.5
+
 - sinceBuild 243
 
 # 0.0.4
+
 - Change compatibility range
 
 # 0.0.3
+
 - Fix compatibility error.
 
 # 0.0.2
+
 - Fix compatibility error.
 
 # 0.0.1
+
 - Basic features of plugins: inspection, quick fix, and setting.
