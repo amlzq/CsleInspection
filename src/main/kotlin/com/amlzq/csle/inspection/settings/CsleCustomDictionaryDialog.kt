@@ -11,7 +11,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.SearchTextField
-import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.components.JBLabel
 import javax.swing.RowFilter
 import javax.swing.event.DocumentEvent
@@ -92,7 +92,7 @@ class CsleCustomDictionaryDialog @JvmOverloads constructor(
         }
     }
     private val glyphCombo = ComboBox(CsleGlyphs.entries.toTypedArray()).apply {
-        renderer = SimpleListCellRenderer.create("") { it.label }
+        renderer = textListCellRenderer("") { it.label }
         selectedItem = glyph
     }
     private val searchCards = JPanel(java.awt.CardLayout())

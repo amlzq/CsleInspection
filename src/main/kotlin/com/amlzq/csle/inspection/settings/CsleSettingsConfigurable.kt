@@ -22,7 +22,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.DocumentAdapter
@@ -98,7 +98,7 @@ class CsleSettingsConfigurable(private val project: Project) : Configurable {
         targetLanguageComboBox = ComboBox(excludedTargets).apply {
             setPrototypeDisplayValue(longestTarget)
             // 未选择时（selectedItem 为 null）显示占位提示
-            renderer = SimpleListCellRenderer.create(CsleBundle.message("target.language.placeholder")) { it.toString() }
+            renderer = textListCellRenderer(CsleBundle.message("target.language.placeholder")) { it.toString() }
             selectedItem = null
         }
 
