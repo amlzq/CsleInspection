@@ -116,32 +116,64 @@ object CsleCustomDictionary {
         return format(entries) to overwritten
     }
 
-    private class Key(val glyph: CsleGlyphs, val text: String)
+    private class Key(val glyph: CsleGlyphs, val source: CsleGlyphs, val text: String)
+
+    private class Cached(val key: Key, val bootstrap: ZhConvertBootstrap, val userWords: LongestMatchSegment)
 
     @Volatile
-    private var cached: Pair<Key, ZhConvertBootstrap>? = null
+    private var cached: Cached? = null
 
     /**
      * 用户词典 + 内置词典转换文本。词典为空或没有有效词条时返回 null，由调用方使用内置转换器。
+     *
+     * [source] 为检查字形：转简体时据此选用台湾/香港内置词典，让地区用词转成大陆用词；
+     * 繁体之间互转时先在原文上匹配用户词条，其余片段按源字形转成简体，再转成目标繁体。
      */
-    fun convert(glyph: CsleGlyphs, dictionaryText: String, text: String): String? {
+    fun convert(
+        glyph: CsleGlyphs,
+        dictionaryText: String,
+        text: String,
+        source: CsleGlyphs = CsleGlyphs.SIMPLIFIED,
+    ): String? {
         if (dictionaryText.isBlank()) return null
-        val bootstrap = bootstrapFor(glyph, dictionaryText) ?: return null
-        return when (glyph) {
-            CsleGlyphs.SIMPLIFIED -> bootstrap.toSimple(text)
-            else -> bootstrap.toTraditional(text)
+        val c = cachedFor(glyph, source, dictionaryText) ?: return null
+        if (glyph == CsleGlyphs.SIMPLIFIED) return c.bootstrap.toSimple(text)
+        if (!CsleUtils.isTraditionalPivot(source, glyph)) return c.bootstrap.toTraditional(text)
+
+        // 原词是代码里的原文（繁体），转成简体后就匹配不上，所以先在原文上切出用户词条
+        val out = StringBuilder()
+        val pending = StringBuilder()
+        fun flush() {
+            if (pending.isNotEmpty()) {
+                out.append(c.bootstrap.toTraditional(CsleUtils.toSimple(source, pending.toString())))
+                pending.setLength(0)
+            }
         }
+        for (piece in c.userWords.seg(text)) {
+            val value = c.userWords.valueOf(piece)
+            if (value != null) {
+                flush()
+                out.append(value)
+            } else {
+                pending.append(piece)
+            }
+        }
+        flush()
+        return out.toString()
     }
 
     @Synchronized
-    private fun bootstrapFor(glyph: CsleGlyphs, dictionaryText: String): ZhConvertBootstrap? {
-        cached?.let { (key, bs) ->
-            if (key.glyph == glyph && key.text == dictionaryText) return bs
+    private fun cachedFor(glyph: CsleGlyphs, source: CsleGlyphs, dictionaryText: String): Cached? {
+        // 转繁体时内置词典只由目标决定，源字形不参与，归一化后避免无谓地重建缓存
+        val dictSource = if (glyph == CsleGlyphs.SIMPLIFIED) source else CsleGlyphs.SIMPLIFIED
+        cached?.let {
+            if (it.key.glyph == glyph && it.key.source == dictSource && it.key.text == dictionaryText) return it
         }
-        val entries = parse(dictionaryText).entries.mapValues { listOf(it.value) }
-        if (entries.isEmpty()) return null
+        val parsed = parse(dictionaryText).entries
+        if (parsed.isEmpty()) return null
+        val entries = parsed.mapValues { listOf(it.value) }
 
-        val builtIn: IDataMap = when (glyph) {
+        val builtIn: IDataMap = when (if (glyph == CsleGlyphs.SIMPLIFIED) dictSource else glyph) {
             CsleGlyphs.SIMPLIFIED, CsleGlyphs.TRADITIONAL -> DataMaps.defaults()
             CsleGlyphs.TAIWAN -> DataMaps.taiwan()
             CsleGlyphs.HONGKONG -> DataMaps.hongKong()
@@ -156,11 +188,11 @@ object CsleCustomDictionary {
         // merge 中后者覆盖前者，所以用户词典放在最后
         val merged = DataMaps.merge(builtIn, custom)
         val bootstrap = ZhConvertBootstrap.newInstance()
-            .segment(LongestMatchSegment(merged))
+            .segment(LongestMatchSegment(merged.stPhrase().keys + merged.tsPhrase().keys))
             .dataMap(merged)
             .init()
-        cached = Key(glyph, dictionaryText) to bootstrap
-        return bootstrap
+        return Cached(Key(glyph, dictSource, dictionaryText), bootstrap, LongestMatchSegment(parsed.keys, parsed))
+            .also { cached = it }
     }
 
     /**
@@ -169,11 +201,12 @@ object CsleCustomDictionary {
      * 不用 Opencc4j 的 dataMapFastForward：它的前缀树是静态共享的，第一次构建之后，
      * 用户词典变化（或切换目标字形）时仍会沿用旧词组，导致自定义词条不生效。
      */
-    private class LongestMatchSegment(dataMap: IDataMap) : Segment {
-        private val words: Set<String> = HashSet<String>().apply {
-            addAll(dataMap.stPhrase().keys)
-            addAll(dataMap.tsPhrase().keys)
-        }
+    private class LongestMatchSegment(
+        private val words: Set<String>,
+        private val values: Map<String, String> = emptyMap(),
+    ) : Segment {
+        fun valueOf(word: String): String? = values[word]
+
         private val maxLength: Int = words.maxOfOrNull { it.length } ?: 1
 
         override fun seg(original: String?): List<String> {

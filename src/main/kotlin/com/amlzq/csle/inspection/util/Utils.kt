@@ -49,13 +49,31 @@ object CsleUtils {
 
     fun getConvertedText(text: String, project: Project? = CsleContext.project()): String {
         val glyphs = getQuickFixGlyphs(project)
-        CsleCustomDictionary.convert(glyphs, CsleSettings.effective(project).customDictionaryFor(glyphs), text)?.let { return it }
-        return when (glyphs) {
-            CsleGlyphs.SIMPLIFIED -> ZhConverterUtil.toSimple(text)
-            CsleGlyphs.TAIWAN -> ZhTwConverterUtil.toTraditional(text)
-            CsleGlyphs.HONGKONG -> ZhHkConverterUtil.toTraditional(text)
-            CsleGlyphs.TRADITIONAL -> ZhConverterUtil.toTraditional(text)
-        }
+        val source = getInspectGlyphs(project)
+        CsleCustomDictionary.convert(glyphs, CsleSettings.effective(project).customDictionaryFor(glyphs), text, source)
+            ?.let { return it }
+        if (glyphs == CsleGlyphs.SIMPLIFIED) return toSimple(source, text)
+        return toTraditional(glyphs, if (isTraditionalPivot(source, glyphs)) toSimple(source, text) else text)
+    }
+
+    /**
+     * 繁体之间互转（台湾、香港、繁体两两之间）：Opencc4j 只有“简→繁”“繁→简”，
+     * 直接把繁体交给 toTraditional 基本不会变化，所以先按源字形转成简体，再转成目标繁体。
+     */
+    internal fun isTraditionalPivot(source: CsleGlyphs, target: CsleGlyphs): Boolean =
+        source != CsleGlyphs.SIMPLIFIED && target != CsleGlyphs.SIMPLIFIED && source != target
+
+    /** 按源字形转简体：台湾/香港用词（網路、軟體、滑鼠）只有地区词典才会转成大陆用词 */
+    internal fun toSimple(source: CsleGlyphs, text: String): String = when (source) {
+        CsleGlyphs.TAIWAN -> ZhTwConverterUtil.toSimple(text)
+        CsleGlyphs.HONGKONG -> ZhHkConverterUtil.toSimple(text)
+        CsleGlyphs.SIMPLIFIED, CsleGlyphs.TRADITIONAL -> ZhConverterUtil.toSimple(text)
+    }
+
+    private fun toTraditional(target: CsleGlyphs, text: String): String = when (target) {
+        CsleGlyphs.TAIWAN -> ZhTwConverterUtil.toTraditional(text)
+        CsleGlyphs.HONGKONG -> ZhHkConverterUtil.toTraditional(text)
+        CsleGlyphs.SIMPLIFIED, CsleGlyphs.TRADITIONAL -> ZhConverterUtil.toTraditional(text)
     }
 }
 

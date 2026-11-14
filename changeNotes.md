@@ -1,3 +1,8 @@
+# Unreleased
+
+- **BUGFIX** converting Taiwan or Hong Kong text to Simplified Chinese now also converts regional words (網路 → 网络, 軟體 → 软件) instead of only the characters (网路, 软体), with or without a custom dictionary.
+- **BUGFIX** converting between Taiwan, Hong Kong and Traditional Chinese now works (網路 → 網絡, 打印機 → 印表機); before, the text was left mostly unchanged. Custom dictionary entries written in the original text still take priority.
+
 # 0.9.0
 
 - **FEATURE** add the "Add to custom dictionary" quick fix: fill in the target phrase and save it to the custom dictionary of the Quick fix target in the active settings scheme.

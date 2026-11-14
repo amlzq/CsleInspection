@@ -79,6 +79,27 @@ class CsleCustomDictionaryTest : CsleBasePlatformTest() {
         assertEquals("程序", CsleCustomDictionary.convert(CsleGlyphs.SIMPLIFIED, "程式\t程序\n", "程式"))
     }
 
+    fun testTraditionalPivotPrefersUserEntriesOnOriginalText() {
+        // 原词是台湾原文，命中则直接用用户值；其余片段经简体转成香港繁体
+        assertEquals(
+            "伺服端網絡",
+            CsleCustomDictionary.convert(CsleGlyphs.HONGKONG, "伺服器\t伺服端\n", "伺服器網路", CsleGlyphs.TAIWAN)
+        )
+        // 简体形态的原词在中转后同样生效
+        assertEquals(
+            "主機網絡",
+            CsleCustomDictionary.convert(CsleGlyphs.HONGKONG, "服务器\t主機\n", "伺服器網路", CsleGlyphs.TAIWAN)
+        )
+    }
+
+    fun testSimplifiedTargetFromTaiwanKeepsRegionalWords() {
+        // 有用户词典时也要用台湾内置词典：網路 → 网络
+        assertEquals(
+            "程序网络",
+            CsleCustomDictionary.convert(CsleGlyphs.SIMPLIFIED, "程式\t程序\n", "程式網路", CsleGlyphs.TAIWAN)
+        )
+    }
+
     fun testValidate() {
         assertNull(CsleCustomDictionary.validate("服务器", "伺服器"))
         assertEquals(CsleCustomDictionary.ValidationError.EMPTY_SOURCE, CsleCustomDictionary.validate(" ", "伺服器"))
