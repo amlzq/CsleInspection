@@ -12,6 +12,11 @@ characters in string literals and doc comments and converts them to the regional
 - Target platform: `intellijIdea("2025.3.6.1")`, `sinceBuild = 253`, no `untilBuild`
 - Only runtime dependency: `opencc4j`
 - Version lives in `gradle.properties`; user-facing release notes in `changeNotes.md`
+- Text files uploaded to the Marketplace: `pluginDescription.md` (plugin page) and
+  `gettingStarted.md` (turned into HTML by `generateGettingStarted`); `README.md` and
+  `README.zh-CN.md` are the repository front pages
+- Signing and publishing read `CERTIFICATE_CHAIN`, `PRIVATE_KEY`, `PRIVATE_KEY_PASSWORD` and
+  `PUBLISH_TOKEN` from the environment; never hard-code or commit them
 
 ## Build, test, run
 
@@ -41,6 +46,10 @@ src/main/resources/META-INF/
   plugin.xml                      base descriptor, hard dependency on com.intellij.modules.platform only
   com.amlzq.csle.inspection-with<Plugin>.xml   one descriptor per optional plugin
 src/main/resources/messages/      CsleBundle.properties + zh, zh_HK, zh_MO, zh_TW
+src/main/resources/inspectionDescriptions/
+  Csle<Lang>.html                  description shown in Settings | Editor | Inspections, no locale suffix = en
+  Csle<Lang>_<locale>.html         translated copies (same set of locales as the bundle)
+  metaInformation.json             lists every inspection id with its codeQualityCategory
 src/test/kotlin/                  BasePlatformTestCase tests mirroring the main packages
 ```
 
@@ -69,7 +78,9 @@ src/test/kotlin/                  BasePlatformTestCase tests mirroring the main 
 5. Settings: `excluded<Lang>` field in `CsleSettings` plus the `loadState` fallback to `excluded`,
    an `ExcludedTarget` entry in `CsleSettingsConfigurable`, and the UI wiring.
 6. Bundle keys in all five locale files: inspection display name, inspection group, language target label.
-7. Tests for highlight and quick fix; entry in `changeNotes.md`.
+7. `inspectionDescriptions/Csle<Lang>.html` plus one copy per locale; the file name must equal the
+   `shortName` used in the `localInspection` entry, and the id is added to `metaInformation.json`.
+8. Tests for highlight and quick fix; entry in `changeNotes.md`.
 
 ## Conventions
 
@@ -77,6 +88,8 @@ src/test/kotlin/                  BasePlatformTestCase tests mirroring the main 
   Comments and KDoc in this codebase are written in Chinese — match the file you are editing.
 - All user-visible text goes through `CsleBundle.message("key")`; add every new key to all
   `messages/CsleBundle*.properties` files (en, zh, zh_HK, zh_MO, zh_TW), not just the English one.
+- Likewise update `inspectionDescriptions/Csle<Lang>*.html` for every locale when the wording of an
+  inspection description changes.
 - Read settings inside inspection code with `CsleSettings.effective()`, never `CsleSettings.instance`,
   so the project scheme is honoured.
 - Do not introduce deprecated IntelliJ Platform APIs. Kotlin uses `JvmDefaultMode.NO_COMPATIBILITY`
@@ -96,7 +109,10 @@ src/test/kotlin/                  BasePlatformTestCase tests mirroring the main 
 - Add user-facing changes under `# Unreleased` in `changeNotes.md` using `**FEATURE**`,
   `**IMPROVEMENT**` or `**BUGFIX**`; bump `version` in `gradle.properties` when releasing.
 - Keep `README.md` and `README.zh-CN.md` in sync when features change.
-- Commit messages follow Conventional Commits (`feat:`, `fix:`, `refactor:`, `docs:`, `chore:`).
+- Commit messages and PR titles follow Conventional Commits: `type(scope): summary`, with types
+  `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert` and
+  scopes `lang`, `scan`, `settings`, `quickfix`, `dictionary`, `l10n`. Contributor-facing details
+  (PR checklist, issue reporting) live in `CONTRIBUTING.md`; `CLAUDE.md` only points at this file.
 
 ## Do not
 
