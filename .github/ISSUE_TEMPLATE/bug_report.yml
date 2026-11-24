@@ -42,16 +42,16 @@ body:
       label: Language of the file / 文件语言
       multiple: true
       options:
-        - Java
-        - Kotlin
-        - JavaScript / TypeScript
-        - Python
-        - PHP
+        - CSS
         - Dart
         - HTML
-        - CSS
-        - XML
+        - Java
+        - JavaScript / TypeScript
         - JSON
+        - Kotlin
+        - PHP
+        - Python
+        - XML
         - Other
   - type: input
     id: plugin-version

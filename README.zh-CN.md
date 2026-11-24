@@ -26,7 +26,7 @@
 
 如果你想更多支持的语言，可以创建 [issue](https://github.com/amlzq/CsleInspection/issues)。
 
-### 安装
+### 选择 IDE
 
 [IntelliJ 插件](https://plugins.jetbrains.com/plugin/26834-chinese-expression-inspection)
 

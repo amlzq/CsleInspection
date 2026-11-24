@@ -26,7 +26,7 @@ Inspects string literal expressions for Chinese characters and quickly converts 
 
 If you want more supported languages, new an [issue](https://github.com/amlzq/CsleInspection/issues).
 
-### Installation
+### Select IDE
 
 [IntelliJ plugin](https://plugins.jetbrains.com/plugin/26834-chinese-expression-inspection)
 
