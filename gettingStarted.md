@@ -4,7 +4,7 @@ Go to **Settings | Plugins | Marketplace**, search for **Chinese Expression Insp
 
 ### 2. See what it finds
 
-Open any Java, Kotlin, JavaScript/TypeScript, PHP, Python, Dart, HTML/CSS, XML or JSON file. Chinese characters in string literals are highlighted by the inspection.
+Open any Dart, HTML/CSS, Java, JavaScript/TypeScript, JSON, Kotlin, PHP, Python or XML file. Chinese characters in string literals are highlighted by the inspection.
 
 ### 3. Convert with a quick fix
 
@@ -34,7 +34,7 @@ Select a phrase in the editor, right-click, and choose **Add to Custom Dictionar
 
 ### 2. 查看检查结果
 
-打开任意 Java、Kotlin、JavaScript/TypeScript、PHP、Python、Dart、HTML/CSS、XML 或 JSON 文件，字符串字面量里的中文会被高亮。
+打开任意 Dart、HTML/CSS、Java、JavaScript/TypeScript、JSON、Kotlin、PHP、Python 或 XML 文件，字符串字面量里的中文会被高亮。
 
 ### 3. 用快速修复转换
 

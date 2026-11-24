@@ -15,14 +15,14 @@
 ### 支持语言
 
 - Dart
+- HTML/CSS
 - Java
-- Kotlin
 - JavaScript and TypeScript
+- JSON
+- Kotlin
 - PHP
 - Python
-- HTML/CSS
 - XML
-- JSON
 
 如果你想更多支持的语言，可以创建 [issue](https://github.com/amlzq/CsleInspection/issues)。
 

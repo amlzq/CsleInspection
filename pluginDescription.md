@@ -12,7 +12,7 @@ Inspects string literal expressions for Chinese characters and quickly converts 
 
 ### Supported languages
 
-Dart, Java, Kotlin, JavaScript and TypeScript, PHP, Python, HTML/CSS, XML and JSON.
+Dart, HTML/CSS, Java, JavaScript and TypeScript, JSON, Kotlin, PHP, Python and XML.
 
 Need another language? Open an [issue](https://github.com/amlzq/CsleInspection/issues).
 
@@ -32,6 +32,6 @@ Need another language? Open an [issue](https://github.com/amlzq/CsleInspection/i
 
 ### 支持语言
 
-Dart、Java、Kotlin、JavaScript 和 TypeScript、PHP、Python、HTML/CSS、XML、JSON。
+Dart、HTML/CSS、Java、JavaScript 和 TypeScript、JSON、Kotlin、PHP、Python、XML。
 
 需要其他语言？请创建 [issue](https://github.com/amlzq/CsleInspection/issues)。
